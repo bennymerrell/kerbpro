@@ -17,7 +17,7 @@ function wayLength(nodes) {
   return d;
 }
 
-const ROAD_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','service','road','living_street','busway','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'];
+const ROAD_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'];
 const FOOTPATH_TAGS = ['footway','path','pedestrian','track','bridleway','cycleway','steps'];
 
 async function queryOverpass(polygon) {
@@ -111,7 +111,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
               onClick={handleCalculate}
               className="w-full h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
             >
-              Calculate Roads &amp; Footpaths
+              Calculate Adopted Roads &amp; Footpaths
             </button>
           )}
 
@@ -132,7 +132,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-blue-50 rounded-lg p-2.5">
-                  <div className="text-[10px] text-blue-600 font-medium mb-0.5">Roads</div>
+                  <div className="text-[10px] text-blue-600 font-medium mb-0.5">Adopted Roads</div>
                   <div className="text-sm font-bold text-blue-800">{formatDistanceMiles(results.roadM)}</div>
                   <div className="text-[10px] text-blue-500">{formatDistance(results.roadM)}</div>
                 </div>
