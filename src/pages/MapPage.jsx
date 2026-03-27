@@ -14,6 +14,7 @@ import SpeciesModal from '../components/map/SpeciesModal';
 import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
+import ExportPanel from '../components/map/ExportPanel';
 import { Link } from 'react-router-dom';
 import { List } from 'lucide-react';
 
@@ -142,6 +143,9 @@ export default function MapPage() {
           <span className="hidden sm:inline">Sightings</span>
         </Link>
       </div>
+
+      {/* Export */}
+      <ExportPanel />
 
       {/* Zoom controls */}
       <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
