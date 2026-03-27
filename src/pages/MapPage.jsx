@@ -9,6 +9,8 @@ import MapToolbar from '../components/map/MapToolbar';
 import TileLayerSelector from '../components/map/TileLayerSelector';
 import DistancePanel from '../components/map/DistancePanel';
 import SearchBox from '../components/map/SearchBox';
+import SpeciesModal from '../components/map/SpeciesModal';
+import SpeciesMarkers from '../components/map/SpeciesMarkers';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -26,11 +28,18 @@ export default function MapPage() {
   const [waypoints, setWaypoints] = useState([]);
   const [isPlotting, setIsPlotting] = useState(true);
   const [tileLayer, setTileLayer] = useState('osm');
+  const [isSpeciesMode, setIsSpeciesMode] = useState(false);
+  const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
+  const [speciesSightings, setSpeciesSightings] = useState([]);
   const mapRef = useRef(null);
 
   const handleMapClick = useCallback((latlng) => {
-    setWaypoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
-  }, []);
+    if (isSpeciesMode) {
+      setSpeciesModalLocation({ lat: latlng.lat, lng: latlng.lng });
+    } else if (isPlotting) {
+      setWaypoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
+    }
+  }, [isSpeciesMode, isPlotting]);
 
   const handleUndo = useCallback(() => {
     setWaypoints(prev => prev.slice(0, -1));
@@ -61,7 +70,7 @@ export default function MapPage() {
         className="h-full w-full"
         zoomControl={false}
         ref={mapRef}
-        style={{ cursor: isPlotting ? 'crosshair' : 'grab' }}
+        style={{ cursor: isPlotting || isSpeciesMode ? 'crosshair' : 'grab' }}
       >
         <TileLayer
           key={tileLayer}
@@ -72,6 +81,7 @@ export default function MapPage() {
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
+        <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
       </MapContainer>
 
       {/* Search */}
@@ -80,10 +90,12 @@ export default function MapPage() {
       {/* Toolbar */}
       <MapToolbar
         isPlotting={isPlotting}
-        onTogglePlotting={() => setIsPlotting(!isPlotting)}
+        onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
         onUndo={handleUndo}
         onClear={handleClear}
         waypointCount={waypoints.length}
+        isSpeciesMode={isSpeciesMode}
+        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); }}
       />
 
       {/* Tile selector */}
@@ -111,8 +123,24 @@ export default function MapPage() {
         </div>
       </div>
 
+      {/* Species Modal */}
+      {speciesModalLocation && (
+        <SpeciesModal
+          location={speciesModalLocation}
+          onClose={() => setSpeciesModalLocation(null)}
+          onSaved={(sighting) => setSpeciesSightings(prev => [...prev, sighting])}
+        />
+      )}
+
       {/* Plotting hint */}
-      {isPlotting && waypoints.length === 0 && (
+      {isSpeciesMode && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+          <div className="bg-emerald-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
+            🌿 Click anywhere to record an invasive species sighting
+          </div>
+        </div>
+      )}
+      {!isSpeciesMode && isPlotting && waypoints.length === 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <div className="bg-card/95 backdrop-blur-md rounded-full shadow-lg border border-border/50 px-5 py-2.5 text-xs text-muted-foreground font-medium">
             Click on the map to start plotting your route
