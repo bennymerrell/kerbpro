@@ -96,7 +96,6 @@ export default function MapPage() {
           <AreaDrawer
             points={areaPoints}
             closed={areaClosed}
-            onAddPoint={p => setAreaPoints(prev => [...prev, p])}
             onClose={() => setAreaClosed(true)}
           />
         )}

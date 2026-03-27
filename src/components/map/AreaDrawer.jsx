@@ -10,11 +10,8 @@ function dotIcon(color = '#6366f1') {
   });
 }
 
-export default function AreaDrawer({ points, closed, onAddPoint, onClose }) {
+export default function AreaDrawer({ points, closed, onClose }) {
   useMapEvents({
-    click(e) {
-      if (!closed) onAddPoint({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
     dblclick(e) {
       e.originalEvent.preventDefault();
       if (points.length >= 3 && !closed) onClose();
@@ -35,7 +32,7 @@ export default function AreaDrawer({ points, closed, onAddPoint, onClose }) {
       ) : (
         <Polyline
           positions={positions}
-          pathOptions={{ color: '#6366f1', weight: 2.5, opacity: 0.9, dashArray: points.length > 1 ? null : '6 4' }}
+          pathOptions={{ color: '#6366f1', weight: 2.5, opacity: 0.9 }}
         />
       )}
       {points.map((p, i) => (
