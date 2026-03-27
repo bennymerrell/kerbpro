@@ -1,0 +1,101 @@
+// Haversine formula for calculating distance between two lat/lng points
+export function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function toRad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+// Calculate total distance of a route (array of {lat, lng} points)
+export function calculateTotalDistance(waypoints) {
+  let total = 0;
+  for (let i = 1; i < waypoints.length; i++) {
+    total += haversineDistance(
+      waypoints[i - 1].lat, waypoints[i - 1].lng,
+      waypoints[i].lat, waypoints[i].lng
+    );
+  }
+  return total;
+}
+
+// Format distance nicely
+export function formatDistance(meters) {
+  if (meters < 1000) {
+    return `${Math.round(meters)} m`;
+  }
+  const km = meters / 1000;
+  if (km < 10) {
+    return `${km.toFixed(2)} km`;
+  }
+  return `${km.toFixed(1)} km`;
+}
+
+// Format distance in miles
+export function formatDistanceMiles(meters) {
+  const miles = meters / 1609.344;
+  if (miles < 0.1) {
+    const yards = meters * 1.09361;
+    return `${Math.round(yards)} yd`;
+  }
+  if (miles < 10) {
+    return `${miles.toFixed(2)} mi`;
+  }
+  return `${miles.toFixed(1)} mi`;
+}
+
+// Calculate segment distances
+export function getSegmentDistances(waypoints) {
+  const segments = [];
+  for (let i = 1; i < waypoints.length; i++) {
+    segments.push(
+      haversineDistance(
+        waypoints[i - 1].lat, waypoints[i - 1].lng,
+        waypoints[i].lat, waypoints[i].lng
+      )
+    );
+  }
+  return segments;
+}
+
+// Tile layer configurations
+export const TILE_LAYERS = {
+  osm: {
+    name: "OpenStreetMap",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  },
+  osmHot: {
+    name: "Humanitarian",
+    url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">HOT</a>',
+    maxZoom: 19,
+  },
+  openTopo: {
+    name: "Topographic",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
+    maxZoom: 17,
+  },
+  cartoDB: {
+    name: "CartoDB Light",
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    maxZoom: 20,
+  },
+  cartoDBDark: {
+    name: "CartoDB Dark",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    maxZoom: 20,
+  },
+};
