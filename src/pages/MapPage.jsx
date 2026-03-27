@@ -11,7 +11,8 @@ import DistancePanel from '../components/map/DistancePanel';
 import SearchBox from '../components/map/SearchBox';
 import SpeciesModal from '../components/map/SpeciesModal';
 import SpeciesMarkers from '../components/map/SpeciesMarkers';
-import { base44 } from '@/api/base44Client';
+import AreaDrawer from '../components/map/AreaDrawer';
+import AreaResultsPanel from '../components/map/AreaResultsPanel';
 import { Link } from 'react-router-dom';
 import { List } from 'lucide-react';
 
@@ -32,17 +33,20 @@ export default function MapPage() {
   const [isPlotting, setIsPlotting] = useState(true);
   const [tileLayer, setTileLayer] = useState('osm');
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
-  const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
-  const [speciesSightings, setSpeciesSightings] = useState([]);
+  const [isAreaMode, setIsAreaMode] = useState(false);
+  const [areaPoints, setAreaPoints] = useState([]);
+  const [areaClosed, setAreaClosed] = useState(false);
   const mapRef = useRef(null);
 
   const handleMapClick = useCallback((latlng) => {
     if (isSpeciesMode) {
       setSpeciesModalLocation({ lat: latlng.lat, lng: latlng.lng });
+    } else if (isAreaMode && !areaClosed) {
+      setAreaPoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
     } else if (isPlotting) {
       setWaypoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
     }
-  }, [isSpeciesMode, isPlotting]);
+  }, [isSpeciesMode, isAreaMode, areaClosed, isPlotting]);
 
   const handleUndo = useCallback(() => {
     setWaypoints(prev => prev.slice(0, -1));
@@ -81,10 +85,18 @@ export default function MapPage() {
           url={currentTile.url}
           maxZoom={currentTile.maxZoom}
         />
-        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode} />
+        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode || (isAreaMode && !areaClosed)} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
         <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
+        {isAreaMode && (
+          <AreaDrawer
+            points={areaPoints}
+            closed={areaClosed}
+            onAddPoint={p => setAreaPoints(prev => [...prev, p])}
+            onClose={() => setAreaClosed(true)}
+          />
+        )}
       </MapContainer>
 
       {/* Search */}
@@ -98,7 +110,9 @@ export default function MapPage() {
         onClear={handleClear}
         waypointCount={waypoints.length}
         isSpeciesMode={isSpeciesMode}
-        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); }}
+        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
+        isAreaMode={isAreaMode}
+        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); }}
       />
 
       {/* Tile selector */}
@@ -106,6 +120,15 @@ export default function MapPage() {
 
       {/* Distance info */}
       <DistancePanel waypoints={waypoints} />
+
+      {/* Area results */}
+      {isAreaMode && (
+        <AreaResultsPanel
+          points={areaPoints}
+          closed={areaClosed}
+          onClearArea={() => { setAreaPoints([]); setAreaClosed(false); }}
+        />
+      )}
 
       {/* Sightings link */}
       <div className="absolute top-4 right-14 z-[1000]">
@@ -156,6 +179,15 @@ export default function MapPage() {
       )}
 
       {/* Plotting hint */}
+      {isAreaMode && !areaClosed && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+          <div className="bg-indigo-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
+            {areaPoints.length < 3
+              ? `Click to place points (${areaPoints.length} placed, need at least 3)`
+              : 'Double-click to close the shape'}
+          </div>
+        </div>
+      )}
       {isSpeciesMode && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <div className="bg-emerald-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
@@ -163,7 +195,7 @@ export default function MapPage() {
           </div>
         </div>
       )}
-      {!isSpeciesMode && isPlotting && waypoints.length === 0 && (
+      {!isSpeciesMode && !isAreaMode && isPlotting && waypoints.length === 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <div className="bg-card/95 backdrop-blur-md rounded-full shadow-lg border border-border/50 px-5 py-2.5 text-xs text-muted-foreground font-medium">
             Click on the map to start plotting your route
