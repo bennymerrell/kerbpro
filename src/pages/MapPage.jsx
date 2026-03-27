@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { base44 } from '@/api/base44Client';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TILE_LAYERS } from '../lib/mapUtils';
@@ -33,6 +34,8 @@ export default function MapPage() {
   const [isPlotting, setIsPlotting] = useState(true);
   const [tileLayer, setTileLayer] = useState('osm');
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
+  const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
+  const [speciesSightings, setSpeciesSightings] = useState([]);
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
