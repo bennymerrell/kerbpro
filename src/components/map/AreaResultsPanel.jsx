@@ -25,13 +25,12 @@ async function queryOverpass(polygon) {
   const query = `[out:json][timeout:25];(way["highway"](poly:"${polyStr}"););out body geom;`;
   const encoded = encodeURIComponent(query);
 
-  const endpoints = [
+  const directEndpoints = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass.openstreetmap.ru/api/interpreter',
   ];
 
-  for (const url of endpoints) {
+  for (const url of directEndpoints) {
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -45,7 +44,23 @@ async function queryOverpass(polygon) {
       }
     } catch {}
   }
-  throw new Error('All Overpass servers are busy. Please try again in a moment.');
+
+  // Try via CORS proxy
+  try {
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://overpass-api.de/api/interpreter')}`;
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encoded}`,
+    });
+    const text = await res.text();
+    if (!text.trim().startsWith('<')) {
+      const data = JSON.parse(text);
+      return data.elements || [];
+    }
+  } catch {}
+
+  return null; // signal to use LLM fallback
 }
 
 export default function AreaResultsPanel({ points, closed, onClearArea }) {
@@ -58,30 +73,47 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
     setLoading(true);
     setError(null);
     setResults(null);
-    let ways;
-    try {
-      ways = await queryOverpass(points);
-    } catch (e) {
-      setError(e.message);
+
+    const ways = await queryOverpass(points);
+
+    if (ways !== null) {
+      // Calculate from Overpass data
+      let roadM = 0, footM = 0, otherM = 0;
+      const breakdown = {};
+      ways.forEach(way => {
+        const tag = way.tags?.highway || 'unknown';
+        const nodes = way.geometry || [];
+        const len = wayLength(nodes);
+        breakdown[tag] = (breakdown[tag] || 0) + len;
+        if (ROAD_TAGS.includes(tag)) roadM += len;
+        else if (FOOTPATH_TAGS.includes(tag)) footM += len;
+        else otherM += len;
+      });
+      setResults({ roadM, footM, otherM, breakdown, total: roadM + footM + otherM, source: 'osm' });
       setLoading(false);
-      return;
+    } else {
+      // LLM fallback with internet context
+      const coordList = points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(' | ');
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Using OpenStreetMap data, estimate the total length in metres of:
+1. Adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential) within the polygon defined by these coordinates: ${coordList}
+2. Footpaths (footway, path, pedestrian, track, bridleway, cycleway) within the same polygon.
+
+Return only a JSON object with keys: roadM (number, metres), footM (number, metres), breakdown (object mapping highway type to metres).`,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            roadM: { type: 'number' },
+            footM: { type: 'number' },
+            breakdown: { type: 'object' },
+          },
+        },
+      });
+      const { roadM = 0, footM = 0, breakdown = {} } = result;
+      setResults({ roadM, footM, otherM: 0, breakdown, total: roadM + footM, source: 'ai' });
+      setLoading(false);
     }
-
-    let roadM = 0, footM = 0, otherM = 0;
-    const breakdown = {};
-
-    ways.forEach(way => {
-      const tag = way.tags?.highway || 'unknown';
-      const nodes = way.geometry || [];
-      const len = wayLength(nodes);
-      breakdown[tag] = (breakdown[tag] || 0) + len;
-      if (ROAD_TAGS.includes(tag)) roadM += len;
-      else if (FOOTPATH_TAGS.includes(tag)) footM += len;
-      else otherM += len;
-    });
-
-    setResults({ roadM, footM, otherM, breakdown, total: roadM + footM + otherM });
-    setLoading(false);
   }
 
   if (!closed || points.length < 3) return null;
@@ -166,6 +198,9 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
                 </div>
               )}
 
+              {results.source === 'ai' && (
+                <div className="text-[10px] text-amber-600 text-center">⚠ AI estimate (OSM servers unavailable)</div>
+              )}
               <button
                 onClick={() => { setResults(null); handleCalculate(); }}
                 className="w-full h-7 rounded-lg border border-border text-[10px] text-muted-foreground hover:bg-muted/50 transition-colors"
