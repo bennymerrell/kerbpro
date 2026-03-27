@@ -19,15 +19,27 @@ function wayLength(nodes) {
 const ROAD_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','service','road','living_street','busway','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'];
 const FOOTPATH_TAGS = ['footway','path','pedestrian','track','bridleway','cycleway','steps'];
 
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+
 async function queryOverpass(polygon) {
   const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
   const query = `[out:json][timeout:30];(way["highway"](poly:"${polyStr}"););out body geom;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    body: `data=${encodeURIComponent(query)}`,
-  });
-  const data = await res.json();
-  return data.elements || [];
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      body: `data=${encodeURIComponent(query)}`,
+    });
+    const text = await res.text();
+    if (!text.trim().startsWith('<')) {
+      const data = JSON.parse(text);
+      return data.elements || [];
+    }
+  }
+  throw new Error('Overpass API is busy or unavailable. Please try again in a moment.');
 }
 
 export default function AreaResultsPanel({ points, closed, onClearArea }) {
@@ -40,7 +52,14 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
     setLoading(true);
     setError(null);
     setResults(null);
-    const ways = await queryOverpass(points);
+    let ways;
+    try {
+      ways = await queryOverpass(points);
+    } catch (e) {
+      setError(e.message);
+      setLoading(false);
+      return;
+    }
 
     let roadM = 0, footM = 0, otherM = 0;
     const breakdown = {};
