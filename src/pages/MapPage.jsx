@@ -182,12 +182,20 @@ export default function MapPage() {
 
       {/* Plotting hint */}
       {isAreaMode && !areaClosed && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2">
           <div className="bg-indigo-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
             {areaPoints.length < 3
               ? `Click to place points (${areaPoints.length} placed, need at least 3)`
-              : 'Double-click to close the shape'}
+              : `${areaPoints.length} points placed`}
           </div>
+          {areaPoints.length >= 3 && (
+            <button
+              onClick={() => setAreaClosed(true)}
+              className="bg-white text-indigo-700 font-semibold text-xs rounded-full shadow-lg px-4 py-2.5 hover:bg-indigo-50 transition-colors border border-indigo-200"
+            >
+              Close Shape ✓
+            </button>
+          )}
         </div>
       )}
       {isSpeciesMode && (
