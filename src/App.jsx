@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
 import MapPage from './pages/MapPage';
+import SightingsPage from './pages/SightingsPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -35,6 +36,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={<MapPage />} />
+      <Route path="/sightings" element={<SightingsPage />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

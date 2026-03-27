@@ -11,6 +11,9 @@ import DistancePanel from '../components/map/DistancePanel';
 import SearchBox from '../components/map/SearchBox';
 import SpeciesModal from '../components/map/SpeciesModal';
 import SpeciesMarkers from '../components/map/SpeciesMarkers';
+import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
+import { List } from 'lucide-react';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -104,6 +107,17 @@ export default function MapPage() {
       {/* Distance info */}
       <DistancePanel waypoints={waypoints} />
 
+      {/* Sightings link */}
+      <div className="absolute top-4 right-14 z-[1000]">
+        <Link
+          to="/sightings"
+          className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
+        >
+          <List className="h-4 w-4" />
+          <span className="hidden sm:inline">Sightings</span>
+        </Link>
+      </div>
+
       {/* Zoom controls */}
       <div className="absolute bottom-6 right-4 z-[1000]">
         <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
@@ -128,7 +142,16 @@ export default function MapPage() {
         <SpeciesModal
           location={speciesModalLocation}
           onClose={() => setSpeciesModalLocation(null)}
-          onSaved={(sighting) => setSpeciesSightings(prev => [...prev, sighting])}
+          onSaved={async (sighting) => {
+            setSpeciesSightings(prev => [...prev, sighting]);
+            await base44.entities.Sighting.create({
+              species: sighting.species,
+              notes: sighting.notes,
+              lat: sighting.lat,
+              lng: sighting.lng,
+              photo_url: sighting.photoUrl || null,
+            });
+          }}
         />
       )}
 

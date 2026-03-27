@@ -1,0 +1,29 @@
+{
+  "name": "Sighting",
+  "type": "object",
+  "properties": {
+    "species": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "reported_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "species",
+    "lat",
+    "lng"
+  ]
+}
