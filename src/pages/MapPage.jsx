@@ -78,7 +78,7 @@ export default function MapPage() {
           url={currentTile.url}
           maxZoom={currentTile.maxZoom}
         />
-        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting} />
+        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
         <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
