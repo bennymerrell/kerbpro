@@ -15,6 +15,7 @@ import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
 import ExportPanel from '../components/map/ExportPanel';
+import LocateButton from '../components/map/LocateButton';
 import { Link } from 'react-router-dom';
 import { List } from 'lucide-react';
 
@@ -93,6 +94,7 @@ export default function MapPage() {
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
         <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
+        <LocateButton />
         {isAreaMode && (
           <AreaDrawer
             points={areaPoints}
