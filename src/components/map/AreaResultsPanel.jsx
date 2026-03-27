@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Loader2, SquareDashedBottom, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { calculateTotalDistance, formatDistanceMiles, formatDistance } from '../../lib/mapUtils';
+import { base44 } from '@/api/base44Client';
 
 function haversineSegment(a, b) {
   const R = 6371000;
@@ -19,27 +20,32 @@ function wayLength(nodes) {
 const ROAD_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','service','road','living_street','busway','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'];
 const FOOTPATH_TAGS = ['footway','path','pedestrian','track','bridleway','cycleway','steps'];
 
-const OVERPASS_ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-];
-
 async function queryOverpass(polygon) {
   const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const query = `[out:json][timeout:30];(way["highway"](poly:"${polyStr}"););out body geom;`;
+  const query = `[out:json][timeout:25];(way["highway"](poly:"${polyStr}"););out body geom;`;
+  const encoded = encodeURIComponent(query);
 
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      body: `data=${encodeURIComponent(query)}`,
-    });
-    const text = await res.text();
-    if (!text.trim().startsWith('<')) {
-      const data = JSON.parse(text);
-      return data.elements || [];
-    }
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter',
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encoded}`,
+      });
+      const text = await res.text();
+      if (!text.trim().startsWith('<')) {
+        const data = JSON.parse(text);
+        return data.elements || [];
+      }
+    } catch {}
   }
-  throw new Error('Overpass API is busy or unavailable. Please try again in a moment.');
+  throw new Error('All Overpass servers are busy. Please try again in a moment.');
 }
 
 export default function AreaResultsPanel({ points, closed, onClearArea }) {
