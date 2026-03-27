@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Leaf, Send, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Leaf, Send, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 
@@ -7,41 +7,41 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   const [speciesName, setSpeciesName] = useState('');
   const [notes, setNotes] = useState('');
   const [managerEmail, setManagerEmail] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const fileInputRef = useRef(null);
+
+  function handlePhotoChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!speciesName.trim() || !managerEmail.trim()) return;
-
     setSending(true);
+
+    let photoUrl = null;
+    if (photoFile) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: photoFile });
+      photoUrl = file_url;
+    }
 
     const googleMapsLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
 
     await base44.integrations.Core.SendEmail({
       to: managerEmail,
       subject: `Invasive Species Sighting: ${speciesName}`,
-      body: `
-Hello,
-
-An invasive plant species has been recorded during a field survey.
-
-Species: ${speciesName}
-${notes ? `Notes: ${notes}\n` : ''}
-Location:
-  Latitude: ${location.lat.toFixed(6)}
-  Longitude: ${location.lng.toFixed(6)}
-  Google Maps: ${googleMapsLink}
-
-Recorded on: ${new Date().toLocaleString()}
-
-This report was generated automatically from the field mapping tool.
-      `.trim(),
+      body: `Hello,\n\nAn invasive plant species has been recorded during a field survey.\n\nSpecies: ${speciesName}\n${notes ? `Notes: ${notes}\n` : ''}\nLocation:\n  Latitude: ${location.lat.toFixed(6)}\n  Longitude: ${location.lng.toFixed(6)}\n  Google Maps: ${googleMapsLink}\n${photoUrl ? `\nPhoto: ${photoUrl}\n` : ''}\nRecorded on: ${new Date().toLocaleString()}\n\nThis report was generated automatically from the field mapping tool.`,
     });
 
     setSending(false);
     setSent(true);
-    onSaved({ lat: location.lat, lng: location.lng, species: speciesName, notes });
+    onSaved({ lat: location.lat, lng: location.lng, species: speciesName, notes, photoUrl });
     setTimeout(onClose, 1500);
   }
 
@@ -66,6 +66,7 @@ This report was generated automatically from the field mapping tool.
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* Species Name */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">
               Species Name <span className="text-destructive">*</span>
@@ -80,6 +81,41 @@ This report was generated automatically from the field mapping tool.
             />
           </div>
 
+          {/* Photo */}
+          <div>
+            <label className="text-xs font-medium text-foreground block mb-1.5">Photo</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+            {photoPreview ? (
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <img src={photoPreview} alt="Preview" className="w-full h-32 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                  className="absolute top-1.5 right-1.5 bg-black/50 text-white rounded-full p-0.5 hover:bg-black/70"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-muted-foreground"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-xs">Tap to add photo</span>
+              </button>
+            )}
+          </div>
+
+          {/* Notes */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">Notes</label>
             <textarea
@@ -91,6 +127,7 @@ This report was generated automatically from the field mapping tool.
             />
           </div>
 
+          {/* Manager Email */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">
               Manager Email <span className="text-destructive">*</span>
