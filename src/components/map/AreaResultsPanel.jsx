@@ -94,24 +94,25 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
     } else {
       // LLM fallback with internet context
       const coordList = points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(' | ');
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Using OpenStreetMap data, estimate the total length in metres of:
-1. Adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential) within the polygon defined by these coordinates: ${coordList}
-2. Footpaths (footway, path, pedestrian, track, bridleway, cycleway) within the same polygon.
-
-Return only a JSON object with keys: roadM (number, metres), footM (number, metres), breakdown (object mapping highway type to metres).`,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            roadM: { type: 'number' },
-            footM: { type: 'number' },
-            breakdown: { type: 'object' },
+      try {
+        const result = await base44.integrations.Core.InvokeLLM({
+          model: 'gemini_3_flash',
+          prompt: `Using OpenStreetMap data, estimate the total length in metres of adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential) and footpaths (footway, path, pedestrian, track, bridleway, cycleway) within the polygon defined by these lat,lng coordinates: ${coordList}. Return a JSON with roadM (total road metres as number), footM (total footpath metres as number), breakdown (object of highway type to metres).`,
+          add_context_from_internet: true,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              roadM: { type: 'number' },
+              footM: { type: 'number' },
+              breakdown: { type: 'object' },
+            },
           },
-        },
-      });
-      const { roadM = 0, footM = 0, breakdown = {} } = result;
-      setResults({ roadM, footM, otherM: 0, breakdown, total: roadM + footM, source: 'ai' });
+        });
+        const { roadM = 0, footM = 0, breakdown = {} } = result;
+        setResults({ roadM, footM, otherM: 0, breakdown, total: roadM + footM, source: 'ai' });
+      } catch (e) {
+        setError('Could not reach mapping servers. Please check your connection and try again.');
+      }
       setLoading(false);
     }
   }
