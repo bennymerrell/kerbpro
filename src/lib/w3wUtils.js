@@ -9,6 +9,7 @@ export async function w3wToCoords(words) {
   const clean = words.replace(/^\/\/\//, '');
   const res = await fetch(`${BASE}/convert-to-coordinates?words=${encodeURIComponent(clean)}&key=${W3W_API_KEY}`);
   const data = await res.json();
+  console.log('W3W convert-to-coordinates response:', data);
   if (data.error) throw new Error(data.error.message);
   return { lat: data.coordinates.lat, lng: data.coordinates.lng, words: `///${data.words}`, nearestPlace: data.nearestPlace };
 }
@@ -16,6 +17,7 @@ export async function w3wToCoords(words) {
 export async function coordsToW3W(lat, lng) {
   const res = await fetch(`${BASE}/convert-to-3wa?coordinates=${lat},${lng}&key=${W3W_API_KEY}`);
   const data = await res.json();
-  if (data.error) return null;
+  console.log('W3W convert-to-3wa response:', data);
+  if (data.error) { console.error('W3W error:', data.error); return null; }
   return `///${data.words}`;
 }
