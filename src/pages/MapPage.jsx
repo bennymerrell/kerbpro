@@ -173,12 +173,13 @@ export default function MapPage() {
       )}
 
       {/* Settings link */}
-      <div className="absolute top-4 right-28 z-[1000]">
+      <div className="absolute top-4 right-44 z-[1000]">
         <Link
           to="/settings"
           className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
         >
           <Settings className="h-4 w-4" />
+          <span className="hidden sm:inline">Settings</span>
         </Link>
       </div>
 
