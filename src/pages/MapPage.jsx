@@ -19,6 +19,7 @@ import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import { Link } from 'react-router-dom';
 import { List } from 'lucide-react';
+import useIsMobile from '../hooks/useIsMobile';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -33,6 +34,7 @@ const DEFAULT_CENTER = [51.505, -1.27]; // UK center
 const DEFAULT_ZOOM = 13;
 
 export default function MapPage() {
+  const isMobile = useIsMobile();
   const [waypoints, setWaypoints] = useState([]);
   const [isPlotting, setIsPlotting] = useState(true);
   const [tileLayer, setTileLayer] = useState('osm');
@@ -109,7 +111,7 @@ export default function MapPage() {
       <SearchBox onLocationFound={handleLocationFound} />
 
       {/* Desktop Toolbar — hidden on mobile/tablet */}
-      <div className="hidden xl:block">
+      {!isMobile && (
         <MapToolbar
           isPlotting={isPlotting}
           onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
@@ -121,7 +123,7 @@ export default function MapPage() {
           isAreaMode={isAreaMode}
           onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); }}
         />
-      </div>
+      )}
 
       {/* Mobile Toolbar */}
       <MobileToolbar
@@ -162,27 +164,16 @@ export default function MapPage() {
         </Link>
       </div>
 
-      {/* Export */}
-      <ExportPanel />
+      {/* Export — desktop only, mobile has it in toolbar */}
+      {!isMobile && <ExportPanel />}
 
-      {/* Zoom controls — hidden on mobile/tablet where MobileToolbar handles actions */}
-      <div className="hidden xl:block absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
-        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
-          <button
-            onClick={() => mapRef.current?.zoomIn()}
-            className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium"
-          >
-            +
-          </button>
+      {/* Zoom controls — desktop only */}
+      {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
+          <button onClick={() => mapRef.current?.zoomIn()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">+</button>
           <div className="h-px bg-border/50" />
-          <button
-            onClick={() => mapRef.current?.zoomOut()}
-            className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium"
-          >
-            −
-          </button>
+          <button onClick={() => mapRef.current?.zoomOut()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">−</button>
         </div>
-      </div>
+      </div>}
 
       {/* Species Modal */}
       {speciesModalLocation && (
