@@ -19,7 +19,7 @@ import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import { Link } from 'react-router-dom';
-import { List } from 'lucide-react';
+import { List, Settings } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
 
 // Fix leaflet default marker icon
@@ -39,8 +39,14 @@ export default function MapPage() {
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
 
-  // On mount, try to get the user's current location
+  // On mount, load saved default location then try geolocation
   useEffect(() => {
+    base44.entities.AppSettings.list().then((records) => {
+      if (records.length > 0 && records[0].default_lat && records[0].default_lng) {
+        setMapCenter([records[0].default_lat, records[0].default_lng]);
+        if (records[0].default_zoom) mapRef.current?.setZoom(records[0].default_zoom);
+      }
+    });
     navigator.geolocation?.getCurrentPosition(
       (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
       () => {}
@@ -166,6 +172,16 @@ export default function MapPage() {
         />
       )}
 
+      {/* Settings link */}
+      <div className="absolute top-4 right-28 z-[1000]">
+        <Link
+          to="/settings"
+          className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
+      </div>
+
       {/* Sightings link */}
       <div className="absolute top-4 right-14 z-[1000]">
         <Link
@@ -175,7 +191,7 @@ export default function MapPage() {
           <List className="h-4 w-4" />
           <span className="hidden sm:inline">Sightings</span>
         </Link>
-      </div>
+        </div>
 
       {/* Export — desktop only, mobile has it in toolbar */}
       {!isMobile && <ExportPanel />}

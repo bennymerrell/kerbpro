@@ -1,0 +1,16 @@
+{
+  "name": "AppSettings",
+  "type": "object",
+  "properties": {
+    "default_lat": {
+      "type": "number"
+    },
+    "default_lng": {
+      "type": "number"
+    },
+    "default_zoom": {
+      "type": "number"
+    }
+  },
+  "required": []
+}
