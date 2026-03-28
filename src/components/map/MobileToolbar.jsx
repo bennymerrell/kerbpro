@@ -42,8 +42,8 @@ export default function MobileToolbar({
   }
   return (
     <div
-      className="xl:hidden absolute left-1/2 -translate-x-1/2 z-[1000]"
-      style={{ bottom: 'max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+      className="xl:hidden fixed left-1/2 -translate-x-1/2 z-[1000]"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
     >
       <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-lg border border-border/50 flex items-center gap-1 px-2 py-1.5">
         <button
