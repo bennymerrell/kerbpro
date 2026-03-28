@@ -47,7 +47,7 @@ export default function ExportPanel() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="hidden sm:block absolute z-[1000]" style={{ bottom: 'max(8rem, calc(env(safe-area-inset-bottom) + 7rem))', right: '1rem' }}>
+    <div className="hidden lg:block absolute z-[1000]" style={{ bottom: 'max(8rem, calc(env(safe-area-inset-bottom) + 7rem))', right: '1rem' }}>
       <div className="relative">
         <button
           onClick={() => setOpen(o => !o)}

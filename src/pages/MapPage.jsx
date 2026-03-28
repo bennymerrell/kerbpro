@@ -108,8 +108,8 @@ export default function MapPage() {
       {/* Search */}
       <SearchBox onLocationFound={handleLocationFound} />
 
-      {/* Desktop Toolbar — hidden on mobile */}
-      <div className="hidden sm:block">
+      {/* Desktop Toolbar — hidden on mobile/tablet */}
+      <div className="hidden lg:block">
         <MapToolbar
           isPlotting={isPlotting}
           onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
@@ -165,8 +165,8 @@ export default function MapPage() {
       {/* Export */}
       <ExportPanel />
 
-      {/* Zoom controls — hidden on mobile where MobileToolbar handles actions */}
-      <div className="hidden sm:block absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
+      {/* Zoom controls — hidden on mobile/tablet where MobileToolbar handles actions */}
+      <div className="hidden lg:block absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
         <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
           <button
             onClick={() => mapRef.current?.zoomIn()}
