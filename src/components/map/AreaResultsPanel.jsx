@@ -24,7 +24,9 @@ const UNADOPTED_TAGS = ['service','track','road'];
 
 async function queryOverpass(polygon) {
   const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const query = `[out:json][timeout:25];(way["highway"](poly:"${polyStr}"););out body geom;`;
+  // Only fetch the road types we need — massively reduces payload for large areas
+  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service|track|road';
+  const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
   const encoded = encodeURIComponent(query);
 
   const endpoints = [
@@ -34,7 +36,15 @@ async function queryOverpass(polygon) {
 
   for (const url of endpoints) {
     try {
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}` });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 95000);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encoded}`,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
       const text = await res.text();
       if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
     } catch {}
@@ -42,7 +52,15 @@ async function queryOverpass(polygon) {
 
   try {
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://overpass-api.de/api/interpreter')}`;
-    const res = await fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}` });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 95000);
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encoded}`,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
     const text = await res.text();
     if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
   } catch {}
@@ -133,7 +151,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
           {loading && (
             <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Querying OpenStreetMap…
+              Querying OpenStreetMap… (large areas may take up to 90s)
             </div>
           )}
 
