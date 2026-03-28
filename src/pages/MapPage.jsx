@@ -15,6 +15,7 @@ import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
 import ExportPanel from '../components/map/ExportPanel';
+import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import { Link } from 'react-router-dom';
 import { List } from 'lucide-react';
@@ -107,8 +108,23 @@ export default function MapPage() {
       {/* Search */}
       <SearchBox onLocationFound={handleLocationFound} />
 
-      {/* Toolbar */}
-      <MapToolbar
+      {/* Desktop Toolbar — hidden on mobile */}
+      <div className="hidden sm:block">
+        <MapToolbar
+          isPlotting={isPlotting}
+          onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
+          onUndo={handleUndo}
+          onClear={handleClear}
+          waypointCount={waypoints.length}
+          isSpeciesMode={isSpeciesMode}
+          onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
+          isAreaMode={isAreaMode}
+          onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); }}
+        />
+      </div>
+
+      {/* Mobile Toolbar */}
+      <MobileToolbar
         isPlotting={isPlotting}
         onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
         onUndo={handleUndo}

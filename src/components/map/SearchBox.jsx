@@ -34,7 +34,7 @@ export default function SearchBox({ onLocationFound }) {
   }
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-md">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[55%] sm:w-[90%] max-w-md">
       <form onSubmit={handleSearch}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
