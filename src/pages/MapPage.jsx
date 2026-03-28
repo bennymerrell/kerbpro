@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -40,10 +40,10 @@ export default function MapPage() {
   const [waypoints, setWaypoints] = useState([]);
 
   // On mount, try to get the user's current location
-  useState(() => {
+  useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
-      () => {} // silently fall back to default
+      () => {}
     );
   }, []);
   const [isPlotting, setIsPlotting] = useState(true);
