@@ -40,39 +40,20 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
     await base44.integrations.Core.SendEmail({
       to: managerEmail,
       subject: `Spotted: ${category} — ${speciesName}`,
-      body: `Hello,
+      body: `Hi,
 
-A new sighting has been recorded via the field mapping tool.
+I wanted to let you know about a sighting that was recorded today (${recordedAt}).
 
-━━━━━━━━━━━━━━━━━━━━━━
-SIGHTING DETAILS
-━━━━━━━━━━━━━━━━━━━━━━
+Category: ${category}
+Name / Description: ${speciesName}${notes ? `
 
-• Category: ${category}
-• Name / Description: ${speciesName}
-• Recorded on: ${recordedAt}${notes ? `
-
-NOTES
-─────
 ${notes}` : ''}
 
-━━━━━━━━━━━━━━━━━━━━━━
-LOCATION
-━━━━━━━━━━━━━━━━━━━━━━
+It was spotted at ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}. You can view the location on Google Maps here: ${googleMapsLink}${photoUrl ? `
 
-• Latitude:  ${location.lat.toFixed(6)}
-• Longitude: ${location.lng.toFixed(6)}
-• View on Google Maps: ${googleMapsLink}${photoUrl ? `
+A photo was attached: ${photoUrl}` : ''}
 
-━━━━━━━━━━━━━━━━━━━━━━
-PHOTO
-━━━━━━━━━━━━━━━━━━━━━━
-
-${photoUrl}` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-This report was generated automatically from the field mapping tool.`,
+Thanks`,
     });
 
     setSending(false);
