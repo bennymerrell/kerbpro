@@ -243,8 +243,8 @@ export default function MapPage() {
       )}
       {isSpeciesMode && (
         <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
-          <div className="bg-emerald-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
-            🌿 Click anywhere to record an invasive species sighting
+          <div className="bg-primary/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
+            ℹ️ Click anywhere to add a sighting
           </div>
         </div>
       )}

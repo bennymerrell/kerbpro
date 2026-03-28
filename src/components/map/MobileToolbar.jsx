@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MousePointerClick, Undo2, Trash2, Leaf, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
+import { MousePointerClick, Undo2, Trash2, Info, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 async function captureMap() {
@@ -62,10 +62,10 @@ export default function MobileToolbar({
           title="Spotted"
           className={cn(
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isSpeciesMode ? "bg-emerald-600 text-white shadow" : "text-foreground hover:bg-muted"
+            isSpeciesMode ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
           )}
         >
-          <Leaf className="h-4 w-4" />
+          <Info className="h-4 w-4" />
         </button>
 
         <button

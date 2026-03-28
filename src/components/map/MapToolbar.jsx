@@ -1,4 +1,4 @@
-import { MousePointerClick, Undo2, Trash2, Leaf, Shapes } from 'lucide-react';
+import { MousePointerClick, Undo2, Trash2, Info, Shapes } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,10 +27,10 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
           onClick={onToggleSpeciesMode}
           className={cn(
             "justify-start gap-2 h-9 px-3 text-xs font-medium rounded-lg transition-all",
-            isSpeciesMode && "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+            isSpeciesMode && "bg-primary hover:bg-primary/90 text-white shadow-md"
           )}
         >
-          <Leaf className="h-3.5 w-3.5" />
+          <Info className="h-3.5 w-3.5" />
           {isSpeciesMode ? "Recording..." : "Spotted"}
         </Button>
 
