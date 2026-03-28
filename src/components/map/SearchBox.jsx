@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { isW3WQuery, w3wToCoords } from '../../lib/w3wUtils';
@@ -9,34 +9,41 @@ export default function SearchBox({ onLocationFound }) {
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
-
-    setLoading(true);
-    setShowResults(true);
-
-    if (isW3WQuery(query)) {
-      try {
-        const loc = await w3wToCoords(query);
-        onLocationFound({ lat: loc.lat, lng: loc.lng, name: loc.words });
-        setQuery(loc.words);
-        setResults([]);
-        setShowResults(false);
-      } catch {
-        setResults([]);
-      }
-      setLoading(false);
+  useEffect(() => {
+    if (query.trim().length < 3) {
+      setResults([]);
+      setShowResults(false);
       return;
     }
 
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-    );
-    const data = await response.json();
-    setResults(data);
-    setLoading(false);
-  }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setShowResults(true);
+
+      if (isW3WQuery(query)) {
+        try {
+          const loc = await w3wToCoords(query);
+          onLocationFound({ lat: loc.lat, lng: loc.lng, name: loc.words });
+          setQuery(loc.words);
+          setResults([]);
+          setShowResults(false);
+        } catch {
+          setResults([]);
+        }
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await response.json();
+      setResults(data);
+      setLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   function selectResult(result) {
     onLocationFound({
@@ -50,7 +57,7 @@ export default function SearchBox({ onLocationFound }) {
 
   return (
     <div className="absolute top-4 left-4 right-24 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[1000] sm:w-[90%] sm:max-w-md">
-      <form onSubmit={handleSearch}>
+      <form onSubmit={e => e.preventDefault()}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -87,7 +94,7 @@ export default function SearchBox({ onLocationFound }) {
         </div>
       )}
 
-      {showResults && !loading && results.length === 0 && query && (
+      {showResults && !loading && results.length === 0 && query.length >= 3 && (
         <div className="mt-2 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 px-4 py-3 text-xs text-muted-foreground">
           No results found
         </div>
