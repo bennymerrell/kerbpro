@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LocateFixed, Loader2 } from 'lucide-react';
-import { useMap, Marker, Circle } from 'react-leaflet';
+import { useMap, Marker, Circle, Popup } from 'react-leaflet';
+import { coordsToW3W } from '../../lib/w3wUtils';
 import L from 'leaflet';
 
 function createLocationIcon() {
@@ -12,7 +13,7 @@ function createLocationIcon() {
   });
 }
 
-function LocationMarker({ position, accuracy }) {
+function LocationMarker({ position, accuracy, w3w }) {
   if (!position) return null;
   return (
     <>
@@ -21,7 +22,23 @@ function LocationMarker({ position, accuracy }) {
         radius={accuracy}
         pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.1, weight: 1 }}
       />
-      <Marker position={position} icon={createLocationIcon()} />
+      <Marker position={position} icon={createLocationIcon()}>
+        {w3w && (
+          <Popup closeButton={false}>
+            <div className="font-sans text-xs p-1">
+              <div className="text-muted-foreground mb-0.5 font-medium">Your location</div>
+              <a
+                href={`https://what3words.com/${w3w.replace('///', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#e11d48] font-semibold hover:underline text-sm"
+              >
+                {w3w}
+              </a>
+            </div>
+          </Popup>
+        )}
+      </Marker>
     </>
   );
 }
@@ -30,13 +47,14 @@ function LocateControl({ position, accuracy, onLocate }) {
   const map = useMap();
   const [loading, setLoading] = useState(false);
 
-  function handleClick() {
+  async function handleClick() {
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const latlng = [pos.coords.latitude, pos.coords.longitude];
         map.flyTo(latlng, 16, { duration: 1.5 });
-        onLocate({ position: latlng, accuracy: pos.coords.accuracy });
+        const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
+        onLocate({ position: latlng, accuracy: pos.coords.accuracy, w3w });
         setLoading(false);
       },
       () => {
@@ -74,7 +92,7 @@ export default function LocateButton() {
         onLocate={setLocationData}
       />
       {locationData && (
-        <LocationMarker position={locationData.position} accuracy={locationData.accuracy} />
+        <LocationMarker position={locationData.position} accuracy={locationData.accuracy} w3w={locationData.w3w} />
       )}
     </>
   );
