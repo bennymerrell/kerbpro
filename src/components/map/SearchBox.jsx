@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { isW3WQuery, w3wToCoords } from '../../lib/w3wUtils';
 
 export default function SearchBox({ onLocationFound }) {
   const [query, setQuery] = useState('');
@@ -11,10 +12,24 @@ export default function SearchBox({ onLocationFound }) {
   async function handleSearch(e) {
     e.preventDefault();
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setShowResults(true);
-    
+
+    if (isW3WQuery(query)) {
+      try {
+        const loc = await w3wToCoords(query);
+        onLocationFound({ lat: loc.lat, lng: loc.lng, name: loc.words });
+        setQuery(loc.words);
+        setResults([]);
+        setShowResults(false);
+      } catch {
+        setResults([]);
+      }
+      setLoading(false);
+      return;
+    }
+
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
     );
@@ -42,7 +57,7 @@ export default function SearchBox({ onLocationFound }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search location..."
+            placeholder="Search location or ///word.word.word…"
             className={cn(
               "w-full h-10 pl-10 pr-4 bg-card/95 backdrop-blur-md",
               "rounded-xl shadow-lg border border-border/50",
