@@ -31,12 +31,21 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-const DEFAULT_CENTER = [51.505, -1.27]; // UK center
+const DEFAULT_CENTER = [51.505, -1.27]; // UK fallback
 const DEFAULT_ZOOM = 13;
 
 export default function MapPage() {
   const isMobile = useIsMobile();
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
+
+  // On mount, try to get the user's current location
+  useState(() => {
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
+      () => {} // silently fall back to default
+    );
+  }, []);
   const [isPlotting, setIsPlotting] = useState(true);
   const [tileLayer, setTileLayer] = useState('osm');
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
@@ -82,7 +91,7 @@ export default function MapPage() {
   return (
     <div className="h-screen w-screen relative overflow-hidden">
       <MapContainer
-        center={DEFAULT_CENTER}
+        center={mapCenter}
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
         zoomControl={false}
