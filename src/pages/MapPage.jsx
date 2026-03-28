@@ -14,6 +14,7 @@ import SpeciesModal from '../components/map/SpeciesModal';
 import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
+import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
@@ -44,6 +45,7 @@ export default function MapPage() {
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
+  const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const mapRef = useRef(null);
 
   const handleMapClick = useCallback((latlng) => {
@@ -98,6 +100,7 @@ export default function MapPage() {
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
         <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
         <LocateButton />
+        <UnadoptedRoadsLayer roads={unadoptedRoads} />
         {isAreaMode && (
           <AreaDrawer
             points={areaPoints}
@@ -149,7 +152,8 @@ export default function MapPage() {
         <AreaResultsPanel
           points={areaPoints}
           closed={areaClosed}
-          onClearArea={() => { setAreaPoints([]); setAreaClosed(false); }}
+          onClearArea={() => { setAreaPoints([]); setAreaClosed(false); setUnadoptedRoads([]); }}
+          onUnadoptedRoads={setUnadoptedRoads}
         />
       )}
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2, SquareDashedBottom, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { calculateTotalDistance, formatDistanceMiles, formatDistance } from '../../lib/mapUtils';
+import { formatDistanceMiles, formatDistance } from '../../lib/mapUtils';
 import { base44 } from '@/api/base44Client';
 
 function haversineSegment(a, b) {
@@ -17,53 +17,40 @@ function wayLength(nodes) {
   return d;
 }
 
-const ROAD_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'];
-const FOOTPATH_TAGS = ['footway','path','pedestrian','track','bridleway','cycleway','steps'];
+// Adopted = maintained by local authority
+const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
+// Unadopted = not publicly maintained (private roads, service roads, tracks)
+const UNADOPTED_TAGS = ['service','track','road'];
 
 async function queryOverpass(polygon) {
   const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
   const query = `[out:json][timeout:25];(way["highway"](poly:"${polyStr}"););out body geom;`;
   const encoded = encodeURIComponent(query);
 
-  const directEndpoints = [
+  const endpoints = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
   ];
 
-  for (const url of directEndpoints) {
+  for (const url of endpoints) {
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encoded}`,
-      });
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}` });
       const text = await res.text();
-      if (!text.trim().startsWith('<')) {
-        const data = JSON.parse(text);
-        return data.elements || [];
-      }
+      if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
     } catch {}
   }
 
-  // Try via CORS proxy
   try {
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://overpass-api.de/api/interpreter')}`;
-    const res = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encoded}`,
-    });
+    const res = await fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}` });
     const text = await res.text();
-    if (!text.trim().startsWith('<')) {
-      const data = JSON.parse(text);
-      return data.elements || [];
-    }
+    if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
   } catch {}
 
-  return null; // signal to use LLM fallback
+  return null;
 }
 
-export default function AreaResultsPanel({ points, closed, onClearArea }) {
+export default function AreaResultsPanel({ points, closed, onClearArea, onUnadoptedRoads }) {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -73,48 +60,51 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
     setLoading(true);
     setError(null);
     setResults(null);
+    onUnadoptedRoads([]);
 
     const ways = await queryOverpass(points);
 
     if (ways !== null) {
-      // Calculate from Overpass data
-      let roadM = 0, footM = 0, otherM = 0;
-      const breakdown = {};
+      let adoptedM = 0, unadoptedM = 0;
+      const unadoptedGeoms = [];
+
       ways.forEach(way => {
-        const tag = way.tags?.highway || 'unknown';
+        const tag = way.tags?.highway || '';
         const nodes = way.geometry || [];
         const len = wayLength(nodes);
-        breakdown[tag] = (breakdown[tag] || 0) + len;
-        if (ROAD_TAGS.includes(tag)) roadM += len;
-        else if (FOOTPATH_TAGS.includes(tag)) footM += len;
-        else otherM += len;
+
+        if (ADOPTED_TAGS.includes(tag)) {
+          adoptedM += len;
+        } else if (UNADOPTED_TAGS.includes(tag)) {
+          unadoptedM += len;
+          unadoptedGeoms.push(nodes.map(n => [n.lat, n.lon]));
+        }
       });
-      setResults({ roadM, footM, otherM, breakdown, total: roadM + footM + otherM, source: 'osm' });
-      setLoading(false);
+
+      onUnadoptedRoads(unadoptedGeoms);
+      setResults({ adoptedM, unadoptedM, total: adoptedM + unadoptedM, source: 'osm' });
     } else {
-      // LLM fallback with internet context
       const coordList = points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(' | ');
       try {
         const result = await base44.integrations.Core.InvokeLLM({
           model: 'gemini_3_flash',
-          prompt: `Using OpenStreetMap data, estimate the total length in metres of adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential) and footpaths (footway, path, pedestrian, track, bridleway, cycleway) within the polygon defined by these lat,lng coordinates: ${coordList}. Return a JSON with roadM (total road metres as number), footM (total footpath metres as number), breakdown (object of highway type to metres).`,
+          prompt: `Using OpenStreetMap data, estimate the total length in metres of adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential, living_street) and unadopted roads (service, track, road) within the polygon defined by these lat,lng coordinates: ${coordList}. Return JSON with adoptedM (number) and unadoptedM (number).`,
           add_context_from_internet: true,
           response_json_schema: {
             type: 'object',
             properties: {
-              roadM: { type: 'number' },
-              footM: { type: 'number' },
-              breakdown: { type: 'object' },
+              adoptedM: { type: 'number' },
+              unadoptedM: { type: 'number' },
             },
           },
         });
-        const { roadM = 0, footM = 0, breakdown = {} } = result;
-        setResults({ roadM, footM, otherM: 0, breakdown, total: roadM + footM, source: 'ai' });
+        const { adoptedM = 0, unadoptedM = 0 } = result;
+        setResults({ adoptedM, unadoptedM, total: adoptedM + unadoptedM, source: 'ai' });
       } catch (e) {
         setError('Could not reach mapping servers. Please check your connection and try again.');
       }
-      setLoading(false);
     }
+    setLoading(false);
   }
 
   if (!closed || points.length < 3) return null;
@@ -130,21 +120,13 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
             <div className="text-xs text-muted-foreground font-medium">Selected Area</div>
             <div className="text-xs text-foreground font-semibold">{points.length} points</div>
           </div>
-          <button
-            onClick={onClearArea}
-            className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
-          >
-            Clear
-          </button>
+          <button onClick={onClearArea} className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">Clear</button>
         </div>
 
         <div className="p-3 space-y-2">
           {!results && !loading && (
-            <button
-              onClick={handleCalculate}
-              className="w-full h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
-            >
-              Calculate Adopted Roads &amp; Footpaths
+            <button onClick={handleCalculate} className="w-full h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors">
+              Calculate Road Mileage
             </button>
           )}
 
@@ -166,38 +148,19 @@ export default function AreaResultsPanel({ points, closed, onClearArea }) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-blue-50 rounded-lg p-2.5">
                   <div className="text-[10px] text-blue-600 font-medium mb-0.5">Adopted Roads</div>
-                  <div className="text-sm font-bold text-blue-800">{formatDistanceMiles(results.roadM)}</div>
-                  <div className="text-[10px] text-blue-500">{formatDistance(results.roadM)}</div>
+                  <div className="text-sm font-bold text-blue-800">{formatDistanceMiles(results.adoptedM)}</div>
+                  <div className="text-[10px] text-blue-500">{formatDistance(results.adoptedM)}</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-2.5">
-                  <div className="text-[10px] text-green-600 font-medium mb-0.5">Footpaths</div>
-                  <div className="text-sm font-bold text-green-800">{formatDistanceMiles(results.footM)}</div>
-                  <div className="text-[10px] text-green-500">{formatDistance(results.footM)}</div>
+                <div className="bg-red-50 rounded-lg p-2.5">
+                  <div className="text-[10px] text-red-600 font-medium mb-0.5">Unadopted Roads</div>
+                  <div className="text-sm font-bold text-red-800">{formatDistanceMiles(results.unadoptedM)}</div>
+                  <div className="text-[10px] text-red-500">{formatDistance(results.unadoptedM)}</div>
                 </div>
               </div>
               <div className="bg-muted/60 rounded-lg px-3 py-2 flex justify-between items-center">
-                <span className="text-xs text-muted-foreground font-medium">Total highways</span>
+                <span className="text-xs text-muted-foreground font-medium">Total roads</span>
                 <span className="text-xs font-bold text-foreground">{formatDistanceMiles(results.total)}</span>
               </div>
-
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="w-full flex items-center justify-between text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1"
-              >
-                <span>Breakdown by type</span>
-                {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </button>
-
-              {expanded && (
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {Object.entries(results.breakdown).sort((a, b) => b[1] - a[1]).map(([tag, m]) => (
-                    <div key={tag} className="flex justify-between items-center text-[10px] px-1">
-                      <span className="text-muted-foreground capitalize">{tag.replace(/_/g, ' ')}</span>
-                      <span className="font-medium text-foreground">{formatDistanceMiles(m)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               {results.source === 'ai' && (
                 <div className="text-[10px] text-amber-600 text-center">⚠ AI estimate (OSM servers unavailable)</div>
