@@ -165,8 +165,8 @@ export default function MapPage() {
       {/* Export */}
       <ExportPanel />
 
-      {/* Zoom controls */}
-      <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
+      {/* Zoom controls — hidden on mobile where MobileToolbar handles actions */}
+      <div className="hidden sm:block absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>
         <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
           <button
             onClick={() => mapRef.current?.zoomIn()}
@@ -204,7 +204,7 @@ export default function MapPage() {
 
       {/* Plotting hint */}
       {isAreaMode && !areaClosed && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(5rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>        
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>        
           <div className="bg-indigo-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
             {areaPoints.length < 3
               ? `Click to place points (${areaPoints.length} placed, need at least 3)`
@@ -221,14 +221,14 @@ export default function MapPage() {
         </div>
       )}
       {isSpeciesMode && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(5rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
           <div className="bg-emerald-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
             🌿 Click anywhere to record an invasive species sighting
           </div>
         </div>
       )}
       {!isSpeciesMode && !isAreaMode && isPlotting && waypoints.length === 0 && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(5rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>
           <div className="bg-card/95 backdrop-blur-md rounded-full shadow-lg border border-border/50 px-5 py-2.5 text-xs text-muted-foreground font-medium">
             Click on the map to start plotting your route
           </div>
