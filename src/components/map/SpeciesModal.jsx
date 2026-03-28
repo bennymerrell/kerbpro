@@ -40,20 +40,66 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
     await base44.integrations.Core.SendEmail({
       to: managerEmail,
       subject: `Spotted: ${category} — ${speciesName}`,
-      body: `Hi,
+      body: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        
+        <!-- Header -->
+        <tr><td style="background:#1d4ed8;padding:28px 32px;">
+          <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">ℹ️ Sighting Reported</p>
+          <p style="margin:6px 0 0;color:#bfdbfe;font-size:13px;">Recorded on ${recordedAt}</p>
+        </td></tr>
 
-I wanted to let you know about a sighting that was recorded today (${recordedAt}).
+        <!-- Body -->
+        <tr><td style="padding:28px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #1d4ed8;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Category</p>
+                <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${category}</p>
+              </td>
+            </tr>
+            <tr><td style="height:12px;"></td></tr>
+            <tr>
+              <td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #1d4ed8;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Name / Description</p>
+                <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${speciesName}</p>
+              </td>
+            </tr>
+            ${notes ? `<tr><td style="height:12px;"></td></tr>
+            <tr>
+              <td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #6b7280;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Notes</p>
+                <p style="margin:0;font-size:14px;color:#374151;">${notes}</p>
+              </td>
+            </tr>` : ''}
+          </table>
 
-Category: ${category}
-Name / Description: ${speciesName}${notes ? `
+          <div style="margin:24px 0;border-top:1px solid #e5e7eb;"></div>
 
-${notes}` : ''}
+          <p style="margin:0 0 12px;font-size:14px;color:#374151;">The sighting was recorded at the following location:</p>
+          <a href="${googleMapsLink}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;">View location on map →</a>
 
-It was spotted at ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}. You can view the location on Google Maps here: ${googleMapsLink}${photoUrl ? `
+          ${photoUrl ? `<div style="margin-top:24px;">
+            <p style="margin:0 0 10px;font-size:14px;color:#374151;font-weight:600;">Attached photo:</p>
+            <a href="${photoUrl}" style="display:inline-block;background:#f3f4f6;color:#1d4ed8;text-decoration:none;font-size:13px;font-weight:600;padding:10px 18px;border-radius:8px;border:1px solid #e5e7eb;">View photo →</a>
+          </div>` : ''}
+        </td></tr>
 
-A photo was attached: ${photoUrl}` : ''}
+        <!-- Footer -->
+        <tr><td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:12px;color:#9ca3af;">This report was generated automatically from the field mapping tool.</p>
+        </td></tr>
 
-Thanks`,
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
     });
 
     setSending(false);
