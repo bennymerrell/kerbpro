@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react';
-import { X, Leaf, Send, Loader2, ImagePlus } from 'lucide-react';
+import { X, MapPin, Send, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 
+const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
+
 export default function SpeciesModal({ location, onClose, onSaved }) {
+  const [category, setCategory] = useState('Species');
   const [speciesName, setSpeciesName] = useState('');
   const [notes, setNotes] = useState('');
   const [managerEmail, setManagerEmail] = useState('');
@@ -32,16 +35,49 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
     }
 
     const googleMapsLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
+    const recordedAt = new Date().toLocaleString();
 
     await base44.integrations.Core.SendEmail({
       to: managerEmail,
-      subject: `Invasive Species Sighting: ${speciesName}`,
-      body: `Hello,\n\nAn invasive plant species has been recorded during a field survey.\n\nSpecies: ${speciesName}\n${notes ? `Notes: ${notes}\n` : ''}\nLocation:\n  Latitude: ${location.lat.toFixed(6)}\n  Longitude: ${location.lng.toFixed(6)}\n  Google Maps: ${googleMapsLink}\n${photoUrl ? `\nPhoto: ${photoUrl}\n` : ''}\nRecorded on: ${new Date().toLocaleString()}\n\nThis report was generated automatically from the field mapping tool.`,
+      subject: `Spotted: ${category} — ${speciesName}`,
+      body: `Hello,
+
+A new sighting has been recorded via the field mapping tool.
+
+━━━━━━━━━━━━━━━━━━━━━━
+SIGHTING DETAILS
+━━━━━━━━━━━━━━━━━━━━━━
+
+• Category: ${category}
+• Name / Description: ${speciesName}
+• Recorded on: ${recordedAt}${notes ? `
+
+NOTES
+─────
+${notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━
+LOCATION
+━━━━━━━━━━━━━━━━━━━━━━
+
+• Latitude:  ${location.lat.toFixed(6)}
+• Longitude: ${location.lng.toFixed(6)}
+• View on Google Maps: ${googleMapsLink}${photoUrl ? `
+
+━━━━━━━━━━━━━━━━━━━━━━
+PHOTO
+━━━━━━━━━━━━━━━━━━━━━━
+
+${photoUrl}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+This report was generated automatically from the field mapping tool.`,
     });
 
     setSending(false);
     setSent(true);
-    onSaved({ lat: location.lat, lng: location.lng, species: speciesName, notes, photoUrl });
+    onSaved({ lat: location.lat, lng: location.lng, species: `[${category}] ${speciesName}`, notes, photoUrl });
     setTimeout(onClose, 1500);
   }
 
@@ -51,10 +87,10 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-            <Leaf className="h-4 w-4 text-emerald-600" />
+            <MapPin className="h-4 w-4 text-emerald-600" />
           </div>
           <div className="flex-1">
-            <h2 className="font-semibold text-foreground text-sm">Record Invasive Species</h2>
+            <h2 className="font-semibold text-foreground text-sm">Spotted</h2>
             <p className="text-xs text-muted-foreground">
               {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
             </p>
@@ -66,16 +102,31 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Species Name */}
+          {/* Category */}
+          <div>
+            <label className="text-xs font-medium text-foreground block mb-2">Category <span className="text-destructive">*</span></label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {CATEGORIES.map(cat => (
+                <label key={cat} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-xs font-medium transition-all ${
+                  category === cat ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground hover:bg-muted/50'
+                }`}>
+                  <input type="radio" name="category" value={cat} checked={category === cat} onChange={() => setCategory(cat)} className="hidden" />
+                  {cat}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Name/Description */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">
-              Species Name <span className="text-destructive">*</span>
+            Name / Description <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={speciesName}
               onChange={e => setSpeciesName(e.target.value)}
-              placeholder="e.g. Japanese Knotweed"
+              placeholder="Name or description…"
               required
               className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
             />

@@ -59,7 +59,7 @@ export default function MobileToolbar({
 
         <button
           onClick={onToggleSpeciesMode}
-          title="Log Species"
+          title="Spotted"
           className={cn(
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
             isSpeciesMode ? "bg-emerald-600 text-white shadow" : "text-foreground hover:bg-muted"

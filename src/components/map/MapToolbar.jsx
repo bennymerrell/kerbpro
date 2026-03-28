@@ -31,7 +31,7 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
           )}
         >
           <Leaf className="h-3.5 w-3.5" />
-          {isSpeciesMode ? "Recording..." : "Log Species"}
+          {isSpeciesMode ? "Recording..." : "Spotted"}
         </Button>
 
         <div className="h-px bg-border/50 my-0.5" />
