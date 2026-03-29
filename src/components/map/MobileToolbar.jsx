@@ -1,63 +1,9 @@
 import { useState } from 'react';
 import { MousePointerClick, Info, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { buildMapCanvas } from '../../lib/mapExport';
 
-async function captureMap() {
-  const mapEl = document.querySelector('.leaflet-container');
-  if (!mapEl) throw new Error('Map not found');
 
-  const W = mapEl.offsetWidth;
-  const H = mapEl.offsetHeight;
-  const containerRect = mapEl.getBoundingClientRect();
-
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  ctx.fillStyle = '#e8e0d8';
-  ctx.fillRect(0, 0, W, H);
-
-  const tiles = mapEl.querySelectorAll('.leaflet-tile-pane img.leaflet-tile');
-  const tilePromises = Array.from(tiles).map(tile => new Promise(resolve => {
-    const rect = tile.getBoundingClientRect();
-    const x = rect.left - containerRect.left;
-    const y = rect.top - containerRect.top;
-    fetch(tile.src)
-      .then(r => r.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, x, y, rect.width, rect.height); URL.revokeObjectURL(url); resolve(); };
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-        img.src = url;
-      })
-      .catch(() => resolve());
-  }));
-  await Promise.all(tilePromises);
-
-  const svgEl = mapEl.querySelector('.leaflet-overlay-pane svg');
-  if (svgEl) {
-    const svgClone = svgEl.cloneNode(true);
-    const overlayPane = mapEl.querySelector('.leaflet-overlay-pane');
-    const overlayRect = overlayPane.getBoundingClientRect();
-    const ox = overlayRect.left - containerRect.left;
-    const oy = overlayRect.top - containerRect.top;
-    svgClone.setAttribute('width', overlayRect.width);
-    svgClone.setAttribute('height', overlayRect.height);
-    const svgData = new XMLSerializer().serializeToString(svgClone);
-    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    await new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => { ctx.drawImage(img, ox, oy, overlayRect.width, overlayRect.height); URL.revokeObjectURL(url); resolve(); };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-      img.src = url;
-    });
-  }
-
-  return canvas;
-}
 
 export default function MobileToolbar({
   isPlotting, onTogglePlotting,
@@ -72,7 +18,7 @@ export default function MobileToolbar({
   async function handleDownloadPDF() {
     setExporting(true);
     setExportOpen(false);
-    const canvas = await captureMap();
+    const canvas = await buildMapCanvas(cells);
     const { default: jsPDF } = await import('jspdf');
 
     const pageW = 297;
@@ -122,7 +68,7 @@ export default function MobileToolbar({
   async function handlePrint() {
     setExporting(true);
     setExportOpen(false);
-    const canvas = await captureMap();
+    const canvas = await buildMapCanvas(cells);
     const imgData = canvas.toDataURL('image/png');
     const win = window.open('', '_blank');
     win.document.write(`<html><head><title>Map Print</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:white;}img{max-width:100%;max-height:100vh;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
