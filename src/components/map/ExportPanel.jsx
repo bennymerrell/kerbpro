@@ -18,25 +18,22 @@ export default function ExportPanel({ cells = [], selectedCell = null }) {
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
 
     if (selectedCell) {
-      const boxX = 6, boxY = 6, rowH = 9, boxW = 130;
-      const boxH = 16 + rowH + 6;
+      const boxX = 6, boxY = 6, rowH = 7, boxW = 90;
+      const boxH = 10 + rowH * 3 + 4;
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.3);
       pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'FD');
-      pdf.setFontSize(10); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
-      pdf.text('Cell Summary', boxX + 4, boxY + 8);
-      const colX = [boxX + 4, boxX + 48, boxX + 85];
-      const headers = ['Name', 'Area', 'Total (mi)'];
-      pdf.setFontSize(7.5); pdf.setTextColor(100, 100, 100);
-      headers.forEach((h, i) => pdf.text(h, colX[i], boxY + 15));
-      pdf.setFont('helvetica', 'normal'); pdf.setTextColor(30, 30, 30); pdf.setFontSize(8.5);
-      const rowY = boxY + 15 + rowH;
-      const totalMi = (selectedCell.adopted_m != null && selectedCell.unadopted_m != null)
-        ? ((selectedCell.adopted_m + selectedCell.unadopted_m) / 1609.34).toFixed(2) : '-';
+      pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
+      pdf.text('Cell', boxX + 4, boxY + 7);
+      pdf.setFont('helvetica', 'normal'); pdf.setTextColor(30, 30, 30); pdf.setFontSize(7.5);
       const name = selectedCell.name || 'Unnamed';
       const area = selectedCell.area || '-';
-      [name, area, totalMi].forEach((v, i) => pdf.text(String(v).substring(0, 18), colX[i], rowY));
+      const totalMi = (selectedCell.adopted_m != null && selectedCell.unadopted_m != null)
+        ? ((selectedCell.adopted_m + selectedCell.unadopted_m) / 1609.34).toFixed(2) : '-';
+      pdf.text(`Name: ${name.substring(0, 16)}`, boxX + 4, boxY + 15);
+      pdf.text(`Area: ${area.substring(0, 16)}`, boxX + 4, boxY + 15 + rowH);
+      pdf.text(`Total: ${totalMi} mi`, boxX + 4, boxY + 15 + rowH * 2);
     }
 
     pdf.save('map-export.pdf');
