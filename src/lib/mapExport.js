@@ -103,8 +103,6 @@ export async function buildMapCanvas(cells = [], selectedCell = null) {
     ctx.strokeStyle = 'rgba(99, 102, 241, 1)';
     ctx.lineWidth = 5;
     ctx.stroke();
-    ctx.fillStyle = 'rgba(99, 102, 241, 0.15)';
-    ctx.fill();
   });
 
   return canvas;
