@@ -85,9 +85,16 @@ export default function MapPage() {
   }, []);
 
   useEffect(() => {
-    if (location.state?.flyTo && mapRef.current) {
-      mapRef.current.flyTo(location.state.flyTo, 15, { duration: 1.2 });
-    }
+    if (!location.state?.flyTo) return;
+    const target = location.state.flyTo;
+    const attempt = (tries = 0) => {
+      if (mapRef.current) {
+        mapRef.current.flyTo(target, 15, { duration: 1.2 });
+      } else if (tries < 20) {
+        setTimeout(() => attempt(tries + 1), 100);
+      }
+    };
+    attempt();
   }, [location.state]);
 
   async function handleSaveCell(name) {
