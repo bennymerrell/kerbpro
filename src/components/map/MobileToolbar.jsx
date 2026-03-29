@@ -6,7 +6,7 @@ async function captureMap() {
   const mapEl = document.querySelector('.leaflet-container');
   if (!mapEl) throw new Error('Map not found');
   const { default: html2canvas } = await import('html2canvas');
-  return await html2canvas(mapEl, { useCORS: true, allowTaint: true, scale: 2 });
+  return await html2canvas(mapEl, { useCORS: true, allowTaint: true, scale: 1, logging: false });
 }
 
 export default function MobileToolbar({
@@ -25,30 +25,37 @@ export default function MobileToolbar({
     const canvas = await captureMap();
     const { default: jsPDF } = await import('jspdf');
 
-    const mapW = canvas.width / 2;
-    const mapH = canvas.height / 2;
-    const summaryH = cells.length > 0 ? Math.min(cells.length * 10 + 40, 120) : 0;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [mapW, mapH + summaryH] });
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, mapW, mapH);
+    const pageW = 297;
+    const pageH = 210;
+    const summaryH = cells.length > 0 ? Math.min(cells.length * 7 + 22, 60) : 0;
+    const mapAreaH = pageH - summaryH - (summaryH > 0 ? 4 : 0);
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const imgRatio = canvas.width / canvas.height;
+    const imgH = Math.min(mapAreaH, pageW / imgRatio);
+    const imgW = imgH * imgRatio;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - imgW) / 2, 0, imgW, imgH);
 
     if (cells.length > 0) {
-      const y0 = mapH + 8;
-      pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
-      pdf.text('Cell Summary', 10, y0 + 6);
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5); pdf.setTextColor(60, 60, 60);
+      const y0 = imgH + 4;
+      pdf.setFillColor(240, 244, 255);
+      pdf.roundedRect(4, y0, pageW - 8, summaryH, 2, 2, 'F');
+      pdf.setFontSize(7); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
+      pdf.text('Cell Summary', 8, y0 + 5);
+      const colX = [8, 70, 130, 175, 225];
       const headers = ['Cell Name', 'Area', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
-      const colX = [10, 80, 160, 220, 280];
-      pdf.setFont('helvetica', 'bold');
-      headers.forEach((h, i) => pdf.text(h, colX[i], y0 + 16));
-      pdf.setFont('helvetica', 'normal');
-      cells.slice(0, 10).forEach((cell, idx) => {
-        const rowY = y0 + 24 + idx * 9;
-        const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '—';
-        const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '—';
+      pdf.setFontSize(6);
+      headers.forEach((h, i) => pdf.text(h, colX[i], y0 + 11));
+      pdf.setFont('helvetica', 'normal'); pdf.setTextColor(60, 60, 60);
+      cells.slice(0, 8).forEach((cell, idx) => {
+        const rowY = y0 + 16 + idx * 7;
+        const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '-';
+        const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '-';
         const totalMi = (cell.adopted_m != null && cell.unadopted_m != null)
-          ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '—';
-        [cell.name || 'Unnamed', cell.area || '—', adoptedMi, unadoptedMi, totalMi]
-          .forEach((v, i) => pdf.text(String(v), colX[i], rowY));
+          ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '-';
+        [cell.name || 'Unnamed', cell.area || '-', adoptedMi, unadoptedMi, totalMi]
+          .forEach((v, i) => pdf.text(String(v).substring(0, 25), colX[i], rowY));
       });
     }
 
