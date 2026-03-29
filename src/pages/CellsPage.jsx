@@ -44,7 +44,10 @@ export default function CellsPage() {
   function handleSelect(cell) {
     try {
       const points = JSON.parse(cell.points);
-      navigate('/', { state: { fitBounds: points.map(p => [p.lat, p.lng]) } });
+      const mileage = (cell.adopted_m != null && cell.unadopted_m != null)
+        ? { adopted_m: cell.adopted_m, unadopted_m: cell.unadopted_m }
+        : null;
+      navigate('/', { state: { fitBounds: points.map(p => [p.lat, p.lng]), cellMileage: mileage, cellName: cell.name } });
     } catch {
       navigate('/');
     }
@@ -109,7 +112,11 @@ export default function CellsPage() {
                   {cell.name || 'Unnamed Cell'}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {(() => { try { return JSON.parse(cell.points).length + ' points'; } catch { return ''; } })()}
+                  {cell.area && <span className="mr-2">{cell.area}</span>}
+                  {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
+                  {cell.adopted_m != null && (
+                    <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m + (cell.unadopted_m||0)) / 1609.34).toFixed(2)} mi total</span>
+                  )}
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />

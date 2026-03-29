@@ -69,6 +69,7 @@ async function queryOverpass(polygon) {
 }
 
 export default function AreaResultsPanel({ points, closed, onClearArea, onUnadoptedRoads, onSaveCell }) {
+  const [cellArea, setCellArea] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -143,22 +144,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
         </div>
 
         <div className="p-3 space-y-2">
-          {/* Save Cell */}
-          <div className="flex gap-1.5">
-            <input
-              type="text"
-              value={cellName}
-              onChange={e => setCellName(e.target.value)}
-              placeholder="Cell name…"
-              className="flex-1 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <button
-              onClick={() => onSaveCell(cellName || 'Unnamed Cell')}
-              className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors whitespace-nowrap"
-            >
-              Save Cell
-            </button>
-          </div>
+          {/* 1. Calculate mileage */}
           {!results && !loading && (
             <button onClick={handleCalculate} className="w-full h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors">
               Calculate Road Mileage
@@ -196,7 +182,6 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
                 <span className="text-xs text-muted-foreground font-medium">Total roads</span>
                 <span className="text-xs font-bold text-foreground">{formatDistanceMiles(results.total)}</span>
               </div>
-
               {results.source === 'ai' && (
                 <div className="text-[10px] text-amber-600 text-center">⚠ AI estimate (OSM servers unavailable)</div>
               )}
@@ -208,6 +193,32 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
               </button>
             </div>
           )}
+
+          {/* 2. Area text field */}
+          <input
+            type="text"
+            value={cellArea}
+            onChange={e => setCellArea(e.target.value)}
+            placeholder="Area (e.g. North District)…"
+            className="w-full h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+
+          {/* 3. Cell name + save */}
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={cellName}
+              onChange={e => setCellName(e.target.value)}
+              placeholder="Cell name…"
+              className="flex-1 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              onClick={() => onSaveCell(cellName || 'Unnamed Cell', cellArea, results)}
+              className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors whitespace-nowrap"
+            >
+              Save Cell
+            </button>
+          </div>
         </div>
       </div>
     </div>
