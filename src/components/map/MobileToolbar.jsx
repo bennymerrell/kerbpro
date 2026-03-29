@@ -33,10 +33,10 @@ export default function MobileToolbar({
     const imgW = imgH * imgRatio;
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - imgW) / 2, 0, imgW, imgH);
 
-    if (cells.length > 0) {
+    if (selectedCell) {
       const boxX = 6, boxY = 6, rowH = 9;
       const boxW = 130;
-      const boxH = 16 + cells.slice(0, 8).length * rowH + 6;
+      const boxH = 16 + rowH + 6;
 
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(200, 200, 200);
@@ -46,21 +46,18 @@ export default function MobileToolbar({
       pdf.setFontSize(10); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
       pdf.text('Cell Summary', boxX + 4, boxY + 8);
 
-      const colX = [boxX + 4, boxX + 48, boxX + 80, boxX + 105];
-      const headers = ['Cell Name', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
+      const colX = [boxX + 4, boxX + 48, boxX + 85];
+      const headers = ['Name', 'Area', 'Total (mi)'];
       pdf.setFontSize(7.5); pdf.setTextColor(100, 100, 100);
       headers.forEach((h, i) => pdf.text(h, colX[i], boxY + 15));
 
       pdf.setFont('helvetica', 'normal'); pdf.setTextColor(30, 30, 30); pdf.setFontSize(8.5);
-      cells.slice(0, 8).forEach((cell, idx) => {
-        const rowY = boxY + 15 + (idx + 1) * rowH;
-        const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '-';
-        const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '-';
-        const totalMi = (cell.adopted_m != null && cell.unadopted_m != null)
-          ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '-';
-        [cell.name || 'Unnamed', adoptedMi, unadoptedMi, totalMi]
-          .forEach((v, i) => pdf.text(String(v).substring(0, 18), colX[i], rowY));
-      });
+      const rowY = boxY + 15 + rowH;
+      const totalMi = (selectedCell.adopted_m != null && selectedCell.unadopted_m != null)
+        ? ((selectedCell.adopted_m + selectedCell.unadopted_m) / 1609.34).toFixed(2) : '-';
+      const name = selectedCell.name || 'Unnamed';
+      const area = selectedCell.area || '-';
+      [name, area, totalMi].forEach((v, i) => pdf.text(String(v).substring(0, 18), colX[i], rowY));
     }
 
     pdf.save('map-export.pdf');
