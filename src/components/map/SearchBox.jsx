@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { isW3WQuery, w3wToCoords } from '../../lib/w3wUtils';
@@ -8,6 +8,17 @@ export default function SearchBox({ onLocationFound }) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -56,7 +67,7 @@ export default function SearchBox({ onLocationFound }) {
   }
 
   return (
-    <div className="absolute top-4 left-4 right-24 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[1000] sm:w-[90%] sm:max-w-md">
+    <div ref={containerRef} className="absolute top-4 left-4 right-24 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[1000] sm:w-[90%] sm:max-w-md">
       <form onSubmit={e => e.preventDefault()}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
