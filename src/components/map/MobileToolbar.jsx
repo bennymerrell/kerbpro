@@ -14,7 +14,6 @@ export default function MobileToolbar({
   selectedCell = null,
   onSelectCell = null,
 }) {
-  const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   async function handleDownloadPDF() {
@@ -99,22 +98,14 @@ export default function MobileToolbar({
 
         <div className="w-px h-6 bg-border/60 mx-0.5" />
 
-        <div className="relative">
-          <button
-            onClick={() => setExportOpen(o => !o)}
-            title="Export"
-            className="h-10 w-10 rounded-xl flex items-center justify-center text-foreground hover:bg-muted transition-all"
-          >
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-          </button>
-          {exportOpen && (
-            <div className="absolute bottom-full right-0 mb-2 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1 min-w-[130px]">
-              <button onClick={handleDownloadPDF} className="flex items-center gap-2 h-9 px-3 text-xs font-medium rounded-lg hover:bg-muted/60 transition-colors text-foreground">
-                <Download className="h-3.5 w-3.5" /> Save PDF
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={handleDownloadPDF}
+          disabled={exporting}
+          title="Save PDF"
+          className="h-10 w-10 rounded-xl flex items-center justify-center text-foreground hover:bg-muted transition-all disabled:opacity-50"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        </button>
       </div>
     </div>
   );
