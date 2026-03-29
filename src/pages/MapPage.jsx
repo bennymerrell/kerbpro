@@ -15,14 +15,13 @@ import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
 import SavedCellsLayer from '../components/map/SavedCellsLayer';
-import CellsPanel from '../components/map/CellsPanel';
 import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
-import { Link } from 'react-router-dom';
-import { List, Settings } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { List, Settings, SquareDashedBottom } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
 
 // Fix leaflet default marker icon
@@ -39,6 +38,7 @@ const DEFAULT_ZOOM = 13;
 
 export default function MapPage() {
   const isMobile = useIsMobile();
+  const location = useLocation();
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
 
@@ -81,6 +81,12 @@ export default function MapPage() {
   useEffect(() => {
     base44.entities.Cell.list('-created_date', 100).then(setSavedCells);
   }, []);
+
+  useEffect(() => {
+    if (location.state?.flyTo && mapRef.current) {
+      mapRef.current.flyTo(location.state.flyTo, 15, { duration: 1.2 });
+    }
+  }, [location.state]);
 
   async function handleSaveCell(name) {
     const newCell = await base44.entities.Cell.create({
@@ -235,7 +241,7 @@ export default function MapPage() {
       )}
 
       <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />
-      <CellsPanel cells={savedCells} onToggle={handleToggleCell} onDelete={handleDeleteCell} onFlyTo={(latlng) => mapRef.current?.flyTo(latlng, 15, { duration: 1.2 })} />
+
 
       {/* Settings link */}
       <div className="absolute top-4 right-44 z-[1000]">
@@ -245,6 +251,17 @@ export default function MapPage() {
         >
           <Settings className="h-4 w-4" />
           <span className="hidden sm:inline">Settings</span>
+        </Link>
+      </div>
+
+      {/* Cells link */}
+      <div className="absolute top-4 right-28 z-[1000]">
+        <Link
+          to="/cells"
+          className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
+        >
+          <SquareDashedBottom className="h-4 w-4" />
+          <span className="hidden sm:inline">Cells</span>
         </Link>
       </div>
 
