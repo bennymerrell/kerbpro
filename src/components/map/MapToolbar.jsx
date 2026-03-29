@@ -46,7 +46,7 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
           )}
         >
           <Shapes className="h-3.5 w-3.5" />
-          {isAreaMode ? "Drawing..." : "Draw Area"}
+          {isAreaMode ? "Drawing..." : "Draw Cell"}
         </Button>
 
         <div className="h-px bg-border/50 my-0.5" />

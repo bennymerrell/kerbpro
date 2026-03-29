@@ -68,11 +68,12 @@ async function queryOverpass(polygon) {
   return null;
 }
 
-export default function AreaResultsPanel({ points, closed, onClearArea, onUnadoptedRoads }) {
+export default function AreaResultsPanel({ points, closed, onClearArea, onUnadoptedRoads, onSaveCell }) {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [cellName, setCellName] = useState('');
 
   async function handleCalculate() {
     setLoading(true);
@@ -135,13 +136,29 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
             <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground font-medium">Selected Area</div>
+            <div className="text-xs text-muted-foreground font-medium">Selected Cell</div>
             <div className="text-xs text-foreground font-semibold">{points.length} points</div>
           </div>
           <button onClick={onClearArea} className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">Clear</button>
         </div>
 
         <div className="p-3 space-y-2">
+          {/* Save Cell */}
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={cellName}
+              onChange={e => setCellName(e.target.value)}
+              placeholder="Cell name…"
+              className="flex-1 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              onClick={() => onSaveCell(cellName || 'Unnamed Cell')}
+              className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors whitespace-nowrap"
+            >
+              Save Cell
+            </button>
+          </div>
           {!results && !loading && (
             <button onClick={handleCalculate} className="w-full h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors">
               Calculate Road Mileage

@@ -14,6 +14,8 @@ import SpeciesModal from '../components/map/SpeciesModal';
 import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
+import SavedCellsLayer from '../components/map/SavedCellsLayer';
+import CellsPanel from '../components/map/CellsPanel';
 import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
@@ -74,6 +76,34 @@ export default function MapPage() {
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
+  const [savedCells, setSavedCells] = useState([]);
+
+  useEffect(() => {
+    base44.entities.Cell.list('-created_date', 100).then(setSavedCells);
+  }, []);
+
+  async function handleSaveCell(name) {
+    const newCell = await base44.entities.Cell.create({
+      name,
+      points: JSON.stringify(areaPoints),
+      visible: true,
+    });
+    setSavedCells(prev => [newCell, ...prev]);
+    setAreaPoints([]);
+    setAreaClosed(false);
+    setIsAreaMode(false);
+    setUnadoptedRoads([]);
+  }
+
+  async function handleToggleCell(cell) {
+    const updated = await base44.entities.Cell.update(cell.id, { visible: !cell.visible });
+    setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
+  }
+
+  async function handleDeleteCell(cell) {
+    await base44.entities.Cell.delete(cell.id);
+    setSavedCells(prev => prev.filter(c => c.id !== cell.id));
+  }
   const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
   const [activeCategories, setActiveCategories] = useState(CATEGORIES);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
@@ -146,6 +176,7 @@ export default function MapPage() {
         />
         <LocateButton />
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
+        <SavedCellsLayer cells={savedCells} />
         {isAreaMode && (
           <AreaDrawer
             points={areaPoints}
@@ -199,10 +230,12 @@ export default function MapPage() {
           closed={areaClosed}
           onClearArea={() => { setAreaPoints([]); setAreaClosed(false); setUnadoptedRoads([]); }}
           onUnadoptedRoads={setUnadoptedRoads}
+          onSaveCell={handleSaveCell}
         />
       )}
 
       <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />
+      <CellsPanel cells={savedCells} onToggle={handleToggleCell} onDelete={handleDeleteCell} />
 
       {/* Settings link */}
       <div className="absolute top-4 right-44 z-[1000]">
@@ -261,7 +294,7 @@ export default function MapPage() {
           <div className="bg-indigo-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
             {areaPoints.length < 3
               ? `Click to place points (${areaPoints.length} placed, need at least 3)`
-              : `${areaPoints.length} points placed`}
+              : `${areaPoints.length} points placed — cell`}
           </div>
           {areaPoints.length >= 3 && (
             <button

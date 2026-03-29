@@ -1,0 +1,18 @@
+{
+  "name": "Cell",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "points": {
+      "type": "string"
+    },
+    "visible": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "points"
+  ]
+}

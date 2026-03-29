@@ -70,7 +70,7 @@ export default function MobileToolbar({
 
         <button
           onClick={onToggleAreaMode}
-          title="Draw Area"
+          title="Draw Cell"
           className={cn(
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
             isAreaMode ? "bg-indigo-600 text-white shadow" : "text-foreground hover:bg-muted"
