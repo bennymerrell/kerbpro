@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { indexedDBCache } from '@/lib/indexedDBCache';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TILE_LAYERS } from '../lib/mapUtils';
@@ -71,16 +72,32 @@ export default function MapPage() {
   const [speciesSightings, setSpeciesSightings] = useState([]);
 
   useEffect(() => {
-    base44.entities.Sighting.list('-created_date', 200).then((records) => {
-      setSpeciesSightings(records.map(r => ({
-        lat: r.lat,
-        lng: r.lng,
-        species: r.species,
-        notes: r.notes,
-        photoUrl: r.photo_url,
-        id: r.id,
-      })));
-    });
+    const loadSightings = async () => {
+      try {
+        const records = await base44.entities.Sighting.list('-created_date', 200);
+        const mapped = records.map(r => ({
+          lat: r.lat,
+          lng: r.lng,
+          species: r.species,
+          notes: r.notes,
+          photoUrl: r.photo_url,
+          id: r.id,
+        }));
+        setSpeciesSightings(mapped);
+        await indexedDBCache.cacheSightings(records);
+      } catch (e) {
+        const cached = await indexedDBCache.getSightings();
+        setSpeciesSightings(cached.map(r => ({
+          lat: r.lat,
+          lng: r.lng,
+          species: r.species,
+          notes: r.notes,
+          photoUrl: r.photo_url,
+          id: r.id,
+        })));
+      }
+    };
+    loadSightings();
   }, []);
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
@@ -88,7 +105,17 @@ export default function MapPage() {
   const [savedCells, setSavedCells] = useState([]);
 
   useEffect(() => {
-    base44.entities.Cell.list('-created_date', 100).then(setSavedCells);
+    const loadCells = async () => {
+      try {
+        const data = await base44.entities.Cell.list('-created_date', 100);
+        setSavedCells(data);
+        await indexedDBCache.cacheCells(data);
+      } catch (e) {
+        const cached = await indexedDBCache.getCells();
+        setSavedCells(cached);
+      }
+    };
+    loadCells();
   }, []);
 
   useEffect(() => {
@@ -130,6 +157,7 @@ export default function MapPage() {
       unadopted_m: mileage?.unadoptedM ?? null,
     });
     setSavedCells(prev => [newCell, ...prev]);
+    await indexedDBCache.cacheCell(newCell);
     setAreaPoints([]);
     setAreaClosed(false);
     setIsAreaMode(false);
@@ -138,12 +166,16 @@ export default function MapPage() {
 
   async function handleToggleCell(cell) {
     const updated = await base44.entities.Cell.update(cell.id, { visible: !cell.visible });
-    setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
+    const updatedCell = { ...cell, visible: !cell.visible };
+    setSavedCells(prev => prev.map(c => c.id === cell.id ? updatedCell : c));
+    await indexedDBCache.cacheCell(updatedCell);
   }
 
   async function handleDeleteCell(cell) {
     await base44.entities.Cell.delete(cell.id);
     setSavedCells(prev => prev.filter(c => c.id !== cell.id));
+    const cached = await indexedDBCache.getCells();
+    await indexedDBCache.cacheCells(cached.filter(c => c.id !== cell.id));
   }
   const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
   const [activeCategories, setActiveCategories] = useState(CATEGORIES);
