@@ -6,18 +6,7 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
   return (
     <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
       <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1">
-        <Button
-          variant={isPlotting ? "default" : "ghost"}
-          size="sm"
-          onClick={onTogglePlotting}
-          className={cn(
-            "justify-start gap-2 h-9 px-3 text-xs font-medium rounded-lg transition-all",
-            isPlotting && "shadow-md"
-          )}
-        >
-          <MousePointerClick className="h-3.5 w-3.5" />
-          {isPlotting ? "Plotting..." : "Plot Route"}
-        </Button>
+        {/* Plot Route — hidden */}
 
         <div className="h-px bg-border/50 my-0.5" />
 
@@ -49,20 +38,7 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
           {isAreaMode ? "Drawing..." : "Draw Cell"}
         </Button>
 
-        <div className="h-px bg-border/50 my-0.5" />
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onUndo}
-          size="sm"
-          onClick={onClear}
-          disabled={waypointCount === 0}
-          className="justify-start gap-2 h-9 px-3 text-xs font-medium rounded-lg text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Clear All
-        </Button>
+        {/* Undo/Clear — hidden */}
       </div>
     </div>
   );

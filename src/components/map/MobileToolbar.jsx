@@ -46,16 +46,7 @@ export default function MobileToolbar({
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
     >
       <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-lg border border-border/50 flex items-center gap-1 px-2 py-1.5">
-        <button
-          onClick={onTogglePlotting}
-          title="Plot Route"
-          className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isPlotting ? "bg-primary text-primary-foreground shadow" : "text-foreground hover:bg-muted"
-          )}
-        >
-          <MousePointerClick className="h-4 w-4" />
-        </button>
+        {/* Plot Route — hidden */}
 
         <button
           onClick={onToggleSpeciesMode}
@@ -102,25 +93,7 @@ export default function MobileToolbar({
           )}
         </div>
 
-        <div className="w-px h-6 bg-border/60 mx-0.5" />
-
-        <button
-          onClick={onUndo}
-          title="Undo"
-          disabled={waypointCount === 0}
-          className="h-10 w-10 rounded-xl flex items-center justify-center text-foreground hover:bg-muted transition-all disabled:opacity-30"
-        >
-          <Undo2 className="h-4 w-4" />
-        </button>
-
-        <button
-          onClick={onClear}
-          title="Clear All"
-          disabled={waypointCount === 0}
-          className="h-10 w-10 rounded-xl flex items-center justify-center text-destructive hover:bg-muted transition-all disabled:opacity-30"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        {/* Undo/Clear — hidden */}
       </div>
     </div>
   );
