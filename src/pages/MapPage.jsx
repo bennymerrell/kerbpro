@@ -327,9 +327,6 @@ export default function MapPage() {
       {/* Category Filter — desktop only */}
       {!isMobile && <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />}
 
-      {/* Locate Button — desktop only */}
-      {!isMobile && <LocateButton />}
-
       {/* Nav dropdown — desktop only */}
       {!isMobile && (
         <div className="absolute top-4 right-14 z-[1000]">
