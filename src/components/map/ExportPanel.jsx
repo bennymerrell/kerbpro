@@ -7,21 +7,21 @@ export default function ExportPanel({ cells = [] }) {
   async function captureMap() {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
+
+    // Reset Leaflet's map pane transform so html2canvas captures layers aligned
+    const mapPane = mapEl.querySelector('.leaflet-map-pane');
+    const origTransform = mapPane ? mapPane.style.transform : '';
+    if (mapPane) mapPane.style.transform = 'translate3d(0px, 0px, 0px)';
+
     const { default: html2canvas } = await import('html2canvas');
-    return await html2canvas(mapEl, {
-      useCORS: true,
-      allowTaint: true,
-      scale: 1,
-      logging: false,
-      x: 0,
-      y: 0,
-      scrollX: 0,
-      scrollY: 0,
-      width: mapEl.offsetWidth,
-      height: mapEl.offsetHeight,
-      windowWidth: mapEl.offsetWidth,
-      windowHeight: mapEl.offsetHeight,
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true, allowTaint: true, scale: 1, logging: false,
+      x: 0, y: 0, scrollX: 0, scrollY: 0,
+      width: mapEl.offsetWidth, height: mapEl.offsetHeight,
     });
+
+    if (mapPane) mapPane.style.transform = origTransform;
+    return canvas;
   }
 
   async function handleDownloadPDF() {
