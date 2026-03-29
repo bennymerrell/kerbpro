@@ -8,8 +8,6 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
       <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1">
         {/* Plot Route — hidden */}
 
-        <div className="h-px bg-border/50 my-0.5" />
-
         <Button
           variant={isSpeciesMode ? "default" : "ghost"}
           size="sm"
