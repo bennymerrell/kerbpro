@@ -24,40 +24,51 @@ export default function ExportPanel({ cells = [] }) {
 
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-    // Map image — fill top portion exactly
+    // Map image — full page
     const imgRatio = canvas.width / canvas.height;
-    const imgH = Math.min(mapAreaH, pageW / imgRatio);
+    const imgH = Math.min(pageH, pageW / imgRatio);
     const imgW = imgH * imgRatio;
-    const imgX = (pageW - imgW) / 2;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, 0, imgW, imgH);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - imgW) / 2, 0, imgW, imgH);
 
-    // Cell summary block
+    // Cell summary — white box top-left overlay
     if (cells.length > 0) {
-      const y0 = imgH + 4;
-      // Background rect
-      pdf.setFillColor(240, 244, 255);
-      pdf.roundedRect(4, y0, pageW - 8, summaryH, 2, 2, 'F');
+      const boxX = 6;
+      const boxY = 6;
+      const rowH = 9;
+      const boxW = 130;
+      const boxH = 16 + cells.slice(0, 8).length * rowH + 6;
 
-      pdf.setFontSize(7);
+      // White box with shadow effect (border)
+      pdf.setFillColor(255, 255, 255);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.3);
+      pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'FD');
+
+      // Title
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(30, 58, 95);
-      pdf.text('Cell Summary', 8, y0 + 5);
+      pdf.text('Cell Summary', boxX + 4, boxY + 8);
 
-      const colX = [8, 70, 130, 175, 225];
-      const headers = ['Cell Name', 'Area', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
-      pdf.setFontSize(6);
-      headers.forEach((h, i) => pdf.text(h, colX[i], y0 + 11));
+      // Headers
+      const colX = [boxX + 4, boxX + 48, boxX + 80, boxX + 105];
+      const headers = ['Cell Name', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(100, 100, 100);
+      headers.forEach((h, i) => pdf.text(h, colX[i], boxY + 15));
 
+      // Rows
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(60, 60, 60);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFontSize(8.5);
       cells.slice(0, 8).forEach((cell, idx) => {
-        const rowY = y0 + 16 + idx * 7;
+        const rowY = boxY + 15 + (idx + 1) * rowH;
         const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '-';
         const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '-';
         const totalMi = (cell.adopted_m != null && cell.unadopted_m != null)
           ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '-';
-        [cell.name || 'Unnamed', cell.area || '-', adoptedMi, unadoptedMi, totalMi]
-          .forEach((v, i) => pdf.text(String(v).substring(0, 25), colX[i], rowY));
+        [cell.name || 'Unnamed', adoptedMi, unadoptedMi, totalMi]
+          .forEach((v, i) => pdf.text(String(v).substring(0, 18), colX[i], rowY));
       });
     }
 
