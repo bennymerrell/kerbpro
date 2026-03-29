@@ -9,30 +9,55 @@ export default function ExportPanel({ cells = [] }) {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
 
-    // Replace transform with equivalent left/top so html2canvas renders correctly
-    const mapPane = mapEl.querySelector('.leaflet-map-pane');
-    const origTransform = mapPane ? mapPane.style.transform : '';
-    let tx = 0, ty = 0;
-    if (mapPane && origTransform) {
-      const m = origTransform.match(/translate3d\(([^,]+),\s*([^,]+),/);
-      if (m) { tx = parseFloat(m[1]); ty = parseFloat(m[2]); }
-      mapPane.style.transform = 'none';
-      mapPane.style.left = tx + 'px';
-      mapPane.style.top = ty + 'px';
+    const W = mapEl.offsetWidth;
+    const H = mapEl.offsetHeight;
+    const containerRect = mapEl.getBoundingClientRect();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Draw background
+    ctx.fillStyle = '#e8e0d8';
+    ctx.fillRect(0, 0, W, H);
+
+    // Draw tile images at their actual screen positions
+    const tiles = mapEl.querySelectorAll('.leaflet-tile-pane img.leaflet-tile');
+    const tilePromises = Array.from(tiles).map(tile => new Promise(resolve => {
+      const draw = () => {
+        const rect = tile.getBoundingClientRect();
+        const x = rect.left - containerRect.left;
+        const y = rect.top - containerRect.top;
+        ctx.drawImage(tile, x, y, rect.width, rect.height);
+        resolve();
+      };
+      if (tile.complete && tile.naturalWidth > 0) draw();
+      else { tile.onload = draw; tile.onerror = resolve; }
+    }));
+    await Promise.all(tilePromises);
+
+    // Draw SVG overlay (cell polygons etc)
+    const svgEl = mapEl.querySelector('.leaflet-overlay-pane svg');
+    if (svgEl) {
+      const svgClone = svgEl.cloneNode(true);
+      const overlayPane = mapEl.querySelector('.leaflet-overlay-pane');
+      const overlayRect = overlayPane.getBoundingClientRect();
+      const ox = overlayRect.left - containerRect.left;
+      const oy = overlayRect.top - containerRect.top;
+      svgClone.setAttribute('width', overlayRect.width);
+      svgClone.setAttribute('height', overlayRect.height);
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, ox, oy, overlayRect.width, overlayRect.height); URL.revokeObjectURL(url); resolve(); };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+        img.src = url;
+      });
     }
 
-    const { default: html2canvas } = await import('html2canvas');
-    const canvas = await html2canvas(mapEl, {
-      useCORS: true, allowTaint: true, scale: 1, logging: false,
-      scrollX: 0, scrollY: 0,
-      width: mapEl.offsetWidth, height: mapEl.offsetHeight,
-    });
-
-    if (mapPane) {
-      mapPane.style.transform = origTransform;
-      mapPane.style.left = '';
-      mapPane.style.top = '';
-    }
     return canvas;
   }
 
