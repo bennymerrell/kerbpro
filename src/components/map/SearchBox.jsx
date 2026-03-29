@@ -62,6 +62,7 @@ export default function SearchBox({ onLocationFound }) {
       lng: parseFloat(result.lon),
       name: result.display_name,
     });
+    setResults([]);
     setShowResults(false);
     setQuery(result.display_name.split(',')[0]);
   }
