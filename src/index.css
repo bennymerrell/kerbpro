@@ -91,6 +91,17 @@
   }
 }
 
+/* Cell label tooltip */
+.cell-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1e3a5f !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+.cell-label::before { display: none !important; }
+
 /* Leaflet overrides for clean look */
 .leaflet-container {
   font-family: var(--font-sans) !important;
