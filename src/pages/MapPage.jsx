@@ -63,7 +63,7 @@ export default function MapPage() {
       () => {}
     );
   }, []);
-  const [isPlotting, setIsPlotting] = useState(true);
+  const [isPlotting, setIsPlotting] = useState(false);
   const [tileLayer, setTileLayer] = useState('osm');
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
   const [speciesModalLocation, setSpeciesModalLocation] = useState(null);

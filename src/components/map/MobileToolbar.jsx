@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MousePointerClick, Undo2, Trash2, Info, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
+import { MousePointerClick, Info, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 async function captureMap() {
@@ -46,7 +46,16 @@ export default function MobileToolbar({
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
     >
       <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-lg border border-border/50 flex items-center gap-1 px-2 py-1.5">
-        {/* Plot Route — hidden */}
+        <button
+          onClick={onTogglePlotting}
+          title="Plot Route"
+          className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
+            isPlotting ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
+          )}
+        >
+          <MousePointerClick className="h-4 w-4" />
+        </button>
 
         <button
           onClick={onToggleSpeciesMode}
