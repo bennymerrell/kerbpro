@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Download, Printer, Loader2, Share2 } from 'lucide-react';
 
-export default function ExportPanel({ cells = [] }) {
+export default function ExportPanel({ cells = [], mapRef }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -41,24 +41,23 @@ export default function ExportPanel({ cells = [] }) {
     }));
     await Promise.all(tilePromises);
 
-    // Draw SVG overlay (cell polygons etc)
-    const svgEl = mapEl.querySelector('.leaflet-overlay-pane svg');
-    if (svgEl) {
-      const svgClone = svgEl.cloneNode(true);
-      const overlayPane = mapEl.querySelector('.leaflet-overlay-pane');
-      const overlayRect = overlayPane.getBoundingClientRect();
-      const ox = overlayRect.left - containerRect.left;
-      const oy = overlayRect.top - containerRect.top;
-      svgClone.setAttribute('width', overlayRect.width);
-      svgClone.setAttribute('height', overlayRect.height);
-      const svgData = new XMLSerializer().serializeToString(svgClone);
-      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      await new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => { ctx.drawImage(img, ox, oy, overlayRect.width, overlayRect.height); URL.revokeObjectURL(url); resolve(); };
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-        img.src = url;
+    // Draw cell outlines directly using Leaflet projection
+    const map = mapRef?.current;
+    if (map && cells.length > 0) {
+      cells.filter(c => c.visible !== false).forEach(cell => {
+        let points;
+        try { points = JSON.parse(cell.points); } catch { return; }
+        if (!points || points.length < 2) return;
+        const pixelPoints = points.map(p => map.latLngToContainerPoint([p.lat, p.lng]));
+        ctx.beginPath();
+        ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
+        pixelPoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(99, 102, 241, 1)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.15)';
+        ctx.fill();
       });
     }
 

@@ -313,7 +313,7 @@ export default function MapPage() {
       </div>
 
       {/* Export — desktop only, mobile has it in toolbar */}
-      {!isMobile && <ExportPanel cells={savedCells} />}
+      {!isMobile && <ExportPanel cells={savedCells} mapRef={mapRef} />}
 
       {/* Zoom controls — desktop only */}
       {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
