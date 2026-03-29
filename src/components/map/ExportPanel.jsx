@@ -9,18 +9,30 @@ export default function ExportPanel({ cells = [] }) {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
 
+    // Replace transform with equivalent left/top so html2canvas renders correctly
     const mapPane = mapEl.querySelector('.leaflet-map-pane');
     const origTransform = mapPane ? mapPane.style.transform : '';
-    if (mapPane) mapPane.style.transform = 'translate3d(0px, 0px, 0px)';
+    let tx = 0, ty = 0;
+    if (mapPane && origTransform) {
+      const m = origTransform.match(/translate3d\(([^,]+),\s*([^,]+),/);
+      if (m) { tx = parseFloat(m[1]); ty = parseFloat(m[2]); }
+      mapPane.style.transform = 'none';
+      mapPane.style.left = tx + 'px';
+      mapPane.style.top = ty + 'px';
+    }
 
     const { default: html2canvas } = await import('html2canvas');
     const canvas = await html2canvas(mapEl, {
       useCORS: true, allowTaint: true, scale: 1, logging: false,
-      x: 0, y: 0, scrollX: 0, scrollY: 0,
+      scrollX: 0, scrollY: 0,
       width: mapEl.offsetWidth, height: mapEl.offsetHeight,
     });
 
-    if (mapPane) mapPane.style.transform = origTransform;
+    if (mapPane) {
+      mapPane.style.transform = origTransform;
+      mapPane.style.left = '';
+      mapPane.style.top = '';
+    }
     return canvas;
   }
 
