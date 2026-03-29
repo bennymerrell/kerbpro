@@ -1,72 +1,117 @@
 import { useState } from 'react';
 import { Download, Printer, Loader2, Share2 } from 'lucide-react';
+import L from 'leaflet';
 
 export default function ExportPanel({ cells = [], mapRef }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  async function captureMap() {
-    const mapEl = document.querySelector('.leaflet-container');
-    if (!mapEl) throw new Error('Map not found');
+  async function buildMapCanvas() {
+    const CANVAS_W = 1400;
+    const CANVAS_H = 990;
+    const TILE_SIZE = 256;
 
-    const W = mapEl.offsetWidth;
-    const H = mapEl.offsetHeight;
-    const containerRect = mapEl.getBoundingClientRect();
+    // Collect all visible cell points to determine bounds
+    const allPoints = cells.filter(c => c.visible !== false).flatMap(c => {
+      try { return JSON.parse(c.points); } catch { return []; }
+    });
+
+    let center, zoom;
+    if (allPoints.length > 0) {
+      const lats = allPoints.map(p => p.lat);
+      const lngs = allPoints.map(p => p.lng);
+      const bounds = L.latLngBounds(
+        [Math.min(...lats), Math.min(...lngs)],
+        [Math.max(...lats), Math.max(...lngs)]
+      );
+      center = bounds.getCenter();
+      // Find zoom where cell fits inside canvas with padding
+      zoom = 18;
+      for (let z = 18; z >= 1; z--) {
+        const nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), z);
+        const se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), z);
+        if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.8 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.8) {
+          zoom = z;
+          break;
+        }
+      }
+    } else {
+      // Fallback: use current map view
+      const map = mapRef?.current;
+      if (map) { center = map.getCenter(); zoom = map.getZoom(); }
+      else { center = L.latLng(51.505, -1.27); zoom = 13; }
+    }
+
+    const centerPx = L.CRS.EPSG3857.latLngToPoint(center, zoom);
+    const originX = centerPx.x - CANVAS_W / 2;
+    const originY = centerPx.y - CANVAS_H / 2;
 
     const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
     const ctx = canvas.getContext('2d');
-
-    // Draw background
     ctx.fillStyle = '#e8e0d8';
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // Draw tile images by fetching as blobs to avoid CORS taint
-    const tiles = mapEl.querySelectorAll('.leaflet-tile-pane img.leaflet-tile');
-    const tilePromises = Array.from(tiles).map(tile => new Promise(resolve => {
-      const rect = tile.getBoundingClientRect();
-      const x = rect.left - containerRect.left;
-      const y = rect.top - containerRect.top;
-      fetch(tile.src)
-        .then(r => r.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          const img = new Image();
-          img.onload = () => { ctx.drawImage(img, x, y, rect.width, rect.height); URL.revokeObjectURL(url); resolve(); };
-          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-          img.src = url;
-        })
-        .catch(() => resolve());
-    }));
+    // Detect tile URL pattern from live map
+    const existingTile = document.querySelector('.leaflet-tile-pane img.leaflet-tile');
+    let tileUrlFn = (x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    if (existingTile?.src?.includes('arcgisonline')) {
+      tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+    }
+
+    const tX0 = Math.floor(originX / TILE_SIZE);
+    const tY0 = Math.floor(originY / TILE_SIZE);
+    const tX1 = Math.ceil((originX + CANVAS_W) / TILE_SIZE);
+    const tY1 = Math.ceil((originY + CANVAS_H) / TILE_SIZE);
+
+    const tilePromises = [];
+    for (let tx = tX0; tx <= tX1; tx++) {
+      for (let ty = tY0; ty <= tY1; ty++) {
+        const cx = tx * TILE_SIZE - originX;
+        const cy = ty * TILE_SIZE - originY;
+        tilePromises.push(
+          fetch(tileUrlFn(tx, ty, zoom))
+            .then(r => r.blob())
+            .then(blob => new Promise(resolve => {
+              const u = URL.createObjectURL(blob);
+              const img = new Image();
+              img.onload = () => { ctx.drawImage(img, cx, cy, TILE_SIZE, TILE_SIZE); URL.revokeObjectURL(u); resolve(); };
+              img.onerror = () => { URL.revokeObjectURL(u); resolve(); };
+              img.src = u;
+            }))
+            .catch(() => {})
+        );
+      }
+    }
     await Promise.all(tilePromises);
 
-    // Draw cell outlines directly using Leaflet projection
-    const map = mapRef?.current;
-    if (map && cells.length > 0) {
-      cells.filter(c => c.visible !== false).forEach(cell => {
-        let points;
-        try { points = JSON.parse(cell.points); } catch { return; }
-        if (!points || points.length < 2) return;
-        const pixelPoints = points.map(p => map.latLngToContainerPoint([p.lat, p.lng]));
-        ctx.beginPath();
-        ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
-        pixelPoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.closePath();
-        ctx.strokeStyle = 'rgba(99, 102, 241, 1)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.15)';
-        ctx.fill();
+    // Draw cell outlines using direct projection
+    cells.filter(c => c.visible !== false).forEach(cell => {
+      let points;
+      try { points = JSON.parse(cell.points); } catch { return; }
+      if (!points || points.length < 2) return;
+      const pts = points.map(p => {
+        const px = L.CRS.EPSG3857.latLngToPoint(L.latLng(p.lat, p.lng), zoom);
+        return { x: px.x - originX, y: px.y - originY };
       });
-    }
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(99,102,241,1)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(99,102,241,0.15)';
+      ctx.fill();
+    });
 
     return canvas;
   }
 
   async function handleDownloadPDF() {
     setLoading(true);
-    const canvas = await captureMap();
+    const canvas = await buildMapCanvas();
     const { default: jsPDF } = await import('jspdf');
 
     const pageW = 297;
@@ -122,7 +167,7 @@ export default function ExportPanel({ cells = [], mapRef }) {
 
   async function handlePrint() {
     setLoading(true);
-    const canvas = await captureMap();
+    const canvas = await buildMapCanvas();
     const imgData = canvas.toDataURL('image/png');
     const win = window.open('', '_blank');
     win.document.write(`
