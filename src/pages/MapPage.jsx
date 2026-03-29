@@ -18,6 +18,7 @@ import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
+import CategoryFilter from '../components/map/CategoryFilter';
 import { Link } from 'react-router-dom';
 import { List, Settings } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
@@ -60,6 +61,8 @@ export default function MapPage() {
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
+  const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
+  const [activeCategories, setActiveCategories] = useState(CATEGORIES);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const mapRef = useRef(null);
 
@@ -113,7 +116,21 @@ export default function MapPage() {
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode || (isAreaMode && !areaClosed)} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
-        <SpeciesMarkers sightings={speciesSightings} onRemove={(i) => setSpeciesSightings(prev => prev.filter((_, idx) => idx !== i))} />
+        <SpeciesMarkers
+          sightings={speciesSightings.filter(s => {
+            const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+            return activeCategories.includes(cat);
+          })}
+          onRemove={(i) => {
+            // find index in full array
+            const visible = speciesSightings.filter(s => {
+              const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+              return activeCategories.includes(cat);
+            });
+            const target = visible[i];
+            setSpeciesSightings(prev => prev.filter(s => s !== target));
+          }}
+        />
         <LocateButton />
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
         {isAreaMode && (
@@ -171,6 +188,8 @@ export default function MapPage() {
           onUnadoptedRoads={setUnadoptedRoads}
         />
       )}
+
+      <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />
 
       {/* Settings link */}
       <div className="absolute top-4 right-44 z-[1000]">
