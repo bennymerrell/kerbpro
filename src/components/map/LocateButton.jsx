@@ -125,7 +125,7 @@ function LocateControl({ locationData, onLocationUpdate }) {
   }
 
   return (
-    <div className="absolute z-[1000] top-4 right-4 md:right-20">
+    <div className="absolute z-[1000] top-16 right-4 md:right-5">
       <button
         onClick={handleCenterOnMe}
         disabled={loading}
