@@ -294,11 +294,11 @@ export default function MapPage() {
         onSelectCell={setSelectedCell}
       />
 
-      {/* Tile selector */}
-      <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
+      {/* Tile selector — desktop only */}
+      {!isMobile && <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />}
 
-      {/* Distance info */}
-      <DistancePanel waypoints={waypoints} />
+      {/* Distance info — desktop only */}
+      {!isMobile && <DistancePanel waypoints={waypoints} />}
 
       {/* Area results */}
       {isAreaMode && (
@@ -324,35 +324,107 @@ export default function MapPage() {
         </div>
       )}
 
-      <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />
+      {/* Category Filter — desktop only */}
+      {!isMobile && <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />}
 
+      {/* Locate Button — desktop only */}
+      {!isMobile && <LocateButton />}
 
-      {/* Settings link — hidden */}
-
-      {/* Nav dropdown */}
-      <div className="absolute top-4 right-14 z-[1000]">
-        <div className="relative">
-          <button
-            onClick={() => setNavOpen(o => !o)}
-            className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
-          >
-            <List className="h-4 w-4" />
-            <span className="hidden sm:inline">Data</span>
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          {navOpen && (
-            <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[130px]">
-              <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                <List className="h-3.5 w-3.5" /> Sightings
-              </button>
-              <div className="h-px bg-border/50" />
-              <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
-              </button>
-            </div>
-          )}
+      {/* Nav dropdown — desktop only */}
+      {!isMobile && (
+        <div className="absolute top-4 right-14 z-[1000]">
+          <div className="relative">
+            <button
+              onClick={() => setNavOpen(o => !o)}
+              className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 flex items-center gap-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-all"
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Data</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {navOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[130px]">
+                <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <List className="h-3.5 w-3.5" /> Sightings
+                </button>
+                <div className="h-px bg-border/50" />
+                <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Mobile Burger Menu */}
+      {isMobile && (
+        <div className="absolute top-4 right-4 z-[1000]">
+          <div className="relative">
+            <button
+              onClick={() => setNavOpen(o => !o)}
+              className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 text-foreground hover:bg-muted/80 transition-all"
+            >
+              <List className="h-5 w-5" />
+            </button>
+            {navOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[180px]">
+                {/* Map Layers */}
+                <div className="px-3 py-2 border-b border-border/50">
+                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Map Layers</div>
+                  <div className="space-y-1">
+                    {Object.entries(TILE_LAYERS).map(([key, layer]) => (
+                      <button
+                        key={key}
+                        onClick={() => { setTileLayer(key); setNavOpen(false); }}
+                        className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${
+                          tileLayer === key ? 'bg-primary/20 text-primary font-medium' : 'text-foreground hover:bg-muted/60'
+                        }`}
+                      >
+                        {layer.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div className="px-3 py-2 border-b border-border/50">
+                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Categories</div>
+                  <div className="space-y-1">
+                    {CATEGORIES.map(cat => (
+                      <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={activeCategories.includes(cat)}
+                          onChange={() => {
+                            if (activeCategories.includes(cat)) {
+                              setActiveCategories(activeCategories.filter(c => c !== cat));
+                            } else {
+                              setActiveCategories([...activeCategories, cat]);
+                            }
+                          }}
+                          className="w-3.5 h-3.5"
+                        />
+                        <span className="text-xs text-foreground">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pages */}
+                <div className="divide-y divide-border/50">
+                  <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                    <List className="h-3.5 w-3.5" /> Sightings
+                  </button>
+                  <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                    <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Zoom controls — desktop only */}
       {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
