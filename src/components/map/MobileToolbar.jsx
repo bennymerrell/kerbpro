@@ -14,6 +14,7 @@ export default function MobileToolbar({
   onUndo, onClear, waypointCount,
   isSpeciesMode, onToggleSpeciesMode,
   isAreaMode, onToggleAreaMode,
+  cells = [],
 }) {
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -22,10 +23,35 @@ export default function MobileToolbar({
     setExporting(true);
     setExportOpen(false);
     const canvas = await captureMap();
-    const imgData = canvas.toDataURL('image/png');
     const { default: jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+
+    const mapW = canvas.width / 2;
+    const mapH = canvas.height / 2;
+    const summaryH = cells.length > 0 ? Math.min(cells.length * 10 + 40, 120) : 0;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [mapW, mapH + summaryH] });
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, mapW, mapH);
+
+    if (cells.length > 0) {
+      const y0 = mapH + 8;
+      pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 58, 95);
+      pdf.text('Cell Summary', 10, y0 + 6);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5); pdf.setTextColor(60, 60, 60);
+      const headers = ['Cell Name', 'Area', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
+      const colX = [10, 80, 160, 220, 280];
+      pdf.setFont('helvetica', 'bold');
+      headers.forEach((h, i) => pdf.text(h, colX[i], y0 + 16));
+      pdf.setFont('helvetica', 'normal');
+      cells.slice(0, 10).forEach((cell, idx) => {
+        const rowY = y0 + 24 + idx * 9;
+        const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '—';
+        const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '—';
+        const totalMi = (cell.adopted_m != null && cell.unadopted_m != null)
+          ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '—';
+        [cell.name || 'Unnamed', cell.area || '—', adoptedMi, unadoptedMi, totalMi]
+          .forEach((v, i) => pdf.text(String(v), colX[i], rowY));
+      });
+    }
+
     pdf.save('map-export.pdf');
     setExporting(false);
   }

@@ -1,21 +1,62 @@
 import { useState } from 'react';
 import { Download, Printer, Loader2, Share2 } from 'lucide-react';
 
-export default function ExportPanel() {
+export default function ExportPanel({ cells = [] }) {
   const [loading, setLoading] = useState(false);
 
   async function captureMap() {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
+    const { default: html2canvas } = await import('html2canvas');
     return await html2canvas(mapEl, { useCORS: true, allowTaint: true, scale: 2 });
   }
 
   async function handleDownloadPDF() {
     setLoading(true);
     const canvas = await captureMap();
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+    const { default: jsPDF } = await import('jspdf');
+
+    const mapW = canvas.width / 2;
+    const mapH = canvas.height / 2;
+    const summaryH = cells.length > 0 ? Math.min(cells.length * 10 + 40, 120) : 0;
+    const pageH = mapH + summaryH;
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [mapW, pageH] });
+
+    // Map image
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, mapW, mapH);
+
+    // Cell summary block
+    if (cells.length > 0) {
+      const y0 = mapH + 8;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('Cell Summary', 10, y0 + 6);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(60, 60, 60);
+
+      const headers = ['Cell Name', 'Area', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
+      const colX = [10, 80, 160, 220, 280];
+
+      // Header row
+      pdf.setFont('helvetica', 'bold');
+      headers.forEach((h, i) => pdf.text(h, colX[i], y0 + 16));
+      pdf.setFont('helvetica', 'normal');
+
+      cells.slice(0, 10).forEach((cell, idx) => {
+        const rowY = y0 + 24 + idx * 9;
+        const adoptedMi = cell.adopted_m != null ? (cell.adopted_m / 1609.34).toFixed(2) : '—';
+        const unadoptedMi = cell.unadopted_m != null ? (cell.unadopted_m / 1609.34).toFixed(2) : '—';
+        const totalMi = (cell.adopted_m != null && cell.unadopted_m != null)
+          ? ((cell.adopted_m + cell.unadopted_m) / 1609.34).toFixed(2) : '—';
+        const row = [cell.name || 'Unnamed', cell.area || '—', adoptedMi, unadoptedMi, totalMi];
+        row.forEach((val, i) => pdf.text(String(val), colX[i], rowY));
+      });
+    }
+
     pdf.save('map-export.pdf');
     setLoading(false);
   }

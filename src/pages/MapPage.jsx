@@ -249,6 +249,7 @@ export default function MapPage() {
         onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
         isAreaMode={isAreaMode}
         onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); }}
+        cells={savedCells}
       />
 
       {/* Tile selector */}
@@ -312,7 +313,7 @@ export default function MapPage() {
       </div>
 
       {/* Export — desktop only, mobile has it in toolbar */}
-      {!isMobile && <ExportPanel />}
+      {!isMobile && <ExportPanel cells={savedCells} />}
 
       {/* Zoom controls — desktop only */}
       {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
