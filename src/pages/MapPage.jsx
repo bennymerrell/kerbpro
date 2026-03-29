@@ -53,7 +53,13 @@ export default function MapPage() {
       }
     });
     navigator.geolocation?.getCurrentPosition(
-      (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
+      (pos) => {
+        const latlng = [pos.coords.latitude, pos.coords.longitude];
+        setMapCenter(latlng);
+        if (mapRef.current) {
+          mapRef.current.flyTo(latlng, mapRef.current.getZoom(), { animate: false });
+        }
+      },
       () => {}
     );
   }, []);
