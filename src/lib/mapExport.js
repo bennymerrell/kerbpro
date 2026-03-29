@@ -30,7 +30,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null) {
     for (let z = 18; z >= 1; z--) {
       const nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), z);
       const se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), z);
-      if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.95 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.95) {
+      if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.99 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.99) {
         zoom = z;
         break;
       }
