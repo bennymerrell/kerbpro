@@ -89,7 +89,17 @@ export default function MapPage() {
     const bounds = location.state.fitBounds;
     const attempt = (tries = 0) => {
       if (mapRef.current) {
-        mapRef.current.fitBounds(bounds, { padding: [40, 40], animate: true });
+        // Check if bounds span is too small (1-2 point cells)
+        const lats = bounds.map(b => b[0]);
+        const lngs = bounds.map(b => b[1]);
+        const latSpan = Math.max(...lats) - Math.min(...lats);
+        const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+        if (latSpan < 0.0001 && lngSpan < 0.0001) {
+          const center = [lats.reduce((a,b)=>a+b,0)/lats.length, lngs.reduce((a,b)=>a+b,0)/lngs.length];
+          mapRef.current.flyTo(center, 16, { animate: true });
+        } else {
+          mapRef.current.fitBounds(bounds, { padding: [40, 40], animate: true });
+        }
       } else if (tries < 20) {
         setTimeout(() => attempt(tries + 1), 100);
       }
