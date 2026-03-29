@@ -95,11 +95,9 @@ function LocateControl({ locationData, onLocationUpdate }) {
           position: latlng,
           accuracy: pos.coords.accuracy,
         }));
-        // Fetch W3W only if not yet fetched or moved significantly
-        if (!prev?.w3w) {
-          const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
-          onLocationUpdate(p => ({ ...p, w3w }));
-        }
+        // Fetch W3W once
+        const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
+        onLocationUpdate(p => ({ ...p, w3w }));
       },
       () => setLoading(false),
       { enableHighAccuracy: true }
