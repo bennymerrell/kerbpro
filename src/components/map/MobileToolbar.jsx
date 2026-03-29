@@ -47,17 +47,6 @@ export default function MobileToolbar({
     >
       <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-lg border border-border/50 flex items-center gap-1 px-2 py-1.5">
         <button
-          onClick={onTogglePlotting}
-          title="Plot Route"
-          className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isPlotting ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
-          )}
-        >
-          <MousePointerClick className="h-4 w-4" />
-        </button>
-
-        <button
           onClick={onToggleSpeciesMode}
           title="Spotted"
           className={cn(
@@ -77,6 +66,17 @@ export default function MobileToolbar({
           )}
         >
           <Shapes className="h-4 w-4" />
+        </button>
+
+        <button
+          onClick={onTogglePlotting}
+          title="Plot Route"
+          className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
+            isPlotting ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
+          )}
+        >
+          <MousePointerClick className="h-4 w-4" />
         </button>
 
         <div className="w-px h-6 bg-border/60 mx-0.5" />
