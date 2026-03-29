@@ -260,7 +260,9 @@ export default function MapPage() {
       </MapContainer>
 
       {/* Search */}
-      <SearchBox onLocationFound={handleLocationFound} />
+      <div className={isMobile ? "absolute top-4 left-16 right-14 z-[999]" : "z-[999]"}>
+        <SearchBox onLocationFound={handleLocationFound} />
+      </div>
 
       {/* Desktop Toolbar — hidden on mobile/tablet */}
       {!isMobile && (
@@ -376,7 +378,7 @@ export default function MapPage() {
                   <Info className="h-3.5 w-3.5" /> Spotted
                 </button>
                 <button
-                  onClick={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setNavOpen(false); }}
+                  onClick={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setNavOpen(false); navigate('/'); }}
                   className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
                     isAreaMode ? 'bg-indigo-600/20 text-indigo-600' : 'text-foreground hover:bg-muted/60'
                   }`}
