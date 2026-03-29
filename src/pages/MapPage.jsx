@@ -58,6 +58,19 @@ export default function MapPage() {
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
   const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
   const [speciesSightings, setSpeciesSightings] = useState([]);
+
+  useEffect(() => {
+    base44.entities.Sighting.list('-created_date', 200).then((records) => {
+      setSpeciesSightings(records.map(r => ({
+        lat: r.lat,
+        lng: r.lng,
+        species: r.species,
+        notes: r.notes,
+        photoUrl: r.photo_url,
+        id: r.id,
+      })));
+    });
+  }, []);
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
