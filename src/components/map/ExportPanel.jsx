@@ -8,7 +8,20 @@ export default function ExportPanel({ cells = [] }) {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
     const { default: html2canvas } = await import('html2canvas');
-    return await html2canvas(mapEl, { useCORS: true, allowTaint: true, scale: 1, logging: false });
+    return await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      scale: 1,
+      logging: false,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+      width: mapEl.offsetWidth,
+      height: mapEl.offsetHeight,
+      windowWidth: mapEl.offsetWidth,
+      windowHeight: mapEl.offsetHeight,
+    });
   }
 
   async function handleDownloadPDF() {
