@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Download, Printer, Loader2, Share2 } from 'lucide-react';
 import { buildMapCanvas } from '../../lib/mapExport';
 
-export default function ExportPanel({ cells = [] }) {
+export default function ExportPanel({ cells = [], selectedCell = null }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   async function handleDownloadPDF() {
     setLoading(true);
     setOpen(false);
-    const canvas = await buildMapCanvas(cells);
+    const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
 
     const pageW = 297;
@@ -49,7 +49,7 @@ export default function ExportPanel({ cells = [] }) {
   async function handlePrint() {
     setLoading(true);
     setOpen(false);
-    const canvas = await buildMapCanvas(cells);
+    const canvas = await buildMapCanvas(cells, selectedCell);
     const imgData = canvas.toDataURL('image/png');
     const win = window.open('', '_blank');
     win.document.write(`<html><head><title>Map Print</title><style>body{margin:0;}img{width:100%;display:block;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);

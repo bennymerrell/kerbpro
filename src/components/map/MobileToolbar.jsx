@@ -11,6 +11,8 @@ export default function MobileToolbar({
   isSpeciesMode, onToggleSpeciesMode,
   isAreaMode, onToggleAreaMode,
   cells = [],
+  selectedCell = null,
+  onSelectCell = null,
 }) {
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -18,7 +20,7 @@ export default function MobileToolbar({
   async function handleDownloadPDF() {
     setExporting(true);
     setExportOpen(false);
-    const canvas = await buildMapCanvas(cells);
+    const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
 
     const pageW = 297;
@@ -68,7 +70,7 @@ export default function MobileToolbar({
   async function handlePrint() {
     setExporting(true);
     setExportOpen(false);
-    const canvas = await buildMapCanvas(cells);
+    const canvas = await buildMapCanvas(cells, selectedCell);
     const imgData = canvas.toDataURL('image/png');
     const win = window.open('', '_blank');
     win.document.write(`<html><head><title>Map Print</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:white;}img{max-width:100%;max-height:100vh;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);

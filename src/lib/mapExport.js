@@ -1,18 +1,26 @@
 import L from 'leaflet';
 
-export async function buildMapCanvas(cells = []) {
+export async function buildMapCanvas(cells = [], selectedCell = null) {
   const CANVAS_W = 1400;
   const CANVAS_H = 990;
   const TILE_SIZE = 256;
 
-  const allPoints = cells.filter(c => c.visible !== false).flatMap(c => {
-    try { return JSON.parse(c.points); } catch { return []; }
-  });
+  // If a specific cell is selected, zoom to only that cell
+  let pointsToUse = [];
+  if (selectedCell) {
+    try {
+      pointsToUse = JSON.parse(selectedCell.points) || [];
+    } catch {}
+  } else {
+    pointsToUse = cells.filter(c => c.visible !== false).flatMap(c => {
+      try { return JSON.parse(c.points); } catch { return []; }
+    });
+  }
 
   let center, zoom;
-  if (allPoints.length > 0) {
-    const lats = allPoints.map(p => p.lat);
-    const lngs = allPoints.map(p => p.lng);
+  if (pointsToUse.length > 0) {
+    const lats = pointsToUse.map(p => p.lat);
+    const lngs = pointsToUse.map(p => p.lng);
     const bounds = L.latLngBounds(
       [Math.min(...lats), Math.min(...lngs)],
       [Math.max(...lats), Math.max(...lngs)]
@@ -77,7 +85,8 @@ export async function buildMapCanvas(cells = []) {
   await Promise.all(tilePromises);
 
   // Draw cell outlines using Leaflet's own projection at the same zoom
-  cells.filter(c => c.visible !== false).forEach(cell => {
+  const cellsToDraw = selectedCell ? [selectedCell] : cells.filter(c => c.visible !== false);
+  cellsToDraw.forEach(cell => {
     let points;
     try { points = JSON.parse(cell.points); } catch { return; }
     if (!points || points.length < 2) return;
