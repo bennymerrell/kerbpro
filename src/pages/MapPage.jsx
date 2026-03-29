@@ -214,7 +214,7 @@ export default function MapPage() {
   const currentTile = TILE_LAYERS[tileLayer];
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen relative overflow-hidden">
       <MapContainer
         center={mapCenter}
         zoom={DEFAULT_ZOOM}
