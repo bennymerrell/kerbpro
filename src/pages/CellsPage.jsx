@@ -42,8 +42,12 @@ export default function CellsPage() {
   }
 
   function handleSelect(cell) {
-    const center = getCellCenter(cell);
-    navigate('/', { state: { flyTo: center } });
+    try {
+      const points = JSON.parse(cell.points);
+      navigate('/', { state: { fitBounds: points.map(p => [p.lat, p.lng]) } });
+    } catch {
+      navigate('/');
+    }
   }
 
   return (

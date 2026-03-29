@@ -85,11 +85,11 @@ export default function MapPage() {
   }, []);
 
   useEffect(() => {
-    if (!location.state?.flyTo) return;
-    const target = location.state.flyTo;
+    if (!location.state?.fitBounds) return;
+    const bounds = location.state.fitBounds;
     const attempt = (tries = 0) => {
       if (mapRef.current) {
-        mapRef.current.flyTo(target, 15, { duration: 1.2 });
+        mapRef.current.fitBounds(bounds, { padding: [40, 40], animate: true });
       } else if (tries < 20) {
         setTimeout(() => attempt(tries + 1), 100);
       }
