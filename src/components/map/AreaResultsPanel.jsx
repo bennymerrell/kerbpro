@@ -214,9 +214,10 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
             />
             <button
               onClick={() => onSaveCell(cellName || 'Unnamed Cell', cellArea, results)}
-              className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors whitespace-nowrap"
+              disabled={loading}
+              className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Cell
+              {loading ? 'Calculating…' : 'Save Cell'}
             </button>
           </div>
         </div>
