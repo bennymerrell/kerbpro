@@ -35,7 +35,7 @@ export default function CategoryFilter({ activeCategories, onChange }) {
   const hiddenCount = CATEGORIES.length - activeCategories.length;
 
   return (
-    <div className="absolute top-16 right-4 z-[1000]">
+    <div className="absolute top-28 right-4 z-[1000]">
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
