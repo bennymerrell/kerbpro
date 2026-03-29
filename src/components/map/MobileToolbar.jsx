@@ -18,7 +18,6 @@ export default function MobileToolbar({
 
   async function handleDownloadPDF() {
     setExporting(true);
-    setExportOpen(false);
     const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
 
