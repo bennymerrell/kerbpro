@@ -88,25 +88,33 @@ function LocateControl({ locationData, onLocationUpdate }) {
     // Start continuous tracking
     watchRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
-        const latlng = [pos.coords.latitude, pos.coords.longitude];
-        setLoading(false);
-        onLocationUpdate(prev => ({
-          ...prev,
-          position: latlng,
-          accuracy: pos.coords.accuracy,
-        }));
-        // Fetch W3W once
-        const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
-        onLocationUpdate(p => ({ ...p, w3w }));
+        try {
+          const latlng = [pos.coords.latitude, pos.coords.longitude];
+          setLoading(false);
+          onLocationUpdate(prev => ({
+            ...prev,
+            position: latlng,
+            accuracy: pos.coords.accuracy,
+          }));
+          // Fetch W3W once
+          const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
+          onLocationUpdate(p => ({ ...p, w3w }));
+        } catch (e) {
+          console.error('Location update error:', e);
+          setLoading(false);
+        }
       },
-      () => setLoading(false),
+      (err) => {
+        console.error('Geolocation error:', err);
+        setLoading(false);
+      },
       { enableHighAccuracy: true }
     );
 
     return () => {
       if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current);
     };
-  }, []);
+  }, [onLocationUpdate]);
 
   function handleCenterOnMe() {
     if (locationData?.position) {
