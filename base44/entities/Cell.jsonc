@@ -10,6 +10,15 @@
     },
     "visible": {
       "type": "boolean"
+    },
+    "area": {
+      "type": "string"
+    },
+    "adopted_m": {
+      "type": "number"
+    },
+    "unadopted_m": {
+      "type": "number"
     }
   },
   "required": [
