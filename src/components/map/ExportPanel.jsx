@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Printer, Loader2, Share2 } from 'lucide-react';
+import { Download, Loader2, Share2 } from 'lucide-react';
 import { buildMapCanvas } from '../../lib/mapExport';
 
 export default function ExportPanel({ cells = [], selectedCell = null }) {
@@ -40,16 +40,7 @@ export default function ExportPanel({ cells = [], selectedCell = null }) {
     setLoading(false);
   }
 
-  async function handlePrint() {
-    setLoading(true);
-    setOpen(false);
-    const canvas = await buildMapCanvas(cells, selectedCell);
-    const imgData = canvas.toDataURL('image/png');
-    const win = window.open('', '_blank');
-    win.document.write(`<html><head><title>Map Print</title><style>body{margin:0;}img{width:100%;display:block;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
-    win.document.close();
-    setLoading(false);
-  }
+
 
   return (
     <div className="absolute z-[1000]" style={{ bottom: 'max(8rem, calc(env(safe-area-inset-bottom) + 7rem))', right: '1rem' }}>
@@ -70,14 +61,6 @@ export default function ExportPanel({ cells = [], selectedCell = null }) {
               className="flex items-center gap-2 h-9 px-3 text-xs font-medium rounded-lg hover:bg-muted/60 transition-colors text-foreground disabled:opacity-50"
             >
               <Download className="h-3.5 w-3.5" /> Save PDF
-            </button>
-            <div className="h-px bg-border/50" />
-            <button
-              onClick={handlePrint}
-              disabled={loading}
-              className="flex items-center gap-2 h-9 px-3 text-xs font-medium rounded-lg hover:bg-muted/60 transition-colors text-foreground disabled:opacity-50"
-            >
-              <Printer className="h-3.5 w-3.5" /> Print
             </button>
           </div>
         )}

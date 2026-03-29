@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MousePointerClick, Info, Shapes, Share2, Download, Printer, Loader2 } from 'lucide-react';
+import { MousePointerClick, Info, Shapes, Share2, Download, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { buildMapCanvas } from '../../lib/mapExport';
 
@@ -56,16 +56,7 @@ export default function MobileToolbar({
     setExporting(false);
   }
 
-  async function handlePrint() {
-    setExporting(true);
-    setExportOpen(false);
-    const canvas = await buildMapCanvas(cells, selectedCell);
-    const imgData = canvas.toDataURL('image/png');
-    const win = window.open('', '_blank');
-    win.document.write(`<html><head><title>Map Print</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:white;}img{max-width:100%;max-height:100vh;}@media print{body{margin:0;}img{width:100%;}}</style></head><body><img src="${imgData}" onload="window.print();window.close();"/></body></html>`);
-    win.document.close();
-    setExporting(false);
-  }
+
 
   return (
     <div
@@ -120,10 +111,6 @@ export default function MobileToolbar({
             <div className="absolute bottom-full right-0 mb-2 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1 min-w-[130px]">
               <button onClick={handleDownloadPDF} className="flex items-center gap-2 h-9 px-3 text-xs font-medium rounded-lg hover:bg-muted/60 transition-colors text-foreground">
                 <Download className="h-3.5 w-3.5" /> Save PDF
-              </button>
-              <div className="h-px bg-border/50" />
-              <button onClick={handlePrint} className="flex items-center gap-2 h-9 px-3 text-xs font-medium rounded-lg hover:bg-muted/60 transition-colors text-foreground">
-                <Printer className="h-3.5 w-3.5" /> Print
               </button>
             </div>
           )}
