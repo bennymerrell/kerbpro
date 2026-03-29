@@ -22,18 +22,22 @@ export default function ExportPanel({ cells = [] }) {
     ctx.fillStyle = '#e8e0d8';
     ctx.fillRect(0, 0, W, H);
 
-    // Draw tile images at their actual screen positions
+    // Draw tile images by fetching as blobs to avoid CORS taint
     const tiles = mapEl.querySelectorAll('.leaflet-tile-pane img.leaflet-tile');
     const tilePromises = Array.from(tiles).map(tile => new Promise(resolve => {
-      const draw = () => {
-        const rect = tile.getBoundingClientRect();
-        const x = rect.left - containerRect.left;
-        const y = rect.top - containerRect.top;
-        ctx.drawImage(tile, x, y, rect.width, rect.height);
-        resolve();
-      };
-      if (tile.complete && tile.naturalWidth > 0) draw();
-      else { tile.onload = draw; tile.onerror = resolve; }
+      const rect = tile.getBoundingClientRect();
+      const x = rect.left - containerRect.left;
+      const y = rect.top - containerRect.top;
+      fetch(tile.src)
+        .then(r => r.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, x, y, rect.width, rect.height); URL.revokeObjectURL(url); resolve(); };
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+          img.src = url;
+        })
+        .catch(() => resolve());
     }));
     await Promise.all(tilePromises);
 
