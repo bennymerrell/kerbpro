@@ -241,7 +241,7 @@ export default function MapPage() {
           isSpeciesMode={isSpeciesMode}
           onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
           isAreaMode={isAreaMode}
-          onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); }}
+          onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
           selectedCell={selectedCell}
           />
       )}
@@ -256,7 +256,7 @@ export default function MapPage() {
         isSpeciesMode={isSpeciesMode}
         onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
         isAreaMode={isAreaMode}
-        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); }}
+        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
         cells={savedCells}
         selectedCell={selectedCell}
         onSelectCell={setSelectedCell}
