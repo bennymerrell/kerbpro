@@ -235,7 +235,7 @@ export default function MapPage() {
       )}
 
       <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />
-      <CellsPanel cells={savedCells} onToggle={handleToggleCell} onDelete={handleDeleteCell} />
+      <CellsPanel cells={savedCells} onToggle={handleToggleCell} onDelete={handleDeleteCell} onFlyTo={(latlng) => mapRef.current?.flyTo(latlng, 15, { duration: 1.2 })} />
 
       {/* Settings link */}
       <div className="absolute top-4 right-44 z-[1000]">

@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { SquareDashedBottom, Eye, EyeOff, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-export default function CellsPanel({ cells, onToggle, onDelete }) {
+function getCellCenter(cell) {
+  try {
+    const points = JSON.parse(cell.points);
+    if (!points.length) return null;
+    const lat = points.reduce((s, p) => s + p.lat, 0) / points.length;
+    const lng = points.reduce((s, p) => s + p.lng, 0) / points.length;
+    return [lat, lng];
+  } catch { return null; }
+}
+
+export default function CellsPanel({ cells, onToggle, onDelete, onFlyTo }) {
   const [open, setOpen] = useState(false);
   if (cells.length === 0) return null;
 
@@ -21,9 +31,12 @@ export default function CellsPanel({ cells, onToggle, onDelete }) {
         <div className="mt-2 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2 w-56 max-h-64 overflow-y-auto space-y-1">
           {cells.map(cell => (
             <div key={cell.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50 group">
-              <span className={cn("flex-1 text-xs truncate", !cell.visible && "text-muted-foreground line-through")}>
+              <button
+                onClick={() => { const c = getCellCenter(cell); if (c) onFlyTo(c); }}
+                className={cn("flex-1 text-xs truncate text-left hover:text-indigo-600 transition-colors", !cell.visible && "text-muted-foreground line-through")}
+              >
                 {cell.name || 'Unnamed Cell'}
-              </span>
+              </button>
               <button
                 onClick={() => onToggle(cell)}
                 className="text-muted-foreground hover:text-foreground transition-colors"
