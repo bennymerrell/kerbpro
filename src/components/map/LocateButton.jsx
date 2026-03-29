@@ -117,7 +117,7 @@ function LocateControl({ locationData, onLocationUpdate }) {
   }
 
   return (
-    <div className="absolute z-[1000]" style={{ top: '4rem', right: '1rem' }}>
+    <div className="absolute z-[1000] top-4 right-4">
       <button
         onClick={handleCenterOnMe}
         disabled={loading}
