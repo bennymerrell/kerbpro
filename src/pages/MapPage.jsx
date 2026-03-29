@@ -22,7 +22,7 @@ import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { List, Settings, SquareDashedBottom, ChevronDown } from 'lucide-react';
+import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
 
 // Fix leaflet default marker icon
@@ -356,7 +356,7 @@ export default function MapPage() {
 
       {/* Mobile Burger Menu */}
       {isMobile && (
-        <div className="absolute top-4 right-4 z-[1000]">
+        <div className="absolute top-4 left-14 z-[1000]">
           <div className="relative">
             <button
               onClick={() => setNavOpen(o => !o)}
@@ -365,28 +365,48 @@ export default function MapPage() {
               <List className="h-5 w-5" />
             </button>
             {navOpen && (
-              <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[180px]">
-                {/* Map Layers */}
-                <div className="px-3 py-2 border-b border-border/50">
-                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Map Layers</div>
-                  <div className="space-y-1">
-                    {Object.entries(TILE_LAYERS).map(([key, layer]) => (
-                      <button
-                        key={key}
-                        onClick={() => { setTileLayer(key); setNavOpen(false); }}
-                        className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${
-                          tileLayer === key ? 'bg-primary/20 text-primary font-medium' : 'text-foreground hover:bg-muted/60'
-                        }`}
-                      >
-                        {layer.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="absolute top-full left-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[160px]">
+                {/* Map Controls */}
+                <button
+                  onClick={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); setNavOpen(false); }}
+                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
+                    isSpeciesMode ? 'bg-primary/20 text-primary' : 'text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <Info className="h-3.5 w-3.5" /> Spotted
+                </button>
+                <button
+                  onClick={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setNavOpen(false); }}
+                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
+                    isAreaMode ? 'bg-indigo-600/20 text-indigo-600' : 'text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <Shapes className="h-3.5 w-3.5" /> Draw Cell
+                </button>
+                <button
+                  onClick={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); setIsAreaMode(false); setNavOpen(false); }}
+                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
+                    isPlotting ? 'bg-primary/20 text-primary' : 'text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <MousePointerClick className="h-3.5 w-3.5" /> Plot Route
+                </button>
+
+                <div className="h-px bg-border/50" />
+
+                {/* Pages */}
+                <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <List className="h-3.5 w-3.5" /> Sightings
+                </button>
+                <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
+                </button>
+
+                <div className="h-px bg-border/50" />
 
                 {/* Categories */}
-                <div className="px-3 py-2 border-b border-border/50">
-                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Categories</div>
+                <div className="px-3 py-2">
+                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Sightings Filter</div>
                   <div className="space-y-1">
                     {CATEGORIES.map(cat => (
                       <label key={cat} className="flex items-center gap-2 cursor-pointer">
@@ -407,16 +427,6 @@ export default function MapPage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Pages */}
-                <div className="divide-y divide-border/50">
-                  <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                    <List className="h-3.5 w-3.5" /> Sightings
-                  </button>
-                  <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                    <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -424,7 +434,7 @@ export default function MapPage() {
       )}
 
       {/* Zoom controls — desktop only */}
-      {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}>        <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
+      {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
           <button onClick={() => mapRef.current?.zoomIn()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">+</button>
           <div className="h-px bg-border/50" />
           <button onClick={() => mapRef.current?.zoomOut()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">−</button>
