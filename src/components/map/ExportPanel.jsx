@@ -3,12 +3,12 @@ import { Download, Printer, Loader2, Share2 } from 'lucide-react';
 
 export default function ExportPanel({ cells = [] }) {
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function captureMap() {
     const mapEl = document.querySelector('.leaflet-container');
     if (!mapEl) throw new Error('Map not found');
 
-    // Reset Leaflet's map pane transform so html2canvas captures layers aligned
     const mapPane = mapEl.querySelector('.leaflet-map-pane');
     const origTransform = mapPane ? mapPane.style.transform : '';
     if (mapPane) mapPane.style.transform = 'translate3d(0px, 0px, 0px)';
@@ -29,21 +29,16 @@ export default function ExportPanel({ cells = [] }) {
     const canvas = await captureMap();
     const { default: jsPDF } = await import('jspdf');
 
-    // A4 landscape in mm: 297 x 210
     const pageW = 297;
     const pageH = 210;
-    const summaryH = cells.length > 0 ? Math.min(cells.length * 7 + 22, 60) : 0;
-    const mapAreaH = pageH - summaryH - (summaryH > 0 ? 4 : 0);
 
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-    // Map image — full page
     const imgRatio = canvas.width / canvas.height;
     const imgH = Math.min(pageH, pageW / imgRatio);
     const imgW = imgH * imgRatio;
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - imgW) / 2, 0, imgW, imgH);
 
-    // Cell summary — white box top-left overlay
     if (cells.length > 0) {
       const boxX = 6;
       const boxY = 6;
@@ -51,26 +46,22 @@ export default function ExportPanel({ cells = [] }) {
       const boxW = 130;
       const boxH = 16 + cells.slice(0, 8).length * rowH + 6;
 
-      // White box with shadow effect (border)
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.3);
       pdf.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'FD');
 
-      // Title
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(30, 58, 95);
       pdf.text('Cell Summary', boxX + 4, boxY + 8);
 
-      // Headers
       const colX = [boxX + 4, boxX + 48, boxX + 80, boxX + 105];
       const headers = ['Cell Name', 'Adopted (mi)', 'Unadopted (mi)', 'Total (mi)'];
       pdf.setFontSize(7.5);
       pdf.setTextColor(100, 100, 100);
       headers.forEach((h, i) => pdf.text(h, colX[i], boxY + 15));
 
-      // Rows
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(30, 30, 30);
       pdf.setFontSize(8.5);
@@ -112,8 +103,6 @@ export default function ExportPanel({ cells = [] }) {
     win.document.close();
     setLoading(false);
   }
-
-  const [open, setOpen] = useState(false);
 
   return (
     <div className="absolute z-[1000]" style={{ bottom: 'max(8rem, calc(env(safe-area-inset-bottom) + 7rem))', right: '1rem' }}>

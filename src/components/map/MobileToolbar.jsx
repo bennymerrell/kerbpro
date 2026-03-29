@@ -39,8 +39,6 @@ export default function MobileToolbar({
 
     const pageW = 297;
     const pageH = 210;
-    const summaryH = cells.length > 0 ? Math.min(cells.length * 7 + 22, 60) : 0;
-    const mapAreaH = pageH - summaryH - (summaryH > 0 ? 4 : 0);
 
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
@@ -93,6 +91,7 @@ export default function MobileToolbar({
     win.document.close();
     setExporting(false);
   }
+
   return (
     <div
       className="fixed left-1/2 -translate-x-1/2 z-[1000]"
@@ -154,8 +153,6 @@ export default function MobileToolbar({
             </div>
           )}
         </div>
-
-        {/* Undo/Clear — hidden */}
       </div>
     </div>
   );
