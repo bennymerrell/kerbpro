@@ -267,16 +267,6 @@ export default function MapPage() {
         <div className="absolute bottom-6 left-4 z-[1000] w-72">
           <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-3 space-y-2">
             <div className="text-xs font-semibold text-foreground mb-1">{location.state.cellName || 'Cell'} — Road Mileage</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-blue-50 rounded-lg p-2.5">
-                <div className="text-[10px] text-blue-600 font-medium mb-0.5">Adopted Roads</div>
-                <div className="text-sm font-bold text-blue-800">{(location.state.cellMileage.adopted_m / 1609.34).toFixed(2)} mi</div>
-              </div>
-              <div className="bg-red-50 rounded-lg p-2.5">
-                <div className="text-[10px] text-red-600 font-medium mb-0.5">Unadopted Roads</div>
-                <div className="text-sm font-bold text-red-800">{(location.state.cellMileage.unadopted_m / 1609.34).toFixed(2)} mi</div>
-              </div>
-            </div>
             <div className="bg-muted/60 rounded-lg px-3 py-2 flex justify-between items-center">
               <span className="text-xs text-muted-foreground font-medium">Total roads</span>
               <span className="text-xs font-bold text-foreground">{((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34).toFixed(2)} mi</span>

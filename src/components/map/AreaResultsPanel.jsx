@@ -166,18 +166,6 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
 
           {results && (
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-blue-50 rounded-lg p-2.5">
-                  <div className="text-[10px] text-blue-600 font-medium mb-0.5">Adopted Roads</div>
-                  <div className="text-sm font-bold text-blue-800">{formatDistanceMiles(results.adoptedM)}</div>
-                  <div className="text-[10px] text-blue-500">{formatDistance(results.adoptedM)}</div>
-                </div>
-                <div className="bg-red-50 rounded-lg p-2.5">
-                  <div className="text-[10px] text-red-600 font-medium mb-0.5">Unadopted Roads</div>
-                  <div className="text-sm font-bold text-red-800">{formatDistanceMiles(results.unadoptedM)}</div>
-                  <div className="text-[10px] text-red-500">{formatDistance(results.unadoptedM)}</div>
-                </div>
-              </div>
               <div className="bg-muted/60 rounded-lg px-3 py-2 flex justify-between items-center">
                 <span className="text-xs text-muted-foreground font-medium">Total roads</span>
                 <span className="text-xs font-bold text-foreground">{formatDistanceMiles(results.total)}</span>
