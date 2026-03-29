@@ -47,7 +47,7 @@ export default function CellsPage() {
       const mileage = (cell.adopted_m != null && cell.unadopted_m != null)
         ? { adopted_m: cell.adopted_m, unadopted_m: cell.unadopted_m }
         : null;
-      navigate('/', { state: { fitBounds: points.map(p => [p.lat, p.lng]), cellMileage: mileage, cellName: cell.name } });
+      navigate('/', { state: { fitBounds: points.map(p => [p.lat, p.lng]), cellMileage: mileage, cellName: cell.name, selectedCell: cell } });
     } catch {
       navigate('/');
     }

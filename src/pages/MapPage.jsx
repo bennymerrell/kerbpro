@@ -92,6 +92,12 @@ export default function MapPage() {
   }, []);
 
   useEffect(() => {
+    if (location.state?.selectedCell) {
+      setSelectedCell(location.state.selectedCell);
+    }
+  }, [location.state?.selectedCell]);
+
+  useEffect(() => {
     if (!location.state?.fitBounds) return;
     const bounds = location.state.fitBounds;
     const attempt = (tries = 0) => {
