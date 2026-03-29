@@ -34,7 +34,7 @@ export default function MobileToolbar({
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - imgW) / 2, 0, imgW, imgH);
 
     if (selectedCell) {
-      const boxX = 6, boxY = 6, rowH = 7, boxW = 90;
+      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
       const boxH = 10 + rowH * 3 + 4;
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(200, 200, 200);

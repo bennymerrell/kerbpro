@@ -18,7 +18,7 @@ export default function ExportPanel({ cells = [], selectedCell = null }) {
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
 
     if (selectedCell) {
-      const boxX = 6, boxY = 6, rowH = 7, boxW = 90;
+      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
       const boxH = 10 + rowH * 3 + 4;
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(200, 200, 200);
