@@ -356,7 +356,7 @@ export default function MapPage() {
 
       {/* Mobile Burger Menu */}
       {isMobile && (
-        <div className="absolute top-4 left-14 z-[1000]">
+        <div className="absolute top-4 left-4 z-[1000]">
           <div className="relative">
             <button
               onClick={() => setNavOpen(o => !o)}
