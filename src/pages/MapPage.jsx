@@ -281,23 +281,7 @@ export default function MapPage() {
         />
       </div>
 
-      {/* Mobile Toolbar */}
-      <div className="md:hidden">
-        <MobileToolbar
-          isPlotting={isPlotting}
-          onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
-          onUndo={handleUndo}
-          onClear={handleClear}
-          waypointCount={waypoints.length}
-          isSpeciesMode={isSpeciesMode}
-          onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
-          isAreaMode={isAreaMode}
-          onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
-          cells={savedCells}
-          selectedCell={selectedCell}
-          onSelectCell={setSelectedCell}
-        />
-      </div>
+
 
       {/* Tile selector — desktop only */}
       <div className="hidden md:block"><TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} /></div>
