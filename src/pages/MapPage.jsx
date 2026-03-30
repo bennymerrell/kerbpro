@@ -260,7 +260,7 @@ export default function MapPage() {
       </MapContainer>
 
       {/* Search */}
-      <div className="absolute top-4 left-[70px] right-[70px] z-[999] flex items-center">
+      <div className="absolute top-4 left-[70px] right-[70px] md:left-48 md:right-auto md:w-[40%] z-[999] flex items-center">
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
@@ -332,7 +332,7 @@ export default function MapPage() {
 
       {/* Nav dropdown — desktop only */}
       <div className="hidden md:block">
-        <div className="absolute top-4 right-14 z-[1000]">
+        <div className="absolute top-4 right-28 z-[1000]">
           <div className="relative">
             <button
               onClick={() => setNavOpen(o => !o)}
