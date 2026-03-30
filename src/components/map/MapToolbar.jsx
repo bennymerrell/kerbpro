@@ -1,8 +1,33 @@
-import { MousePointerClick, Info, Shapes } from 'lucide-react';
+import { MousePointerClick, Info, Shapes, Download, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { buildMapCanvas } from '../../lib/mapExport';
 
-export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onClear, waypointCount, isSpeciesMode, onToggleSpeciesMode, isAreaMode, onToggleAreaMode }) {
+export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onClear, waypointCount, isSpeciesMode, onToggleSpeciesMode, isAreaMode, onToggleAreaMode, cells = [], selectedCell = null }) {
+  const [exporting, setExporting] = useState(false);
+
+  async function handleDownloadPDF() {
+    setExporting(true);
+    const canvas = await buildMapCanvas(cells, selectedCell);
+    const { default: jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210);
+    if (selectedCell) {
+      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
+      pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
+      pdf.roundedRect(boxX, boxY, boxW, 10 + rowH * 3 + 4, 2, 2, 'FD');
+      pdf.setFontSize(9); pdf.setFont('helvetica','bold'); pdf.setTextColor(30,58,95);
+      pdf.text('Cell', boxX+4, boxY+7);
+      pdf.setFont('helvetica','normal'); pdf.setTextColor(30,30,30); pdf.setFontSize(7.5);
+      pdf.text(`Name: ${(selectedCell.name||'Unnamed').substring(0,16)}`, boxX+4, boxY+15);
+      pdf.text(`Area: ${(selectedCell.area||'-').substring(0,16)}`, boxX+4, boxY+15+rowH);
+      const totalMi = (selectedCell.adopted_m!=null&&selectedCell.unadopted_m!=null) ? ((selectedCell.adopted_m+selectedCell.unadopted_m)/1609.34).toFixed(2) : '-';
+      pdf.text(`Total: ${totalMi} mi`, boxX+4, boxY+15+rowH*2);
+    }
+    pdf.save('map-export.pdf');
+    setExporting(false);
+  }
   return (
     <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
       <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1">
@@ -47,7 +72,18 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
           {isPlotting ? "Plotting..." : "Plot Route"}
         </Button>
 
-        {/* Undo/Clear — hidden */}
+        <div className="h-px bg-border/50 my-0.5" />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDownloadPDF}
+          disabled={exporting}
+          className="justify-start gap-2 h-9 px-3 text-xs font-medium rounded-lg transition-all"
+        >
+          {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          Save PDF
+        </Button>
       </div>
     </div>
   );

@@ -276,6 +276,7 @@ export default function MapPage() {
           onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
           isAreaMode={isAreaMode}
           onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
+          cells={savedCells}
           selectedCell={selectedCell}
         />
       </div>
