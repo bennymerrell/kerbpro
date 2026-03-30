@@ -260,12 +260,12 @@ export default function MapPage() {
       </MapContainer>
 
       {/* Search */}
-      <div className="absolute top-4 left-16 right-16 md:right-14 z-[999]">
+      <div className="absolute top-4 left-14 right-14 z-[999]">
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
-      {/* Desktop Toolbar — hidden on mobile/tablet */}
-      {!isMobile && (
+      {/* Desktop Toolbar — hidden on mobile */}
+      <div className="hidden md:block">
         <MapToolbar
           isPlotting={isPlotting}
           onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
@@ -277,30 +277,33 @@ export default function MapPage() {
           isAreaMode={isAreaMode}
           onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
           selectedCell={selectedCell}
-          />
-      )}
+        />
+      </div>
 
-      {/* Mobile Toolbar */}
-      <MobileToolbar
-        isPlotting={isPlotting}
-        onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
-        onUndo={handleUndo}
-        onClear={handleClear}
-        waypointCount={waypoints.length}
-        isSpeciesMode={isSpeciesMode}
-        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
-        isAreaMode={isAreaMode}
-        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
-        cells={savedCells}
-        selectedCell={selectedCell}
-        onSelectCell={setSelectedCell}
-      />
+      {/* Mobile Toolbar */
+      <div className="md:hidden">
+        <MobileToolbar
+          isPlotting={isPlotting}
+          onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
+          onUndo={handleUndo}
+          onClear={handleClear}
+          waypointCount={waypoints.length}
+          isSpeciesMode={isSpeciesMode}
+          onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
+          isAreaMode={isAreaMode}
+          onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setSelectedCell(null); navigate('/'); }}
+          cells={savedCells}
+          selectedCell={selectedCell}
+          onSelectCell={setSelectedCell}
+        />
+      </div>
 
       {/* Tile selector — desktop only */}
-      {!isMobile && <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />}
+      <div className="hidden md:block"><TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
 
+      </div>
       {/* Distance info — desktop only */}
-      {!isMobile && <DistancePanel waypoints={waypoints} />}
+      <div className="hidden md:block"><DistancePanel waypoints={waypoints} /></div>
 
       {/* Area results */}
       {isAreaMode && (
@@ -327,10 +330,12 @@ export default function MapPage() {
       )}
 
       {/* Category Filter — desktop only */}
-      {!isMobile && <CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />}
+      <div className="hidden md:block"><CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />}
+
+      </div>
 
       {/* Nav dropdown — desktop only */}
-      {!isMobile && (
+      <div className="hidden md:block">
         <div className="absolute top-4 right-14 z-[1000]">
           <div className="relative">
             <button
@@ -354,9 +359,9 @@ export default function MapPage() {
             )}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Mobile Burger Menu */}
+      {/* Mobile Burger Menu */
       <div className="absolute top-4 left-4 z-[1000] md:hidden">
           <div className="relative">
             <button
@@ -434,14 +439,14 @@ export default function MapPage() {
         </div>
 
       {/* Zoom controls — desktop only */}
-      {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
+      <div className="hidden md:block"><div className="absolute right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
           <button onClick={() => mapRef.current?.zoomIn()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">+</button>
           <div className="h-px bg-border/50" />
           <button onClick={() => mapRef.current?.zoomOut()} className="px-3 py-2 text-foreground hover:bg-muted/60 transition-colors text-lg font-medium">−</button>
         </div>
-      </div>}
+      </div></div>
 
-      {/* Species Modal */}
+      {/* Species Modal */
       {speciesModalLocation && (
         <SpeciesModal
           location={speciesModalLocation}
