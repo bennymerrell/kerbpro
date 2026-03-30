@@ -68,7 +68,7 @@ export default function SearchBox({ onLocationFound }) {
   }
 
   return (
-    <div ref={containerRef} className="absolute top-4 left-4 right-24 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[1000] sm:w-[90%] sm:max-w-md">
+    <div ref={containerRef} className="relative w-full">
       <form onSubmit={e => e.preventDefault()}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

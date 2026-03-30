@@ -260,7 +260,7 @@ export default function MapPage() {
       </MapContainer>
 
       {/* Search */}
-      <div className="absolute top-4 left-14 right-14 z-[999]">
+      <div className="absolute top-4 left-14 right-14 z-[999] flex items-center">
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
