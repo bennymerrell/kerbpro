@@ -409,7 +409,15 @@ export default function MapPage() {
 
                 {/* Categories */}
                 <div className="px-3 py-2">
-                  <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-1.5">Sightings Filter</div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="text-[10px] text-muted-foreground font-semibold uppercase">Sightings Filter</div>
+                    <button
+                      onClick={() => setActiveCategories(activeCategories.length === CATEGORIES.length ? [] : [...CATEGORIES])}
+                      className="text-[10px] text-primary font-medium hover:underline"
+                    >
+                      {activeCategories.length === CATEGORIES.length ? 'Hide all' : 'Show all'}
+                    </button>
+                  </div>
                   <div className="space-y-1">
                     {CATEGORIES.map(cat => (
                       <label key={cat} className="flex items-center gap-2 cursor-pointer">
