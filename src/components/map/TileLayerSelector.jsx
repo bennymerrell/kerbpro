@@ -7,7 +7,7 @@ export default function TileLayerSelector({ currentLayer, onChangeLayer }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="absolute top-4 right-4 z-[1100]">
+    <div className="absolute top-4 right-16 z-[1100]">
       <div className="relative">
         <button
           onClick={() => setOpen(!open)}
