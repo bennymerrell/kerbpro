@@ -280,7 +280,7 @@ export default function MapPage() {
         />
       </div>
 
-      {/* Mobile Toolbar */
+      {/* Mobile Toolbar */}
       <div className="md:hidden">
         <MobileToolbar
           isPlotting={isPlotting}
@@ -299,9 +299,7 @@ export default function MapPage() {
       </div>
 
       {/* Tile selector — desktop only */}
-      <div className="hidden md:block"><TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
-
-      </div>
+      <div className="hidden md:block"><TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} /></div>
       {/* Distance info — desktop only */}
       <div className="hidden md:block"><DistancePanel waypoints={waypoints} /></div>
 
@@ -330,9 +328,7 @@ export default function MapPage() {
       )}
 
       {/* Category Filter — desktop only */}
-      <div className="hidden md:block"><CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} />}
-
-      </div>
+      <div className="hidden md:block"><CategoryFilter activeCategories={activeCategories} onChange={setActiveCategories} /></div>
 
       {/* Nav dropdown — desktop only */}
       <div className="hidden md:block">
@@ -361,7 +357,7 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Mobile Burger Menu */
+      {/* Mobile Burger Menu */}
       <div className="absolute top-4 left-4 z-[1000] md:hidden">
           <div className="relative">
             <button
@@ -437,6 +433,7 @@ export default function MapPage() {
             )}
           </div>
         </div>
+      </div>
 
       {/* Zoom controls — desktop only */}
       <div className="hidden md:block"><div className="absolute right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
@@ -446,7 +443,7 @@ export default function MapPage() {
         </div>
       </div></div>
 
-      {/* Species Modal */
+      {/* Species Modal */}
       {speciesModalLocation && (
         <SpeciesModal
           location={speciesModalLocation}
