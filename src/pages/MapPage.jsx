@@ -433,7 +433,6 @@ export default function MapPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Zoom controls — desktop only */}
       <div className="hidden md:block"><div className="absolute right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
