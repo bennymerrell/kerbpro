@@ -260,7 +260,7 @@ export default function MapPage() {
       </MapContainer>
 
       {/* Search */}
-      <div className={`absolute top-4 z-[999] ${isMobile ? 'left-16 right-16' : 'left-16 right-14'}`}>
+      <div className="absolute top-4 left-16 right-16 md:right-14 z-[999]">
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
@@ -357,8 +357,7 @@ export default function MapPage() {
       )}
 
       {/* Mobile Burger Menu */}
-      {isMobile && (
-        <div className="absolute top-4 left-4 z-[1000]">
+      <div className="absolute top-4 left-4 z-[1000] md:hidden">
           <div className="relative">
             <button
               onClick={() => setNavOpen(o => !o)}
@@ -433,7 +432,6 @@ export default function MapPage() {
             )}
           </div>
         </div>
-      )}
 
       {/* Zoom controls — desktop only */}
       {!isMobile && <div className="absolute bottom-8 right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
