@@ -29,7 +29,6 @@
   "required": [
     "date",
     "chemical_name",
-    "start_amount",
-    "end_amount"
+    "start_amount"
   ]
 }
