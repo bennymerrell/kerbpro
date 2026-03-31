@@ -1,0 +1,35 @@
+{
+  "name": "ChemicalLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "chemical_name": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "litres",
+        "kg"
+      ]
+    },
+    "start_amount": {
+      "type": "number"
+    },
+    "end_amount": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "chemical_name",
+    "start_amount",
+    "end_amount"
+  ]
+}

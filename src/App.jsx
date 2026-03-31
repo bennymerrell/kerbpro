@@ -10,6 +10,7 @@ import MapPage from './pages/MapPage';
 import SightingsPage from './pages/SightingsPage';
 import SettingsPage from './pages/SettingsPage';
 import CellsPage from './pages/CellsPage';
+import ChemicalLogPage from './pages/ChemicalLogPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -41,6 +42,7 @@ const AuthenticatedApp = () => {
       <Route path="/sightings" element={<SightingsPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/cells" element={<CellsPage />} />
+      <Route path="/chemical-logs" element={<ChemicalLogPage />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

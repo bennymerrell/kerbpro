@@ -22,7 +22,7 @@ import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick } from 'lucide-react';
+import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick, FlaskConical } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
 
 // Fix leaflet default marker icon
@@ -329,6 +329,10 @@ export default function MapPage() {
             </button>
             {navOpen && (
               <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[130px]">
+                <button onClick={() => { setNavOpen(false); navigate('/chemical-logs'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <FlaskConical className="h-3.5 w-3.5" /> Chemical Logs
+                </button>
+                <div className="h-px bg-border/50" />
                 <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
                   <List className="h-3.5 w-3.5" /> Sightings
                 </button>
@@ -336,13 +340,13 @@ export default function MapPage() {
                 <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
                   <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                </div>
+                )}
+                </div>
+                </div>
+                </div>
 
-      {/* Mobile Burger Menu */}
+                {/* Mobile Burger Menu */}
       <div className="absolute top-4 left-4 z-[1000] md:hidden">
           <div className="relative">
             <button
@@ -382,6 +386,10 @@ export default function MapPage() {
                 <div className="h-px bg-border/50" />
 
                 {/* Pages */}
+                <button onClick={() => { setNavOpen(false); navigate('/chemical-logs'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
+                  <FlaskConical className="h-3.5 w-3.5" /> Chemical Logs
+                </button>
+                <div className="h-px bg-border/50" />
                 <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
                   <List className="h-3.5 w-3.5" /> Sightings
                 </button>
