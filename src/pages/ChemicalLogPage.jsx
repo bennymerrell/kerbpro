@@ -4,67 +4,88 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, FlaskConical, Pencil, Check, X } from 'lucide-react';
 
 const UNITS = ['litres', 'kg'];
+const EMPTY_CHEM = { chemical_name: '', unit: 'litres', start_amount: '', end_amount: '' };
 
+function parseChemicals(str) {
+  try { return JSON.parse(str) || []; } catch { return []; }
+}
+
+// ── Add new daily log form ──────────────────────────────────────────────────
 function LogForm({ onSave, onCancel }) {
   const today = new Date().toISOString().split('T')[0];
-  const [form, setForm] = useState({ date: today, chemical_name: '', unit: 'litres', start_amount: '', end_amount: '', notes: '' });
+  const [date, setDate] = useState(today);
+  const [notes, setNotes] = useState('');
+  const [chemicals, setChemicals] = useState([{ ...EMPTY_CHEM }]);
   const [saving, setSaving] = useState(false);
 
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
+  function setChemField(i, key, val) {
+    setChemicals(prev => prev.map((c, idx) => idx === i ? { ...c, [key]: val } : c));
+  }
+  function addChem() { setChemicals(prev => [...prev, { ...EMPTY_CHEM }]); }
+  function removeChem(i) { setChemicals(prev => prev.filter((_, idx) => idx !== i)); }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    const cleaned = chemicals.map(c => ({
+      chemical_name: c.chemical_name,
+      unit: c.unit,
+      start_amount: parseFloat(c.start_amount),
+      end_amount: c.end_amount !== '' ? parseFloat(c.end_amount) : null,
+    }));
     await base44.entities.ChemicalLog.create({
-      date: form.date,
-      chemical_name: form.chemical_name,
-      unit: form.unit,
-      start_amount: parseFloat(form.start_amount),
-      end_amount: form.end_amount !== '' ? parseFloat(form.end_amount) : null,
-      notes: form.notes || null,
+      date,
+      chemicals: JSON.stringify(cleaned),
+      notes: notes || null,
     });
     setSaving(false);
     onSave();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-3 mb-4">
-      <div className="text-sm font-semibold text-foreground mb-1">New Chemical Log</div>
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-4 mb-4">
+      <div className="text-sm font-semibold text-foreground">New Daily Log</div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground font-medium">Date</label>
-          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">Chemical Name</label>
-          <input type="text" value={form.chemical_name} onChange={e => set('chemical_name', e.target.value)} placeholder="e.g. Glyphosate" required
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">Unit</label>
-          <select value={form.unit} onChange={e => set('unit', e.target.value)}
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
-            {UNITS.map(u => <option key={u}>{u}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">Start Amount</label>
-          <input type="number" step="0.01" value={form.start_amount} onChange={e => set('start_amount', e.target.value)} placeholder="0.00" required
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">End Amount <span className="text-muted-foreground/60">(optional)</span></label>
-          <input type="number" step="0.01" value={form.end_amount} onChange={e => set('end_amount', e.target.value)} placeholder="Fill in later…"
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} required
             className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
-          <input type="text" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional…"
+          <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional…"
             className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
         </div>
       </div>
-      <div className="flex gap-2 pt-1">
+
+      {/* Chemical rows */}
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-muted-foreground">Chemicals</div>
+        {chemicals.map((c, i) => (
+          <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
+            <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Chemical name" required
+              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+            <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
+              className="h-8 px-1 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none">
+              {UNITS.map(u => <option key={u}>{u}</option>)}
+            </select>
+            <input type="number" step="0.01" value={c.start_amount} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start" required
+              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+            <input type="number" step="0.01" value={c.end_amount} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End (later)"
+              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+            {chemicals.length > 1
+              ? <button type="button" onClick={() => removeChem(i)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><X className="h-3.5 w-3.5" /></button>
+              : <div />
+            }
+          </div>
+        ))}
+        <button type="button" onClick={addChem} className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-1">
+          <Plus className="h-3.5 w-3.5" /> Add chemical
+        </button>
+      </div>
+
+      <div className="flex gap-2">
         <button type="submit" disabled={saving} className="h-8 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
           {saving ? 'Saving…' : 'Save Log'}
         </button>
@@ -76,68 +97,91 @@ function LogForm({ onSave, onCancel }) {
   );
 }
 
-function EditableRow({ log, currentUser, onUpdated, onDeleted }) {
+// ── Inline edit row ─────────────────────────────────────────────────────────
+function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
-    start_amount: log.start_amount ?? '',
-    end_amount: log.end_amount ?? '',
-    notes: log.notes ?? '',
-  });
+  const [chemicals, setChemicals] = useState(parseChemicals(log.chemicals));
+  const [notes, setNotes] = useState(log.notes ?? '');
   const [saving, setSaving] = useState(false);
 
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
+  function setChemField(i, key, val) {
+    setChemicals(prev => prev.map((c, idx) => idx === i ? { ...c, [key]: val } : c));
+  }
+  function addChem() { setChemicals(prev => [...prev, { ...EMPTY_CHEM }]); }
+  function removeChem(i) { setChemicals(prev => prev.filter((_, idx) => idx !== i)); }
 
   async function handleSave() {
     setSaving(true);
+    const cleaned = chemicals.map(c => ({
+      chemical_name: c.chemical_name,
+      unit: c.unit,
+      start_amount: parseFloat(c.start_amount),
+      end_amount: c.end_amount !== '' && c.end_amount != null ? parseFloat(c.end_amount) : null,
+    }));
     const updated = await base44.entities.ChemicalLog.update(log.id, {
-      start_amount: parseFloat(form.start_amount),
-      end_amount: form.end_amount !== '' ? parseFloat(form.end_amount) : null,
-      notes: form.notes || null,
+      chemicals: JSON.stringify(cleaned),
+      notes: notes || null,
     });
     setSaving(false);
     setEditing(false);
-    onUpdated({ ...log, ...updated });
+    onUpdated({ ...log, ...updated, chemicals: JSON.stringify(cleaned), notes });
   }
 
-  const usage = (log.end_amount != null) ? (log.start_amount - log.end_amount).toFixed(2) : null;
+  function handleCancel() {
+    setChemicals(parseChemicals(log.chemicals));
+    setNotes(log.notes ?? '');
+    setEditing(false);
+  }
+
+  const chems = parseChemicals(log.chemicals);
+  const pending = chems.some(c => c.end_amount == null);
   const isOwner = log.created_by === currentUser?.email;
 
   return (
     <div className="px-4 py-3">
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-foreground">{log.chemical_name}</span>
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{log.date}</span>
-            {log.end_amount == null && (
-              <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">Awaiting end amount</span>
-            )}
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <span className="text-xs font-semibold text-foreground">{log.date}</span>
+            {pending && <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">Awaiting end amounts</span>}
+            {log.notes && !editing && <span className="text-[10px] text-muted-foreground">{log.notes}</span>}
           </div>
 
           {editing ? (
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground">Start</label>
-                <input type="number" step="0.01" value={form.start_amount} onChange={e => set('start_amount', e.target.value)}
-                  className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground">End</label>
-                <input type="number" step="0.01" value={form.end_amount} onChange={e => set('end_amount', e.target.value)} placeholder="—"
-                  className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground">Notes</label>
-                <input type="text" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="—"
-                  className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-              </div>
+            <div className="space-y-2">
+              {chemicals.map((c, i) => (
+                <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
+                  <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Name"
+                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                  <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
+                    className="h-7 px-1 rounded border border-input bg-background text-xs focus:outline-none">
+                    {UNITS.map(u => <option key={u}>{u}</option>)}
+                  </select>
+                  <input type="number" step="0.01" value={c.start_amount ?? ''} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start"
+                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                  <input type="number" step="0.01" value={c.end_amount ?? ''} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End"
+                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                  {chemicals.length > 1
+                    ? <button type="button" onClick={() => removeChem(i)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><X className="h-3 w-3" /></button>
+                    : <div />}
+                </div>
+              ))}
+              <button type="button" onClick={addChem} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+                <Plus className="h-3 w-3" /> Add chemical
+              </button>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…"
+                className="w-full h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 mt-1" />
             </div>
           ) : (
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
-              <span>Start: <strong className="text-foreground">{log.start_amount} {log.unit}</strong></span>
-              <span>End: <strong className="text-foreground">{log.end_amount != null ? `${log.end_amount} ${log.unit}` : '—'}</strong></span>
-              {usage != null && <span>Used: <strong className="text-destructive">{usage} {log.unit}</strong></span>}
-              {log.notes && <span className="text-[10px]">{log.notes}</span>}
+            <div className="space-y-1">
+              {chems.map((c, i) => (
+                <div key={i} className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                  <span className="font-medium text-foreground">{c.chemical_name}</span>
+                  <span>Start: <strong className="text-foreground">{c.start_amount} {c.unit}</strong></span>
+                  <span>End: <strong className="text-foreground">{c.end_amount != null ? `${c.end_amount} ${c.unit}` : '—'}</strong></span>
+                  {c.end_amount != null && <span>Used: <strong className="text-destructive">{(c.start_amount - c.end_amount).toFixed(2)} {c.unit}</strong></span>}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -146,21 +190,13 @@ function EditableRow({ log, currentUser, onUpdated, onDeleted }) {
           <div className="flex items-center gap-1 flex-shrink-0">
             {editing ? (
               <>
-                <button onClick={handleSave} disabled={saving} className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors disabled:opacity-50">
-                  <Check className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <button onClick={handleSave} disabled={saving} className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
+                <button onClick={handleCancel} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"><X className="h-3.5 w-3.5" /></button>
               </>
             ) : (
               <>
-                <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => onDeleted(log.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
+                <button onClick={() => onDeleted(log.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
               </>
             )}
           </div>
@@ -170,16 +206,30 @@ function EditableRow({ log, currentUser, onUpdated, onDeleted }) {
   );
 }
 
-function StatCard({ label, value, unit, color }) {
+// ── Stats ───────────────────────────────────────────────────────────────────
+function StatCard({ label, value, color }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4">
       <div className="text-xs text-muted-foreground font-medium mb-1">{label}</div>
       <div className={`text-2xl font-bold ${color || 'text-foreground'}`}>{value}</div>
-      {unit && <div className="text-xs text-muted-foreground mt-0.5">{unit}</div>}
     </div>
   );
 }
 
+function buildChemicalTotals(logs) {
+  const map = {};
+  logs.forEach(log => {
+    parseChemicals(log.chemicals).forEach(c => {
+      if (c.end_amount == null) return;
+      const key = `${c.chemical_name} (${c.unit})`;
+      if (!map[key]) map[key] = 0;
+      map[key] += (c.start_amount - c.end_amount);
+    });
+  });
+  return map;
+}
+
+// ── Page ────────────────────────────────────────────────────────────────────
 export default function ChemicalLogPage() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
@@ -210,21 +260,8 @@ export default function ChemicalLogPage() {
   const myLogs = currentUser ? logs.filter(l => l.created_by === currentUser.email) : [];
   const displayLogs = view === 'personal' ? myLogs : logs;
 
-  function totalUsage(logList) {
-    return logList.filter(l => l.end_amount != null).reduce((acc, l) => acc + (l.start_amount - l.end_amount), 0).toFixed(2);
-  }
-
-  function byChemical(logList) {
-    const map = {};
-    logList.filter(l => l.end_amount != null).forEach(l => {
-      if (!map[l.chemical_name]) map[l.chemical_name] = { used: 0, unit: l.unit };
-      map[l.chemical_name].used += (l.start_amount - l.end_amount);
-    });
-    return map;
-  }
-
-  const chemMap = byChemical(displayLogs);
-  const pending = displayLogs.filter(l => l.end_amount == null).length;
+  const totals = buildChemicalTotals(displayLogs);
+  const pending = displayLogs.filter(l => parseChemicals(l.chemicals).some(c => c.end_amount == null)).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -250,28 +287,28 @@ export default function ChemicalLogPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {showForm && <LogForm onSave={() => { setShowForm(false); loadLogs(); }} onCancel={() => setShowForm(false)} />}
 
+        {/* Overview */}
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             {view === 'personal' ? 'My Overview' : 'Company Overview'}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard label="Total Entries" value={displayLogs.length} />
-            <StatCard label="Total Used" value={totalUsage(displayLogs)} color="text-destructive" />
-            {pending > 0 && <StatCard label="Awaiting End Amount" value={pending} color="text-amber-600" />}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+            <StatCard label="Total Days Logged" value={displayLogs.length} />
+            {pending > 0 && <StatCard label="Awaiting End Amounts" value={pending} color="text-amber-600" />}
           </div>
-
-          {Object.keys(chemMap).length > 0 && (
-            <div className="mt-3 bg-card border border-border rounded-xl divide-y divide-border/50">
-              {Object.entries(chemMap).map(([name, data]) => (
-                <div key={name} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-xs font-medium text-foreground">{name}</span>
-                  <span className="text-xs text-destructive font-bold">{data.used.toFixed(2)} {data.unit}</span>
+          {Object.keys(totals).length > 0 && (
+            <div className="bg-card border border-border rounded-xl divide-y divide-border/50">
+              {Object.entries(totals).map(([key, used]) => (
+                <div key={key} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs font-medium text-foreground">{key}</span>
+                  <span className="text-xs text-destructive font-bold">{used.toFixed(2)} used</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
+        {/* Log list */}
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Log Entries</div>
           {loading ? (
@@ -281,7 +318,7 @@ export default function ChemicalLogPage() {
           ) : (
             <div className="bg-card border border-border rounded-xl divide-y divide-border/50">
               {displayLogs.map(log => (
-                <EditableRow key={log.id} log={log} currentUser={currentUser} onUpdated={handleUpdated} onDeleted={handleDelete} />
+                <EditableLog key={log.id} log={log} currentUser={currentUser} onUpdated={handleUpdated} onDeleted={handleDelete} />
               ))}
             </div>
           )}

@@ -6,21 +6,9 @@
       "type": "string",
       "format": "date"
     },
-    "chemical_name": {
-      "type": "string"
-    },
-    "unit": {
+    "chemicals": {
       "type": "string",
-      "enum": [
-        "litres",
-        "kg"
-      ]
-    },
-    "start_amount": {
-      "type": "number"
-    },
-    "end_amount": {
-      "type": "number"
+      "description": "JSON array of {chemical_name, unit, start_amount, end_amount}"
     },
     "notes": {
       "type": "string"
@@ -28,7 +16,6 @@
   },
   "required": [
     "date",
-    "chemical_name",
-    "start_amount"
+    "chemicals"
   ]
 }
