@@ -2,9 +2,15 @@
   "name": "ChemicalLog",
   "type": "object",
   "properties": {
-    "date": {
+    "week_start": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Date log was opened (Monday)"
+    },
+    "week_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Date log was completed (Friday)"
     },
     "chemicals": {
       "type": "string",
@@ -15,7 +21,7 @@
     }
   },
   "required": [
-    "date",
+    "week_start",
     "chemicals"
   ]
 }

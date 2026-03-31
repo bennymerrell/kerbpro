@@ -10,10 +10,26 @@ function parseChemicals(str) {
   try { return JSON.parse(str) || []; } catch { return []; }
 }
 
-// ── Add new daily log form ──────────────────────────────────────────────────
+function getMonday() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().split('T')[0];
+}
+
+function formatDateRange(start, end) {
+  if (!start) return '—';
+  const s = new Date(start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  if (!end) return `w/c ${s}`;
+  const e = new Date(end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${s} – ${e}`;
+}
+
+// ── Add new weekly log form ─────────────────────────────────────────────────
 function LogForm({ onSave, onCancel }) {
-  const today = new Date().toISOString().split('T')[0];
-  const [date, setDate] = useState(today);
+  const [weekStart, setWeekStart] = useState(getMonday());
+  const [weekEnd, setWeekEnd] = useState('');
   const [notes, setNotes] = useState('');
   const [chemicals, setChemicals] = useState([{ ...EMPTY_CHEM }]);
   const [saving, setSaving] = useState(false);
@@ -34,7 +50,8 @@ function LogForm({ onSave, onCancel }) {
       end_amount: c.end_amount !== '' ? parseFloat(c.end_amount) : null,
     }));
     await base44.entities.ChemicalLog.create({
-      date,
+      week_start: weekStart,
+      week_end: weekEnd || null,
       chemicals: JSON.stringify(cleaned),
       notes: notes || null,
     });
@@ -44,15 +61,20 @@ function LogForm({ onSave, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-4 mb-4">
-      <div className="text-sm font-semibold text-foreground">New Daily Log</div>
+      <div className="text-sm font-semibold text-foreground">New Weekly Log</div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-muted-foreground font-medium">Date</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} required
+          <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
+          <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
             className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
         </div>
         <div>
+          <label className="text-xs text-muted-foreground font-medium">Week End <span className="text-muted-foreground/60">(fill in at end of week)</span></label>
+          <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
+            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        </div>
+        <div className="col-span-2">
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
           <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional…"
             className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
@@ -62,6 +84,9 @@ function LogForm({ onSave, onCancel }) {
       {/* Chemical rows */}
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">Chemicals</div>
+        <div className="hidden grid-cols-[1fr_80px_90px_90px_32px] gap-2 sm:grid text-[10px] text-muted-foreground px-1">
+          <span>Name</span><span>Unit</span><span>Start</span><span>End (later)</span><span />
+        </div>
         {chemicals.map((c, i) => (
           <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
             <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Chemical name" required
@@ -76,8 +101,7 @@ function LogForm({ onSave, onCancel }) {
               className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
             {chemicals.length > 1
               ? <button type="button" onClick={() => removeChem(i)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><X className="h-3.5 w-3.5" /></button>
-              : <div />
-            }
+              : <div />}
           </div>
         ))}
         <button type="button" onClick={addChem} className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-1">
@@ -101,6 +125,7 @@ function LogForm({ onSave, onCancel }) {
 function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
   const [editing, setEditing] = useState(false);
   const [chemicals, setChemicals] = useState(parseChemicals(log.chemicals));
+  const [weekEnd, setWeekEnd] = useState(log.week_end ?? '');
   const [notes, setNotes] = useState(log.notes ?? '');
   const [saving, setSaving] = useState(false);
 
@@ -119,36 +144,56 @@ function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
       end_amount: c.end_amount !== '' && c.end_amount != null ? parseFloat(c.end_amount) : null,
     }));
     const updated = await base44.entities.ChemicalLog.update(log.id, {
+      week_end: weekEnd || null,
       chemicals: JSON.stringify(cleaned),
       notes: notes || null,
     });
     setSaving(false);
     setEditing(false);
-    onUpdated({ ...log, ...updated, chemicals: JSON.stringify(cleaned), notes });
+    onUpdated({ ...log, ...updated, week_end: weekEnd || null, chemicals: JSON.stringify(cleaned), notes });
   }
 
   function handleCancel() {
     setChemicals(parseChemicals(log.chemicals));
+    setWeekEnd(log.week_end ?? '');
     setNotes(log.notes ?? '');
     setEditing(false);
   }
 
   const chems = parseChemicals(log.chemicals);
-  const pending = chems.some(c => c.end_amount == null);
+  const pendingEndAmounts = chems.some(c => c.end_amount == null);
+  const pendingEndDate = !log.week_end;
   const isOwner = log.created_by === currentUser?.email;
 
   return (
     <div className="px-4 py-3">
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
+          {/* Header */}
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            <span className="text-xs font-semibold text-foreground">{log.date}</span>
-            {pending && <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">Awaiting end amounts</span>}
+            <span className="text-xs font-semibold text-foreground">{formatDateRange(log.week_start, log.week_end)}</span>
+            {(pendingEndAmounts || pendingEndDate) && (
+              <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">
+                {pendingEndDate ? 'Week not yet closed' : 'Awaiting end amounts'}
+              </span>
+            )}
             {log.notes && !editing && <span className="text-[10px] text-muted-foreground">{log.notes}</span>}
           </div>
 
           {editing ? (
             <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-muted-foreground">Week End Date</label>
+                  <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
+                    className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground">Notes</label>
+                  <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="—"
+                    className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                </div>
+              </div>
               {chemicals.map((c, i) => (
                 <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
                   <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Name"
@@ -162,15 +207,13 @@ function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
                   <input type="number" step="0.01" value={c.end_amount ?? ''} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End"
                     className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
                   {chemicals.length > 1
-                    ? <button type="button" onClick={() => removeChem(i)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><X className="h-3 w-3" /></button>
+                    ? <button type="button" onClick={() => removeChem(i)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
                     : <div />}
                 </div>
               ))}
               <button type="button" onClick={addChem} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
                 <Plus className="h-3 w-3" /> Add chemical
               </button>
-              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…"
-                className="w-full h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 mt-1" />
             </div>
           ) : (
             <div className="space-y-1">
@@ -243,7 +286,7 @@ export default function ChemicalLogPage() {
 
   async function loadLogs() {
     setLoading(true);
-    const data = await base44.entities.ChemicalLog.list('-date', 200);
+    const data = await base44.entities.ChemicalLog.list('-week_start', 200);
     setLogs(data);
     setLoading(false);
   }
@@ -261,7 +304,7 @@ export default function ChemicalLogPage() {
   const displayLogs = view === 'personal' ? myLogs : logs;
 
   const totals = buildChemicalTotals(displayLogs);
-  const pending = displayLogs.filter(l => parseChemicals(l.chemicals).some(c => c.end_amount == null)).length;
+  const openWeeks = displayLogs.filter(l => !l.week_end || parseChemicals(l.chemicals).some(c => c.end_amount == null)).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -287,14 +330,13 @@ export default function ChemicalLogPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {showForm && <LogForm onSave={() => { setShowForm(false); loadLogs(); }} onCancel={() => setShowForm(false)} />}
 
-        {/* Overview */}
         <div>
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             {view === 'personal' ? 'My Overview' : 'Company Overview'}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-            <StatCard label="Total Days Logged" value={displayLogs.length} />
-            {pending > 0 && <StatCard label="Awaiting End Amounts" value={pending} color="text-amber-600" />}
+            <StatCard label="Total Weeks Logged" value={displayLogs.length} />
+            {openWeeks > 0 && <StatCard label="Open / Incomplete" value={openWeeks} color="text-amber-600" />}
           </div>
           {Object.keys(totals).length > 0 && (
             <div className="bg-card border border-border rounded-xl divide-y divide-border/50">
@@ -308,13 +350,12 @@ export default function ChemicalLogPage() {
           )}
         </div>
 
-        {/* Log list */}
         <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Log Entries</div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Weekly Entries</div>
           {loading ? (
             <div className="text-xs text-muted-foreground text-center py-8">Loading…</div>
           ) : displayLogs.length === 0 ? (
-            <div className="text-xs text-muted-foreground text-center py-8">No logs yet. Add your first entry above.</div>
+            <div className="text-xs text-muted-foreground text-center py-8">No logs yet. Add your first weekly entry above.</div>
           ) : (
             <div className="bg-card border border-border rounded-xl divide-y divide-border/50">
               {displayLogs.map(log => (
