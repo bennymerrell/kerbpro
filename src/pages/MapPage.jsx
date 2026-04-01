@@ -57,16 +57,18 @@ export default function MapPage() {
         if (records[0].default_zoom) mapRef.current?.setZoom(records[0].default_zoom);
       }
     });
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        const latlng = [pos.coords.latitude, pos.coords.longitude];
-        setMapCenter(latlng);
-        if (mapRef.current) {
-          mapRef.current.flyTo(latlng, mapRef.current.getZoom(), { animate: false });
-        }
-      },
-      () => {}
-    );
+    if (!location.state?.flyTo) {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          const latlng = [pos.coords.latitude, pos.coords.longitude];
+          setMapCenter(latlng);
+          if (mapRef.current) {
+            mapRef.current.flyTo(latlng, mapRef.current.getZoom(), { animate: false });
+          }
+        },
+        () => {}
+      );
+    }
   }, []);
   const [isPlotting, setIsPlotting] = useState(false);
   const [tileLayer, setTileLayer] = useState('osm');
