@@ -129,6 +129,9 @@ export default function MapPage() {
 
   useEffect(() => {
     if (!location.state?.flyTo) return;
+    if (location.state?.activateCategory) {
+      setActiveCategories(prev => prev.includes(location.state.activateCategory) ? prev : [...prev, location.state.activateCategory]);
+    }
     const coords = location.state.flyTo;
     const attempt = (tries = 0) => {
       if (mapRef.current) {
