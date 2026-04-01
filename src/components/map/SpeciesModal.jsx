@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, MapPin, Send, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
@@ -15,6 +15,12 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   function handlePhotoChange(e) {
     const file = e.target.files[0];
