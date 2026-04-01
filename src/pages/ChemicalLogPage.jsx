@@ -67,12 +67,12 @@ function LogForm({ onSave, onCancel }) {
         <div style={{overflow: 'hidden'}}>
           <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
           <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
-            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
+            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', lineHeight: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
         </div>
         <div style={{overflow: 'hidden'}}>
           <label className="text-xs text-muted-foreground font-medium">Week End</label>
           <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
-            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
+            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', lineHeight: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
