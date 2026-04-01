@@ -147,14 +147,13 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
           {/* Name/Description */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">
-            Name / Description <span className="text-destructive">*</span>
+            Name / Description
             </label>
             <input
               type="text"
               value={speciesName}
               onChange={e => setSpeciesName(e.target.value)}
               placeholder="Name or description…"
-              required
               className="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
             />
           </div>
@@ -222,7 +221,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
           <Button
             type="submit"
-            disabled={sending || sent || !speciesName.trim() || !managerEmail.trim()}
+            disabled={sending || sent || !managerEmail.trim()}
             className="w-full h-9 text-sm"
           >
             {sent ? (
