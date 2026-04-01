@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FlaskConical, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FlaskConical, Pencil, Check, X, User, Building2 } from 'lucide-react';
 
 const UNITS = ['litres', 'kg'];
 const EMPTY_CHEM = { chemical_name: '', unit: 'litres', start_amount: '', end_amount: '' };
@@ -335,11 +335,15 @@ export default function ChemicalLogPage() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
-            <button onClick={() => setView('personal')} className={`px-3 py-1.5 text-xs font-medium transition-colors ${view === 'personal' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/60'}`}>My Usage</button>
-            <button onClick={() => setView('company')} className={`px-3 py-1.5 text-xs font-medium transition-colors ${view === 'company' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/60'}`}>Company</button>
+            <button onClick={() => setView('personal')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${view === 'personal' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/60'}`}>
+              <User className="h-3.5 w-3.5" /><span className="hidden sm:inline">My Usage</span>
+            </button>
+            <button onClick={() => setView('company')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${view === 'company' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/60'}`}>
+              <Building2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Company</span>
+            </button>
           </div>
           <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors">
-            <Plus className="h-3.5 w-3.5" /> Add Log
+            <Plus className="h-3.5 w-3.5" /><span className="hidden sm:inline">Add Log</span>
           </button>
         </div>
       </div>
