@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, ArrowUpDown, MapPin, Calendar, Leaf, Image } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -12,6 +12,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function SightingsPage() {
+  const navigate = useNavigate();
   const [sightings, setSightings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -142,14 +143,12 @@ export default function SightingsPage() {
               <div className="space-y-1.5 text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5" />
-                  <a
-                    href={`https://www.google.com/maps?q=${selected.lat},${selected.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                  <button
+                    onClick={() => { setSelected(null); navigate('/', { state: { fitBounds: [[selected.lat, selected.lng]], center: [selected.lat, selected.lng] } }); }}
+                    className="text-primary hover:underline text-left"
                   >
                     {selected.lat?.toFixed(6)}, {selected.lng?.toFixed(6)}
-                  </a>
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5" />
