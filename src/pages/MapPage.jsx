@@ -468,8 +468,10 @@ export default function MapPage() {
       {speciesModalLocation && (
         <SpeciesModal
           location={speciesModalLocation}
-          onClose={() => setSpeciesModalLocation(null)}
+          onClose={() => { setSpeciesModalLocation(null); setIsSpeciesMode(false); }}
           onSaved={async (sighting) => {
+            setSpeciesModalLocation(null);
+            setIsSpeciesMode(false);
             setSpeciesSightings(prev => [...prev, sighting]);
             await base44.entities.Sighting.create({
               species: sighting.species,
