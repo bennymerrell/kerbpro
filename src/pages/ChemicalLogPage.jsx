@@ -60,19 +60,19 @@ function LogForm({ onSave, onCancel }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-4 mb-4">
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-4 mb-4" style={{overflow: 'hidden'}}>
       <div className="text-sm font-semibold text-foreground">New Weekly Log</div>
 
       <div className="flex flex-col gap-3">
         <div>
           <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
           <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            className="mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" style={{width: '100%', maxWidth: '100%', boxSizing: 'border-box'}} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium">Week End</label>
           <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            className="mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" style={{width: '100%', maxWidth: '100%', boxSizing: 'border-box'}} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
