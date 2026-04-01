@@ -1,7 +1,5 @@
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { useState, useEffect } from 'react';
-import { coordsToW3W } from '../../lib/w3wUtils';
 import { formatDistance, formatDistanceMiles, getSegmentDistances, calculateTotalDistance } from '../../lib/mapUtils';
 
 function createWaypointIcon(index, total) {
@@ -17,23 +15,7 @@ function createWaypointIcon(index, total) {
   });
 }
 
-function W3WLabel({ lat, lng }) {
-  const [words, setWords] = useState(null);
-  useEffect(() => {
-    coordsToW3W(lat, lng).then(setWords);
-  }, [lat, lng]);
-  if (!words) return null;
-  return (
-    <a
-      href={`https://what3words.com/${words.replace('///', '')}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-[#e11d48] font-medium hover:underline"
-    >
-      {words}
-    </a>
-  );
-}
+
 
 export default function WaypointMarkers({ waypoints, onRemoveWaypoint }) {
   const segments = getSegmentDistances(waypoints);
@@ -58,7 +40,6 @@ export default function WaypointMarkers({ waypoints, onRemoveWaypoint }) {
             </div>
             <div className="text-xs text-muted-foreground space-y-0.5">
               <div>{wp.lat.toFixed(6)}, {wp.lng.toFixed(6)}</div>
-              <div><W3WLabel lat={wp.lat} lng={wp.lng} /></div>
               {i > 0 && (
                 <>
                   <div>Leg: {formatDistance(segments[i - 1])} / {formatDistanceMiles(segments[i - 1])}</div>

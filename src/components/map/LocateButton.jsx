@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LocateFixed, Loader2 } from 'lucide-react';
 import { useMap, Marker, Circle, Popup } from 'react-leaflet';
-import { coordsToW3W } from '../../lib/w3wUtils';
+
 import L from 'leaflet';
 
 // Inject pulsing animation style once
@@ -47,7 +47,7 @@ function createLocationIcon() {
   });
 }
 
-function LocationMarker({ position, accuracy, w3w }) {
+function LocationMarker({ position, accuracy }) {
   if (!position) return null;
   return (
     <>
@@ -59,17 +59,7 @@ function LocationMarker({ position, accuracy, w3w }) {
       <Marker position={position} icon={createLocationIcon()}>
         <Popup closeButton={false}>
           <div className="font-sans text-xs p-1">
-            <div className="text-muted-foreground mb-0.5 font-medium">Your location</div>
-            {w3w && (
-              <a
-                href={`https://what3words.com/${w3w.replace('///', '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#e11d48] font-semibold hover:underline text-sm"
-              >
-                {w3w}
-              </a>
-            )}
+            <div className="text-muted-foreground font-medium">Your location</div>
           </div>
         </Popup>
       </Marker>
@@ -96,9 +86,6 @@ function LocateControl({ locationData, onLocationUpdate }) {
             position: latlng,
             accuracy: pos.coords.accuracy,
           }));
-          // Fetch W3W once
-          const w3w = await coordsToW3W(pos.coords.latitude, pos.coords.longitude);
-          onLocationUpdate(p => ({ ...p, w3w }));
         } catch (e) {
           console.error('Location update error:', e);
           setLoading(false);
@@ -150,7 +137,6 @@ export default function LocateButton() {
         <LocationMarker
           position={locationData.position}
           accuracy={locationData.accuracy}
-          w3w={locationData.w3w}
         />
       )}
     </>
