@@ -40,7 +40,7 @@ export default function SightingsPage() {
         </Link>
         <div className="flex items-center gap-2 flex-1">
           <Leaf className="h-5 w-5 text-emerald-600" />
-          <h1 className="font-semibold text-foreground text-base">Invasive Species Sightings</h1>
+          <h1 className="font-semibold text-foreground text-base">Sightings</h1>
           {!loading && (
             <span className="ml-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {filtered.length}
