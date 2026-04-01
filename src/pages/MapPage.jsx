@@ -135,7 +135,7 @@ export default function MapPage() {
     const coords = location.state.flyTo;
     const attempt = (tries = 0) => {
       if (mapRef.current) {
-        mapRef.current.flyTo(coords, 17, { animate: true });
+        mapRef.current.flyTo(coords, 19, { animate: true });
       } else if (tries < 20) {
         setTimeout(() => attempt(tries + 1), 100);
       }
