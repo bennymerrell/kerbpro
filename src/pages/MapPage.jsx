@@ -42,6 +42,9 @@ export default function MapPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);
@@ -456,6 +459,7 @@ export default function MapPage() {
               lat: sighting.lat,
               lng: sighting.lng,
               photo_url: sighting.photoUrl || null,
+              reported_by: currentUser?.full_name || currentUser?.email || null,
             });
           }}
         />
