@@ -109,8 +109,8 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-start justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm my-auto overflow-hidden">
+    <div className="fixed inset-0 z-[2000] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center">
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm flex flex-col" style={{maxHeight: '90dvh'}}>
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -128,7 +128,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1">
           {/* Category */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-2">Category <span className="text-destructive">*</span></label>
