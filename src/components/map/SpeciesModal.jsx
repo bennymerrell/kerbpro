@@ -109,8 +109,8 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden">
+    <div className="fixed inset-0 z-[2000] flex items-start justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm my-auto overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
