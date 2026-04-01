@@ -84,24 +84,31 @@ function LogForm({ onSave, onCancel }) {
       {/* Chemical rows */}
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">Chemicals</div>
-        <div className="hidden grid-cols-[1fr_80px_90px_90px_32px] gap-2 sm:grid text-[10px] text-muted-foreground px-1">
-          <span>Name</span><span>Unit</span><span>Start</span><span>End (later)</span><span />
-        </div>
         {chemicals.map((c, i) => (
-          <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
-            <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Chemical name" required
-              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
-            <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
-              className="h-8 px-1 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none">
-              {UNITS.map(u => <option key={u}>{u}</option>)}
-            </select>
-            <input type="number" step="0.01" value={c.start_amount} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start" required
-              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
-            <input type="number" step="0.01" value={c.end_amount} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End (later)"
-              className="h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
-            {chemicals.length > 1
-              ? <button type="button" onClick={() => removeChem(i)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"><X className="h-3.5 w-3.5" /></button>
-              : <div />}
+          <div key={i} className="border border-border/60 rounded-lg p-2 space-y-2 bg-muted/20">
+            <div className="flex gap-2">
+              <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Chemical name" required
+                className="flex-1 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+              <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
+                className="w-20 h-8 px-1 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none">
+                {UNITS.map(u => <option key={u}>{u}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <label className="text-[10px] text-muted-foreground">Start</label>
+                <input type="number" step="0.01" value={c.start_amount} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start amount" required
+                  className="w-full mt-0.5 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] text-muted-foreground">End (fill in later)</label>
+                <input type="number" step="0.01" value={c.end_amount} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End amount"
+                  className="w-full mt-0.5 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
+              </div>
+              {chemicals.length > 1 && (
+                <button type="button" onClick={() => removeChem(i)} className="mt-4 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+              )}
+            </div>
           </div>
         ))}
         <button type="button" onClick={addChem} className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-1">
@@ -195,20 +202,30 @@ function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
                 </div>
               </div>
               {chemicals.map((c, i) => (
-                <div key={i} className="grid grid-cols-[1fr_80px_90px_90px_32px] gap-2 items-center">
-                  <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Name"
-                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                  <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
-                    className="h-7 px-1 rounded border border-input bg-background text-xs focus:outline-none">
-                    {UNITS.map(u => <option key={u}>{u}</option>)}
-                  </select>
-                  <input type="number" step="0.01" value={c.start_amount ?? ''} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start"
-                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                  <input type="number" step="0.01" value={c.end_amount ?? ''} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End"
-                    className="h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                  {chemicals.length > 1
-                    ? <button type="button" onClick={() => removeChem(i)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
-                    : <div />}
+                <div key={i} className="border border-border/60 rounded-lg p-2 space-y-2 bg-muted/20">
+                  <div className="flex gap-2">
+                    <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Name"
+                      className="flex-1 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                    <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
+                      className="w-20 h-7 px-1 rounded border border-input bg-background text-xs focus:outline-none">
+                      {UNITS.map(u => <option key={u}>{u}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground">Start</label>
+                      <input type="number" step="0.01" value={c.start_amount ?? ''} onChange={e => setChemField(i, 'start_amount', e.target.value)} placeholder="Start"
+                        className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground">End</label>
+                      <input type="number" step="0.01" value={c.end_amount ?? ''} onChange={e => setChemField(i, 'end_amount', e.target.value)} placeholder="End"
+                        className="w-full mt-0.5 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                    </div>
+                    {chemicals.length > 1 && (
+                      <button type="button" onClick={() => removeChem(i)} className="mt-4 h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex-shrink-0"><X className="h-3 w-3" /></button>
+                    )}
+                  </div>
                 </div>
               ))}
               <button type="button" onClick={addChem} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
