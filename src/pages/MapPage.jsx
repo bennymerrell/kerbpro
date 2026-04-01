@@ -217,6 +217,10 @@ export default function MapPage() {
     setWaypoints(prev => prev.slice(0, -1));
   }, []);
 
+  const handleUndoAreaPoint = useCallback(() => {
+    setAreaPoints(prev => prev.slice(0, -1));
+  }, []);
+
   const handleClear = useCallback(() => {
     setWaypoints([]);
   }, []);
@@ -493,6 +497,14 @@ export default function MapPage() {
               ? `Click to place points (${areaPoints.length} placed, need at least 3)`
               : `${areaPoints.length} points placed — cell`}
           </div>
+          {areaPoints.length > 0 && (
+            <button
+              onClick={handleUndoAreaPoint}
+              className="bg-white text-indigo-700 font-semibold text-xs rounded-full shadow-lg px-4 py-2.5 hover:bg-indigo-50 transition-colors border border-indigo-200"
+            >
+              ↩ Undo
+            </button>
+          )}
           {areaPoints.length >= 3 && (
             <button
               onClick={() => setAreaClosed(true)}
