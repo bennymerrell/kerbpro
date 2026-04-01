@@ -63,18 +63,20 @@ function LogForm({ onSave, onCancel }) {
     <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 space-y-4 mb-4">
       <div className="text-sm font-semibold text-foreground">New Weekly Log</div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
-          <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
+            <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
+              className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground font-medium">Week End</label>
+            <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
+              className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium">Week End <span className="text-muted-foreground/60">(fill in at end of week)</span></label>
-          <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
-            className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        </div>
-        <div className="sm:col-span-2">
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
           <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional…"
             className="w-full mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
