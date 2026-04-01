@@ -52,7 +52,7 @@ export default function MapPage() {
   // On mount, load saved default location then try geolocation
   useEffect(() => {
     base44.entities.AppSettings.list().then((records) => {
-      if (records.length > 0 && records[0].default_lat && records[0].default_lng) {
+      if (!location.state?.flyTo && records.length > 0 && records[0].default_lat && records[0].default_lng) {
         setMapCenter([records[0].default_lat, records[0].default_lng]);
         if (records[0].default_zoom) mapRef.current?.setZoom(records[0].default_zoom);
       }
