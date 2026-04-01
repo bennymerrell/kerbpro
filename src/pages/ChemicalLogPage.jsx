@@ -64,15 +64,15 @@ function LogForm({ onSave, onCancel }) {
       <div className="text-sm font-semibold text-foreground">New Weekly Log</div>
 
       <div className="flex flex-col gap-3">
-        <div>
+        <div style={{overflow: 'hidden'}}>
           <label className="text-xs text-muted-foreground font-medium">Week Start <span className="text-destructive">*</span></label>
           <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} required
-            className="mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" style={{width: '100%', maxWidth: '100%', boxSizing: 'border-box'}} />
+            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
         </div>
-        <div>
+        <div style={{overflow: 'hidden'}}>
           <label className="text-xs text-muted-foreground font-medium">Week End</label>
           <input type="date" value={weekEnd} onChange={e => setWeekEnd(e.target.value)}
-            className="mt-1 h-9 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" style={{width: '100%', maxWidth: '100%', boxSizing: 'border-box'}} />
+            style={{display: 'block', width: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none', height: '36px', padding: '0 8px', borderRadius: '8px', border: '1px solid hsl(var(--input))', background: 'hsl(var(--background))', fontSize: '12px', color: 'hsl(var(--foreground))'}} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium">Notes</label>
