@@ -25,7 +25,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!speciesName.trim() || !managerEmail.trim()) return;
+    if (!managerEmail.trim()) return;
     setSending(true);
 
     let photoUrl = null;
