@@ -144,7 +144,7 @@ export default function SightingsPage() {
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5" />
                   <button
-                    onClick={() => { setSelected(null); navigate('/', { state: { fitBounds: [[selected.lat, selected.lng]], center: [selected.lat, selected.lng] } }); }}
+                    onClick={() => { setSelected(null); navigate('/', { state: { flyTo: [selected.lat, selected.lng] } }); }}
                     className="text-primary hover:underline text-left"
                   >
                     {selected.lat?.toFixed(6)}, {selected.lng?.toFixed(6)}

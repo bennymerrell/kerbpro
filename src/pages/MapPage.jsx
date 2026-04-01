@@ -128,6 +128,19 @@ export default function MapPage() {
   }, [location.state?.selectedCell]);
 
   useEffect(() => {
+    if (!location.state?.flyTo) return;
+    const coords = location.state.flyTo;
+    const attempt = (tries = 0) => {
+      if (mapRef.current) {
+        mapRef.current.flyTo(coords, 17, { animate: true });
+      } else if (tries < 20) {
+        setTimeout(() => attempt(tries + 1), 100);
+      }
+    };
+    attempt();
+  }, [location.state?.flyTo]);
+
+  useEffect(() => {
     if (!location.state?.fitBounds) return;
     const bounds = location.state.fitBounds;
     const attempt = (tries = 0) => {
