@@ -98,17 +98,21 @@ export default function MapPage() {
   const [savedCells, setSavedCells] = useState([]);
 
   useEffect(() => {
-    const loadCells = async () => {
+    const loadData = async () => {
       try {
-        const data = await base44.entities.Cell.list('-created_date', 100);
-        setSavedCells(data);
-        await indexedDBCache.cacheCells(data);
+        const [cellData, sightingData] = await Promise.all([
+          base44.entities.Cell.list('-created_date', 100),
+          base44.entities.Sighting.list('-created_date', 500),
+        ]);
+        setSavedCells(cellData);
+        setSpeciesSightings(sightingData);
+        await indexedDBCache.cacheCells(cellData);
       } catch (e) {
         const cached = await indexedDBCache.getCells();
         setSavedCells(cached);
       }
     };
-    loadCells();
+    loadData();
   }, []);
 
   useEffect(() => {
