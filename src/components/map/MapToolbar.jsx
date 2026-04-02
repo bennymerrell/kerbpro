@@ -25,6 +25,18 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
       const totalMi = (selectedCell.adopted_m!=null&&selectedCell.unadopted_m!=null) ? ((selectedCell.adopted_m+selectedCell.unadopted_m)/1609.34).toFixed(2) : '-';
       pdf.text(`Total: ${totalMi} mi`, boxX+4, boxY+15+rowH*2);
     }
+    if (selectedCell) {
+      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
+      pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
+      pdf.roundedRect(boxX, boxY, boxW, 10 + rowH * 3 + 4, 2, 2, 'FD');
+      pdf.setFontSize(9); pdf.setFont('helvetica','bold'); pdf.setTextColor(30,58,95);
+      pdf.text('Cell', boxX+4, boxY+7);
+      pdf.setFont('helvetica','normal'); pdf.setTextColor(30,30,30); pdf.setFontSize(7.5);
+      pdf.text(`Name: ${(selectedCell.name||'Unnamed').substring(0,16)}`, boxX+4, boxY+15);
+      pdf.text(`Area: ${(selectedCell.area||'-').substring(0,16)}`, boxX+4, boxY+15+rowH);
+      const totalMi = (selectedCell.adopted_m!=null&&selectedCell.unadopted_m!=null) ? ((selectedCell.adopted_m+selectedCell.unadopted_m)/1609.34).toFixed(2) : '-';
+      pdf.text(`Total: ${totalMi} mi`, boxX+4, boxY+15+rowH*2);
+    }
     pdf.save('map-export.pdf');
     setExporting(false);
   }
