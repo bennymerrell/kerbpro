@@ -354,6 +354,11 @@ export default function MapPage() {
         selectedCell={selectedCell}
       />
 
+      {/* Tile Layer Selector — bottom right */}
+      <div className="absolute z-[1000]" style={{ bottom: 'max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem))', right: '1rem' }}>
+        <TileLayerSelector />
+      </div>
+
       {/* Species Modal */}
       {speciesModalLocation && (
         <SpeciesModal
