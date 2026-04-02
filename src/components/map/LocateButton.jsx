@@ -113,8 +113,8 @@ function LocateControl({ locationData, onLocationUpdate }) {
 
   return (
     <div
-      className="absolute z-[1000] right-4"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      className="absolute z-[1000]"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', right: '4.75rem' }}
     >
       <button
         onClick={handleCenterOnMe}
