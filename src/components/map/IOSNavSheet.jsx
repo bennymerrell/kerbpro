@@ -33,11 +33,10 @@ export default function IOSNavSheet({
 
   async function handleDownloadPDF() {
     setExporting(true);
+    // Get optimal dimensions BEFORE building canvas so canvas size matches orientation
+    const pdfDims = getPDFDimensions(cells, selectedCell);
     const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
-    
-    // Get optimal dimensions based on cell shape
-    const pdfDims = getPDFDimensions(cells, selectedCell);
     const pdf = new jsPDF({ orientation: pdfDims.orientation, unit: 'mm', format: 'a4' });
     
     // Calculate optimal image placement and size
