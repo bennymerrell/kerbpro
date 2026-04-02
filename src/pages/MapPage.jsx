@@ -355,7 +355,7 @@ export default function MapPage() {
               <ChevronDown className="h-3 w-3" />
             </button>
             {navOpen && (
-              <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[130px]">
+              <div className="absolute top-full right-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[130px] z-[3001]">
                 <button onClick={() => { setNavOpen(false); navigate('/chemical-logs'); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
                   <FlaskConical className="h-3.5 w-3.5" /> Chemical Logs
                 </button>
