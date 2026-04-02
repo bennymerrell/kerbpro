@@ -130,7 +130,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
   if (!closed || points.length < 3) return null;
 
   return (
-    <div className="absolute bottom-6 left-4 z-[1000] w-72">
+    <div className="absolute left-4 z-[1000] w-72" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}>
       <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden">
         <div className="px-4 py-3 flex items-center gap-3 border-b border-border/40">
           <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
