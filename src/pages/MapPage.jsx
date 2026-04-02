@@ -303,6 +303,8 @@ export default function MapPage() {
       {/* Search — iOS pill style */}
       <div className="absolute z-[999] flex items-center"
         style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '4.75rem', right: '4.75rem' }}>
+        <SearchBox mapRef={mapRef} />
+      </div>
 
       {/* Area results */}
       {isAreaMode && (
