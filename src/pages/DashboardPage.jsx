@@ -19,10 +19,19 @@ export default function DashboardPage() {
   const [tab, setTab] = useState('analytics');
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+    
     base44.auth.me().then(u => {
+      clearTimeout(timeout);
       setUser(u);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => {
+      clearTimeout(timeout);
+      console.error('Auth error:', err);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
