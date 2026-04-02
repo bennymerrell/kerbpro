@@ -93,7 +93,7 @@ export default function PrintMapPage() {
   return (
     <div className={`fixed inset-0 bg-background print:bg-white ${orientation === 'landscape' ? 'print:aspect-video' : ''}`}>
       {/* Header - Hidden on print */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-card border-b border-border p-4 flex items-center justify-between print:hidden">
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-card border-b border-border p-4 flex items-center justify-between print:!hidden">
         <div className="flex-1">
           <h1 className="text-lg font-semibold text-foreground">
             Print Map {selectedCell?.name ? `- ${selectedCell.name}` : ''}
