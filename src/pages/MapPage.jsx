@@ -24,6 +24,8 @@ import CategoryFilter from '../components/map/CategoryFilter';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick, FlaskConical } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
+import usePWA from '../hooks/usePWA';
+import OfflineIndicator from '../components/OfflineIndicator';
 import IOSNavSheet from '../components/map/IOSNavSheet';
 
 // Fix leaflet default marker icon
@@ -42,6 +44,7 @@ export default function MapPage() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOnline } = usePWA();
   const [navOpen, setNavOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -232,6 +235,7 @@ export default function MapPage() {
 
   return (
     <div className="fixed inset-0 w-screen h-screen relative overflow-hidden">
+      <OfflineIndicator isOnline={isOnline} />
       <MapContainer
         center={mapCenter}
         zoom={DEFAULT_ZOOM}
