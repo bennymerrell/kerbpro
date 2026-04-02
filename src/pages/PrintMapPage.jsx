@@ -100,7 +100,7 @@ export default function PrintMapPage() {
           </h1>
         </div>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(-1) || navigate('/')}
           className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80"
         >
           <X className="h-4 w-4" />
