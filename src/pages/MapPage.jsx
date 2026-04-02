@@ -426,7 +426,7 @@ export default function MapPage() {
 
       {/* Hint banners — iOS pill style */}
       {isAreaMode && !areaClosed && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 10rem))'}}>
           <div className="bg-indigo-500 rounded-full shadow-lg px-5 py-2.5 text-sm text-white font-medium">
             {areaPoints.length < 3
               ? `Tap to place points (${areaPoints.length} placed, need at least 3)`
@@ -445,14 +445,14 @@ export default function MapPage() {
         </div>
       )}
       {isSpeciesMode && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 10rem))'}}>
           <div className="bg-blue-500 rounded-full shadow-lg px-5 py-2.5 text-sm text-white font-medium">
             Tap anywhere to add a sighting
           </div>
         </div>
       )}
       {!isSpeciesMode && !isAreaMode && isPlotting && waypoints.length === 0 && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 6rem))'}}>
           <div className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg px-5 py-2.5 text-sm text-gray-500 font-medium">
             Tap the map to start plotting your route
           </div>

@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
+import Layout from './components/Layout';
 import MapPage from './pages/MapPage';
 import SightingsPage from './pages/SightingsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -38,12 +39,14 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<MapPage />} />
-      <Route path="/sightings" element={<SightingsPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/cells" element={<CellsPage />} />
-      <Route path="/chemical-logs" element={<ChemicalLogPage />} />
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<MapPage />} />
+        <Route path="/sightings" element={<SightingsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/cells" element={<CellsPage />} />
+        <Route path="/chemical-logs" element={<ChemicalLogPage />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
   );
 };

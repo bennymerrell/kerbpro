@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
+import usePullToRefresh from '../hooks/usePullToRefresh';
 import { ArrowLeft, Search, ArrowUpDown, MapPin, Calendar, Leaf, Image } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -19,12 +20,16 @@ export default function SightingsPage() {
   const [sort, setSort] = useState('-created_date');
   const [selected, setSelected] = useState(null);
 
-  useEffect(() => {
-    base44.entities.Sighting.list(sort, 200).then(data => {
-      setSightings(data);
-      setLoading(false);
-    });
+  const loadSightings = useCallback(async () => {
+    setLoading(true);
+    const data = await base44.entities.Sighting.list(sort, 200);
+    setSightings(data);
+    setLoading(false);
   }, [sort]);
+
+  useEffect(() => { loadSightings(); }, [loadSightings]);
+
+  const { refreshing } = usePullToRefresh(loadSightings);
 
   const filtered = sightings.filter(s =>
     s.species?.toLowerCase().includes(search.toLowerCase()) ||
@@ -32,7 +37,12 @@ export default function SightingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
+      {refreshing && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full shadow-md px-4 py-1.5 text-xs text-gray-500 font-medium">
+          Refreshing…
+        </div>
+      )}
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
         <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">

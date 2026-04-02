@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
+import DrawerPicker from '../components/DrawerPicker';
 import { ArrowLeft, Plus, Trash2, FlaskConical, Pencil, Check, X, User, Building2 } from 'lucide-react';
 
 const UNITS = ['litres', 'kg'];
@@ -89,10 +90,7 @@ function LogForm({ onSave, onCancel }) {
             <div className="flex gap-2">
               <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Chemical name" required
                 className="flex-1 h-8 px-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30" />
-              <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
-                className="w-20 h-8 px-1 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none">
-                {UNITS.map(u => <option key={u}>{u}</option>)}
-              </select>
+              <DrawerPicker value={c.unit} options={UNITS} onChange={val => setChemField(i, 'unit', val)} className="w-20 h-8" />
             </div>
             <div className="flex gap-2 items-center">
               <div className="flex-1">
@@ -206,10 +204,7 @@ function EditableLog({ log, currentUser, onUpdated, onDeleted }) {
                   <div className="flex gap-2">
                     <input type="text" value={c.chemical_name} onChange={e => setChemField(i, 'chemical_name', e.target.value)} placeholder="Name"
                       className="flex-1 h-7 px-2 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                    <select value={c.unit} onChange={e => setChemField(i, 'unit', e.target.value)}
-                      className="w-20 h-7 px-1 rounded border border-input bg-background text-xs focus:outline-none">
-                      {UNITS.map(u => <option key={u}>{u}</option>)}
-                    </select>
+                    <DrawerPicker value={c.unit} options={UNITS} onChange={val => setChemField(i, 'unit', val)} className="w-20 h-7" />
                   </div>
                   <div className="flex gap-2 items-center">
                     <div className="flex-1">

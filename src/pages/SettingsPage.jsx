@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Save, Search, Loader2, CheckCircle } from 'lucide-react';
+import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SettingsPage() {
@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     base44.entities.AppSettings.list().then((records) => {
@@ -158,6 +159,40 @@ export default function SettingsPage() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Saved!' : 'Save Settings'}
           </button>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-card rounded-2xl border border-red-200 shadow-sm p-6 space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <span className="text-sm font-semibold text-red-600">Danger Zone</span>
+          </div>
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+            >
+              <Trash2 className="h-4 w-4" /> Delete Account
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Are you sure? This will sign you out. To permanently delete your account, contact support.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => base44.auth.logout()}
+                  className="h-8 px-4 rounded-lg bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+                >
+                  Yes, sign out
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-8 px-4 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,12 +21,16 @@ export default function CellsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    base44.entities.Cell.list('-created_date', 200).then(data => {
-      setCells(data);
-      setLoading(false);
-    });
+  const loadCells = useCallback(async () => {
+    setLoading(true);
+    const data = await base44.entities.Cell.list('-created_date', 200);
+    setCells(data);
+    setLoading(false);
   }, []);
+
+  useEffect(() => { loadCells(); }, [loadCells]);
+
+  const { refreshing } = usePullToRefresh(loadCells);
 
   const filtered = cells.filter(c =>
     (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase())
@@ -54,7 +59,12 @@ export default function CellsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-20">
+      {refreshing && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full shadow-md px-4 py-1.5 text-xs text-gray-500 font-medium">
+          Refreshing…
+        </div>
+      )}
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <button

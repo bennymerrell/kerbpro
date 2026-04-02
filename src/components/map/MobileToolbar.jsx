@@ -59,7 +59,7 @@ export default function MobileToolbar({
   return (
     <div
       className="fixed left-1/2 -translate-x-1/2 z-[1000]"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
     >
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl flex items-center gap-0.5 px-2 py-2">
         <button
