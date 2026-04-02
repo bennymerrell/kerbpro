@@ -1,11 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Map, Leaf, SquareDashedBottom, FlaskConical } from 'lucide-react';
+import { Map, Leaf, SquareDashedBottom } from 'lucide-react';
 
 const TABS = [
   { path: '/', label: 'Map', icon: Map },
   { path: '/sightings', label: 'Sightings', icon: Leaf },
   { path: '/cells', label: 'Cells', icon: SquareDashedBottom },
-  { path: '/chemical-logs', label: 'Logs', icon: FlaskConical },
 ];
 
 export default function BottomTabBar() {

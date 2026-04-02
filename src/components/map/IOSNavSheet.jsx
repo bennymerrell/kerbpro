@@ -62,7 +62,6 @@ export default function IOSNavSheet({
   ];
 
   const pageItems = [
-    { label: 'Chemical Logs', icon: FlaskConical, path: '/chemical-logs', bg: 'bg-orange-500' },
     { label: 'Sightings', icon: List, path: '/sightings', bg: 'bg-green-500' },
     { label: 'Cells', icon: SquareDashedBottom, path: '/cells', bg: 'bg-blue-500' },
   ];
