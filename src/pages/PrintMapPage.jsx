@@ -108,7 +108,7 @@ export default function PrintMapPage() {
       </div>
 
       {/* Map Container */}
-      <div className="absolute inset-0 top-16 bottom-24 print:inset-0 print:top-0 print:bottom-0">
+      <div className="absolute inset-0 top-16 bottom-24 print:inset-0 print:top-0 print:bottom-0 print:m-0">
         {selectedCell ? (
           <MapContainer
             center={[51.505, -0.09]}
