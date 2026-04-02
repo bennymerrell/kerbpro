@@ -4,7 +4,7 @@ import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom
 import { useNavigate } from 'react-router-dom';
 import { buildMapCanvas } from '../../lib/mapExport';
 
-const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
 export default function IOSNavSheet({
   open, onClose,
