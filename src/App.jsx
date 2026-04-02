@@ -14,6 +14,7 @@ import CellsPage from './pages/CellsPage';
 import ChemicalLogPage from './pages/ChemicalLogPage';
 import PermissionsPage from './pages/PermissionsPage';
 import DashboardPage from './pages/DashboardPage';
+import PrintMapPage from './pages/PrintMapPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/chemical-logs" element={<ChemicalLogPage />} />
         <Route path="/permissions" element={<PermissionsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/print-map/:cellId" element={<PrintMapPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

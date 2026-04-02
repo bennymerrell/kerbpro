@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { buildMapCanvas, getPDFDimensions, calculateOptimalImageDimensions } from '../../lib/mapExport';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
@@ -15,7 +14,6 @@ export default function IOSNavSheet({
   cells = [],
   selectedCell = null,
 }) {
-  const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
   const sheetRef = useRef(null);
 
@@ -31,38 +29,16 @@ export default function IOSNavSheet({
 
   function navAndClose(path) { onClose(); navigate(path); }
 
-  async function handleDownloadPDF() {
-    setExporting(true);
-    // Get optimal dimensions BEFORE building canvas so canvas size matches orientation
-    const pdfDims = getPDFDimensions(cells, selectedCell);
-    const canvas = await buildMapCanvas(cells, selectedCell);
-    const { default: jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: pdfDims.orientation, unit: 'mm', format: 'a4' });
-    
-    // Calculate optimal image placement and size
-    const imgDims = calculateOptimalImageDimensions(canvas.width, canvas.height, pdfDims.width, pdfDims.height);
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgDims.x, imgDims.y, imgDims.width, imgDims.height);
+  function handlePrintMap() {
     if (selectedCell) {
-      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
-      pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
-      pdf.roundedRect(boxX, boxY, boxW, 10 + rowH * 3 + 4, 2, 2, 'FD');
-      pdf.setFontSize(9); pdf.setFont('helvetica','bold'); pdf.setTextColor(30,58,95);
-      pdf.text('Cell', boxX+4, boxY+7);
-      pdf.setFont('helvetica','normal'); pdf.setTextColor(30,30,30); pdf.setFontSize(7.5);
-      pdf.text(`Name: ${(selectedCell.name||'Unnamed').substring(0,16)}`, boxX+4, boxY+15);
-      pdf.text(`Area: ${(selectedCell.area||'-').substring(0,16)}`, boxX+4, boxY+15+rowH);
-      const totalMi = (selectedCell.adopted_m!=null&&selectedCell.unadopted_m!=null) ? ((selectedCell.adopted_m+selectedCell.unadopted_m)/1609.34).toFixed(2) : '-';
-      pdf.text(`Total: ${totalMi} mi`, boxX+4, boxY+15+rowH*2);
+      navAndClose(`/print-map/${selectedCell.id}`);
     }
-    pdf.save('map-export.pdf');
-    setExporting(false);
-    onClose();
   }
 
   const toolItems = [
     { label: 'Spotted', icon: Info, active: isSpeciesMode, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onToggleSpeciesMode(); onClose(); } },
     { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { onToggleAreaMode(); onClose(); } },
-    { label: exporting ? 'Exporting…' : 'Save PDF', icon: exporting ? Loader2 : Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handleDownloadPDF },
+    { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handlePrintMap, disabled: !selectedCell },
   ];
 
   const pageItems = [
@@ -101,11 +77,12 @@ export default function IOSNavSheet({
           <div className="px-4 mb-4">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Map Tools</div>
             <div className="bg-muted/40 rounded-2xl overflow-hidden divide-y divide-border/60">
-              {toolItems.map(({ label, icon: Icon, active, color, activeBg, inactiveBg, action }) => (
+              {toolItems.map(({ label, icon: Icon, active, color, activeBg, inactiveBg, action, disabled }) => (
                 <button
                   key={label}
                   onClick={action}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${active ? 'bg-primary/5' : 'hover:bg-muted/60'}`}
+                  disabled={disabled}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${active ? 'bg-primary/5' : 'hover:bg-muted/60'}`}
                 >
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? activeBg : inactiveBg}`}>
                     <Icon className={`h-4 w-4 ${active ? 'text-white' : color}`} />
