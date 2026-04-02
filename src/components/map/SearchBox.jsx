@@ -79,7 +79,7 @@ export default function SearchBox({ onLocationFound }) {
       </form>
 
       {showResults && results.length > 0 && (
-        <div className="mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden z-[2000]">
           {results.map((result, i) => (
             <button
               key={i}
@@ -94,7 +94,7 @@ export default function SearchBox({ onLocationFound }) {
       )}
 
       {showResults && !loading && results.length === 0 && query.length >= 3 && (
-        <div className="mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl px-4 py-3 text-sm text-gray-400 text-center">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl px-4 py-3 text-sm text-gray-400 text-center z-[2000]">
           No results found
         </div>
       )}
