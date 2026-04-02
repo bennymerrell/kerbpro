@@ -394,6 +394,8 @@ export default function MapPage() {
         onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
         activeCategories={activeCategories}
         onChangeCategories={setActiveCategories}
+        cells={savedCells}
+        selectedCell={selectedCell}
       />
 
       {/* Zoom controls — desktop only */}

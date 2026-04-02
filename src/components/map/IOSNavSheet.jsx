@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { buildMapCanvas } from '../../lib/mapExport';
 import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
@@ -10,8 +12,10 @@ export default function IOSNavSheet({
   isAreaMode, onToggleAreaMode,
   isPlotting, onTogglePlotting,
   activeCategories, onChangeCategories,
+  cells = [],
+  selectedCell = null,
 }) {
-  const navigate = useNavigate();
+  const [exporting, setExporting] = useState(false);
   const sheetRef = useRef(null);
 
   useEffect(() => {
@@ -26,10 +30,22 @@ export default function IOSNavSheet({
 
   function navAndClose(path) { onClose(); navigate(path); }
 
+  async function handleDownloadPDF() {
+    setExporting(true);
+    const canvas = await buildMapCanvas(cells, selectedCell);
+    const { default: jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210);
+    pdf.save('map-export.pdf');
+    setExporting(false);
+    onClose();
+  }
+
   const toolItems = [
     { label: 'Spotted', icon: Info, active: isSpeciesMode, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onToggleSpeciesMode(); onClose(); } },
     { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { onToggleAreaMode(); onClose(); } },
     { label: 'Plot Route', icon: MousePointerClick, active: isPlotting, color: 'text-emerald-500', activeBg: 'bg-emerald-500', inactiveBg: 'bg-emerald-100', action: () => { onTogglePlotting(); onClose(); } },
+    { label: exporting ? 'Exporting…' : 'Save PDF', icon: exporting ? Loader2 : Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handleDownloadPDF },
   ];
 
   const pageItems = [
