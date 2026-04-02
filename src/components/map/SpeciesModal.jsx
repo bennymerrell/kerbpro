@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 import { notifyManagers } from '../../lib/notifyManagers';
 
-const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
 export default function SpeciesModal({ location, onClose, onSaved }) {
   const [category, setCategory] = useState('Species');
