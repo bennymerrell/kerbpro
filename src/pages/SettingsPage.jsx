@@ -7,8 +7,8 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState(null);
   const [settingsId, setSettingsId] = useState(null);
   const [managers, setManagers] = useState([]);
-  const [newManagerEmail, setNewManagerEmail] = useState('');
-  const [newManagerName, setNewManagerName] = useState('');
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [addingManager, setAddingManager] = useState(false);
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -22,16 +22,18 @@ export default function SettingsPage() {
 
   useEffect(() => {
     base44.entities.Manager.list().then(setManagers);
+    base44.entities.User.list().then(setAllUsers);
   }, []);
 
   async function handleAddManager(e) {
     e.preventDefault();
-    if (!newManagerEmail.trim()) return;
+    if (!selectedUserId) return;
+    const user = allUsers.find(u => u.id === selectedUserId);
+    if (!user) return;
     setAddingManager(true);
-    const m = await base44.entities.Manager.create({ email: newManagerEmail.trim(), name: newManagerName.trim() || null });
+    const m = await base44.entities.Manager.create({ email: user.email, name: user.full_name || null });
     setManagers(prev => [...prev, m]);
-    setNewManagerEmail('');
-    setNewManagerName('');
+    setSelectedUserId('');
     setAddingManager(false);
   }
 
@@ -209,25 +211,24 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <form onSubmit={handleAddManager} className="space-y-2">
-            <input
-              type="email"
-              value={newManagerEmail}
-              onChange={e => setNewManagerEmail(e.target.value)}
-              placeholder="manager@example.com"
+          <form onSubmit={handleAddManager} className="flex gap-2">
+            <select
+              value={selectedUserId}
+              onChange={e => setSelectedUserId(e.target.value)}
               required
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <input
-              type="text"
-              value={newManagerName}
-              onChange={e => setNewManagerName(e.target.value)}
-              placeholder="Name (optional)"
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <button type="submit" disabled={addingManager || !newManagerEmail.trim()} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
+              className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">Select a user…</option>
+              {allUsers
+                .filter(u => !managers.some(m => m.email === u.email))
+                .map(u => (
+                  <option key={u.id} value={u.id}>{u.full_name ? `${u.full_name} (${u.email})` : u.email}</option>
+                ))
+              }
+            </select>
+            <button type="submit" disabled={addingManager || !selectedUserId} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
               {addingManager ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-              Add Manager
+              Add
             </button>
           </form>
         </div>
