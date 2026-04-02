@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle, Plus, X, Users } from 'lucide-react';
+import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle, X, Users, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState(null);
   const [settingsId, setSettingsId] = useState(null);
-  const [managers, setManagers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [usersError, setUsersError] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [addingManager, setAddingManager] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState(false);
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [zoom, setZoom] = useState('13');
@@ -22,25 +21,22 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    base44.entities.Manager.list().then(setManagers);
     base44.entities.User.list().then(setAllUsers).catch(() => setUsersError(true));
   }, []);
 
   async function handleAddManager(e) {
     e.preventDefault();
     if (!selectedUserId) return;
-    const user = allUsers.find(u => u.id === selectedUserId);
-    if (!user) return;
-    setAddingManager(true);
-    const m = await base44.entities.Manager.create({ email: user.email, name: user.full_name || null });
-    setManagers(prev => [...prev, m]);
+    setUpdatingRole(true);
+    await base44.entities.User.update(selectedUserId, { role: 'manager' });
+    setAllUsers(prev => prev.map(u => u.id === selectedUserId ? { ...u, role: 'manager' } : u));
     setSelectedUserId('');
-    setAddingManager(false);
+    setUpdatingRole(false);
   }
 
-  async function handleRemoveManager(id) {
-    await base44.entities.Manager.delete(id);
-    setManagers(prev => prev.filter(m => m.id !== id));
+  async function handleRemoveManager(userId) {
+    await base44.entities.User.update(userId, { role: 'user' });
+    setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, role: 'user' } : u));
   }
 
   useEffect(() => {
@@ -194,19 +190,26 @@ export default function SettingsPage() {
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">Designated Managers</span>
           </div>
-          <p className="text-xs text-muted-foreground">These email addresses will receive notifications for all sightings, saved cells, and chemical logs.</p>
+          <p className="text-xs text-muted-foreground">Users with the <strong>manager</strong> or <strong>admin</strong> role receive email notifications for all sightings, saved cells, and chemical logs.</p>
 
-          {managers.length > 0 && (
+          {/* Current managers & admins */}
+          {allUsers.filter(u => u.role === 'manager' || u.role === 'admin').length > 0 && (
             <div className="space-y-2">
-              {managers.map(m => (
-                <div key={m.id} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
+              {allUsers.filter(u => u.role === 'manager' || u.role === 'admin').map(u => (
+                <div key={u.id} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
                   <div>
-                    <div className="text-xs font-medium text-foreground">{m.email}</div>
-                    {m.name && <div className="text-[10px] text-muted-foreground">{m.name}</div>}
+                    <div className="text-xs font-medium text-foreground">{u.full_name || u.email}</div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Shield className="h-2.5 w-2.5 text-primary" />
+                      <span className="text-[10px] text-primary font-medium capitalize">{u.role}</span>
+                      {u.full_name && <span className="text-[10px] text-muted-foreground ml-1">{u.email}</span>}
+                    </div>
                   </div>
-                  <button onClick={() => handleRemoveManager(m.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  {u.role === 'manager' && (
+                    <button onClick={() => handleRemoveManager(u.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -215,6 +218,8 @@ export default function SettingsPage() {
           {usersError && (
             <p className="text-xs text-destructive">Could not load users — you may need admin access to manage managers.</p>
           )}
+
+          {/* Add manager form */}
           <form onSubmit={handleAddManager} className="flex gap-2">
             <select
               value={selectedUserId}
@@ -222,17 +227,17 @@ export default function SettingsPage() {
               required
               className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-              <option value="">{allUsers.length === 0 ? 'No users available' : 'Select a user…'}</option>
+              <option value="">{allUsers.length === 0 ? 'No users available' : 'Promote user to manager…'}</option>
               {allUsers
-                .filter(u => !managers.some(m => m.email === u.email))
+                .filter(u => u.role === 'user')
                 .map(u => (
                   <option key={u.id} value={u.id}>{u.full_name ? `${u.full_name} (${u.email})` : u.email}</option>
                 ))
               }
             </select>
-            <button type="submit" disabled={addingManager || !selectedUserId} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
-              {addingManager ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-              Add
+            <button type="submit" disabled={updatingRole || !selectedUserId} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
+              {updatingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Shield className="h-3.5 w-3.5" />}
+              Assign
             </button>
           </form>
         </div>
