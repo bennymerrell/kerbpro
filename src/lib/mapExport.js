@@ -1,8 +1,11 @@
 import L from 'leaflet';
 
 export async function buildMapCanvas(cells = [], selectedCell = null) {
-  const CANVAS_W = 1400;
-  const CANVAS_H = 990;
+  // Determine orientation first to set canvas dimensions
+  const pdfDims = getPDFDimensions(cells, selectedCell);
+  const isPortrait = pdfDims.orientation === 'portrait';
+  const CANVAS_W = isPortrait ? 990 : 1400;
+  const CANVAS_H = isPortrait ? 1400 : 990;
   const TILE_SIZE = 256;
 
   // If a specific cell is selected, zoom to only that cell
