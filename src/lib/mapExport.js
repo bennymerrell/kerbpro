@@ -107,3 +107,60 @@ export async function buildMapCanvas(cells = [], selectedCell = null) {
 
   return canvas;
 }
+
+// Determine optimal PDF dimensions based on cell aspect ratio
+export function getPDFDimensions(cells = [], selectedCell = null) {
+  let pointsToUse = [];
+  if (selectedCell) {
+    try {
+      pointsToUse = JSON.parse(selectedCell.points) || [];
+    } catch {}
+  } else {
+    pointsToUse = cells.filter(c => c.visible !== false).flatMap(c => {
+      try { return JSON.parse(c.points); } catch { return []; }
+    });
+  }
+
+  if (pointsToUse.length < 2) {
+    return { orientation: 'landscape', width: 297, height: 210 };
+  }
+
+  const lats = pointsToUse.map(p => p.lat);
+  const lngs = pointsToUse.map(p => p.lng);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  const latSpan = maxLat - minLat;
+  const lngSpan = maxLng - minLng;
+  
+  const isWider = lngSpan > latSpan;
+  
+  if (isWider) {
+    return { orientation: 'landscape', width: 297, height: 210 };
+  } else {
+    return { orientation: 'portrait', width: 210, height: 297 };
+  }
+}
+
+// Calculate optimal image dimensions to maximize fill while maintaining aspect ratio
+export function calculateOptimalImageDimensions(canvasWidth, canvasHeight, pageWidth, pageHeight) {
+  const canvasAspect = canvasWidth / canvasHeight;
+  const pageAspect = pageWidth / pageHeight;
+
+  let imgWidth, imgHeight;
+
+  if (canvasAspect > pageAspect) {
+    imgWidth = pageWidth;
+    imgHeight = pageWidth / canvasAspect;
+  } else {
+    imgHeight = pageHeight;
+    imgWidth = pageHeight * canvasAspect;
+  }
+
+  const x = (pageWidth - imgWidth) / 2;
+  const y = (pageHeight - imgHeight) / 2;
+
+  return { x, y, width: imgWidth, height: imgHeight };
+}

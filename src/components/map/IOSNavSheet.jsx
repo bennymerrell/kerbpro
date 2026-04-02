@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { buildMapCanvas } from '../../lib/mapExport';
+import { buildMapCanvas, getPDFDimensions, calculateOptimalImageDimensions } from '../../lib/mapExport';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
@@ -35,8 +35,14 @@ export default function IOSNavSheet({
     setExporting(true);
     const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210);
+    
+    // Get optimal dimensions based on cell shape
+    const pdfDims = getPDFDimensions(cells, selectedCell);
+    const pdf = new jsPDF({ orientation: pdfDims.orientation, unit: 'mm', format: 'a4' });
+    
+    // Calculate optimal image placement and size
+    const imgDims = calculateOptimalImageDimensions(canvas.width, canvas.height, pdfDims.width, pdfDims.height);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgDims.x, imgDims.y, imgDims.width, imgDims.height);
     if (selectedCell) {
       const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
       pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);

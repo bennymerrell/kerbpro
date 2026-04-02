@@ -2,7 +2,7 @@ import { Info, Shapes, Download, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from 'react';
-import { buildMapCanvas } from '../../lib/mapExport';
+import { buildMapCanvas, getPDFDimensions, calculateOptimalImageDimensions } from '../../lib/mapExport';
 
 export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onClear, waypointCount, isSpeciesMode, onToggleSpeciesMode, isAreaMode, onToggleAreaMode, cells = [], selectedCell = null }) {
   const [exporting, setExporting] = useState(false);
@@ -11,8 +11,14 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
     setExporting(true);
     const canvas = await buildMapCanvas(cells, selectedCell);
     const { default: jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210);
+    
+    // Get optimal dimensions based on cell shape
+    const pdfDims = getPDFDimensions(cells, selectedCell);
+    const pdf = new jsPDF({ orientation: pdfDims.orientation, unit: 'mm', format: 'a4' });
+    
+    // Calculate optimal image placement and size
+    const imgDims = calculateOptimalImageDimensions(canvas.width, canvas.height, pdfDims.width, pdfDims.height);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgDims.x, imgDims.y, imgDims.width, imgDims.height);
     if (selectedCell) {
       const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
       pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
@@ -28,6 +34,7 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
     pdf.save('map-export.pdf');
     setExporting(false);
   }
+
   return (
     <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
       <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-1.5 flex flex-col gap-1">
