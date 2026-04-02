@@ -3,7 +3,7 @@ import { Search, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 
-export default function SearchBox({ onLocationFound }) {
+export default function SearchBox({ mapRef, onLocationFound }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
@@ -44,15 +44,18 @@ export default function SearchBox({ onLocationFound }) {
   }, [query]);
 
   function selectResult(result) {
-    onLocationFound({
-      lat: parseFloat(result.lat),
-      lng: parseFloat(result.lon),
-      name: result.display_name,
-    });
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    if (mapRef?.current) {
+      mapRef.current.flyTo([lat, lng], 16, { animate: true });
+    } else if (onLocationFound) {
+      onLocationFound({ lat, lng, name: result.display_name });
+    }
     setResults([]);
     setShowResults(false);
     setQuery(result.display_name.split(',')[0]);
   }
+
 
   return (
     <div ref={containerRef} className="relative w-full">
