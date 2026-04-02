@@ -1,0 +1,37 @@
+{
+  "name": "RolePermissions",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "manager"
+      ]
+    },
+    "feature": {
+      "type": "string",
+      "enum": [
+        "cells",
+        "sightings",
+        "chemical_logs"
+      ]
+    },
+    "can_view": {
+      "type": "boolean",
+      "default": true
+    },
+    "can_create": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_delete": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "role",
+    "feature"
+  ]
+}

@@ -190,7 +190,7 @@ export default function SettingsPage() {
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">Designated Managers</span>
           </div>
-          <p className="text-xs text-muted-foreground">Users with the <strong>manager</strong> or <strong>admin</strong> role receive email notifications for all sightings, saved cells, and chemical logs.</p>
+          <p className="text-xs text-muted-foreground">Users with the <strong>manager</strong> or <strong>admin</strong> role receive email notifications for all sightings, saved cells, and chemical logs. <Link to="/permissions" className="text-primary hover:underline">Configure role permissions →</Link></p>
 
           {/* Current managers & admins */}
           {allUsers.filter(u => u.role === 'manager' || u.role === 'admin').length > 0 && (
