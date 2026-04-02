@@ -288,7 +288,7 @@ export default function MapPage() {
 
       {/* Search — iOS pill style */}
       <div className="absolute z-[999] flex items-center"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: isMobile ? '4rem' : '50%', right: isMobile ? '1rem' : 'auto', transform: isMobile ? 'none' : 'translateX(-50%)', width: isMobile ? 'auto' : '40%' }}>
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: isMobile ? '4rem' : '50%', right: isMobile ? '3.5rem' : 'auto', transform: isMobile ? 'none' : 'translateX(-50%)', width: isMobile ? 'auto' : '40%' }}>
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
