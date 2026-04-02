@@ -60,7 +60,7 @@ export default function PrintMapPage() {
   const { cellId } = useParams();
   const navigate = useNavigate();
   const [selectedCell, setSelectedCell] = useState(null);
-  const [zoom, setZoom] = useState(18);
+  const [zoom, setZoom] = useState(18.0);
   const [orientation, setOrientation] = useState('portrait');
   const [loading, setLoading] = useState(true);
 

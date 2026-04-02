@@ -41,14 +41,15 @@ export default function PrintMapControls({
         {/* Zoom Control */}
         <div className="flex flex-col gap-2 sm:flex-1 sm:max-w-xs">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Zoom: {zoom}
+            Zoom: {zoom.toFixed(1)}
           </label>
           <input
             type="range"
             min="5"
             max="22"
+            step="0.5"
             value={zoom}
-            onChange={(e) => onZoomChange(parseInt(e.target.value))}
+            onChange={(e) => onZoomChange(parseFloat(e.target.value))}
             className="h-2 bg-muted rounded-lg appearance-none cursor-pointer"
           />
         </div>
