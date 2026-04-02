@@ -125,7 +125,7 @@ export default function CellsPage() {
                   {cell.area && <span className="mr-2">{cell.area}</span>}
                   {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
                   {cell.adopted_m != null && (
-                    <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m + (cell.unadopted_m||0)) / 1609.34).toFixed(2)} mi total</span>
+                    <span className="ml-2 text-blue-600 font-medium">{(((cell.adopted_m + (cell.unadopted_m||0)) / 1609.34) * 2).toFixed(2)} mi</span>
                   )}
                 </div>
               </div>
