@@ -321,7 +321,10 @@ export default function MapPage() {
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-4 space-y-2">
             <div className="text-sm font-semibold text-gray-900">{location.state.cellName || 'Cell'} — Road Mileage</div>
             <div className="bg-gray-50 rounded-xl px-3 py-2.5 flex justify-between items-center">
-              <span className="text-sm text-gray-500">Total Spray</span>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Total Spray</span>
+                <span className="text-[10px] text-gray-400">Total Roads</span>
+              </div>
               <div className="flex flex-col items-end">
                 <span className="text-sm font-semibold text-gray-900">{(((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34) * 2).toFixed(2)} mi</span>
                 <span className="text-[10px] text-gray-400">{((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34).toFixed(2)} mi</span>

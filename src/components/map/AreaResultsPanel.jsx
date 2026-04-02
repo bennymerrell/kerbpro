@@ -172,7 +172,10 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
             {results && (
               <div className="space-y-2">
                 <div className="bg-muted/60 rounded-lg px-3 py-2.5 flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-medium">Total Spray</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground font-medium">Total Spray</span>
+                    <span className="text-[10px] text-muted-foreground/70">Total Roads</span>
+                  </div>
                   <div className="flex flex-col items-end">
                     <span className="text-sm font-bold text-foreground">{formatDistanceMiles(results.total * 2)}</span>
                     <span className="text-[10px] text-muted-foreground">{formatDistanceMiles(results.total)}</span>
