@@ -19,7 +19,7 @@ import SavedCellsLayer from '../components/map/SavedCellsLayer';
 import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
-import LocateButton from '../components/map/LocateButton';
+import { LocateButton, LocationWatcher, LocationMarker } from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick, FlaskConical } from 'lucide-react';
@@ -87,38 +87,11 @@ export default function MapPage() {
   }, []);
   const [isPlotting, setIsPlotting] = useState(false);
   const [tileLayer, setTileLayer] = useState('osm');
+  const [locationData, setLocationData] = useState(null);
+  const [locating, setLocating] = useState(false);
   const [isSpeciesMode, setIsSpeciesMode] = useState(false);
   const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
   const [speciesSightings, setSpeciesSightings] = useState([]);
-
-  useEffect(() => {
-    const loadSightings = async () => {
-      try {
-        const records = await base44.entities.Sighting.list('-created_date', 200);
-        const mapped = records.map(r => ({
-          lat: r.lat,
-          lng: r.lng,
-          species: r.species,
-          notes: r.notes,
-          photoUrl: r.photo_url,
-          id: r.id,
-        }));
-        setSpeciesSightings(mapped);
-        await indexedDBCache.cacheSightings(records);
-      } catch (e) {
-        const cached = await indexedDBCache.getSightings();
-        setSpeciesSightings(cached.map(r => ({
-          lat: r.lat,
-          lng: r.lng,
-          species: r.species,
-          notes: r.notes,
-          photoUrl: r.photo_url,
-          id: r.id,
-        })));
-      }
-    };
-    loadSightings();
-  }, []);
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaClosed, setAreaClosed] = useState(false);
@@ -271,6 +244,7 @@ export default function MapPage() {
           maxZoom={currentTile.maxZoom}
         />
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode || (isAreaMode && !areaClosed)} />
+        <LocationWatcher onLocationUpdate={setLocationData} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
         <SpeciesMarkers
@@ -279,7 +253,6 @@ export default function MapPage() {
             return activeCategories.includes(cat);
           })}
           onRemove={(i) => {
-            // find index in full array
             const visible = speciesSightings.filter(s => {
               const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
               return activeCategories.includes(cat);
@@ -288,7 +261,9 @@ export default function MapPage() {
             setSpeciesSightings(prev => prev.filter(s => s !== target));
           }}
         />
-        <LocateButton />
+        {locationData?.position && (
+          <LocationMarker position={locationData.position} accuracy={locationData.accuracy} />
+        )}
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
         <SavedCellsLayer cells={savedCells} />
         {isAreaMode && (
@@ -300,10 +275,29 @@ export default function MapPage() {
         )}
       </MapContainer>
 
-      {/* Search — iOS pill style */}
-      <div className="absolute z-[999] flex items-center"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '4.75rem', right: '4.75rem' }}>
-        <SearchBox mapRef={mapRef} />
+      {/* Top bar — single flex row, guaranteed no overlaps */}
+      <div
+        className="absolute z-[1000] left-4 right-4 flex items-center gap-2"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      >
+        {/* Burger */}
+        <button
+          onClick={() => setNavOpen(true)}
+          className="w-11 h-11 flex-shrink-0 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center"
+        >
+          <List className="h-5 w-5 text-gray-700" />
+        </button>
+
+        {/* Search — fills remaining space */}
+        <div className="flex-1 min-w-0">
+          <SearchBox mapRef={mapRef} />
+        </div>
+
+        {/* Locate */}
+        <LocateButton locationData={locationData} mapRef={mapRef} loading={locating} setLoading={setLocating} />
+
+        {/* Tile layer */}
+        <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
       </div>
 
       {/* Area results */}
@@ -317,7 +311,7 @@ export default function MapPage() {
         />
       )}
 
-      {/* Saved cell mileage popup — iOS card style */}
+      {/* Saved cell mileage popup */}
       {location.state?.cellMileage && (
         <div className="absolute bottom-32 left-4 z-[1000] w-72">
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-4 space-y-2">
@@ -330,15 +324,6 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Burger menu */}
-      <div className="absolute z-[1000]"  style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '1rem' }}>
-        <button
-          onClick={() => setNavOpen(true)}
-          className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center"
-        >
-          <List className="h-5 w-5 text-gray-700" />
-        </button>
-      </div>
       <IOSNavSheet
         open={navOpen}
         onClose={() => setNavOpen(false)}
@@ -353,11 +338,6 @@ export default function MapPage() {
         cells={savedCells}
         selectedCell={selectedCell}
       />
-
-      {/* Tile Layer Selector — top right, mirrors burger */}
-      <div className="absolute z-[1000]" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', right: '1rem' }}>
-        <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
-      </div>
 
       {/* Species Modal */}
       {speciesModalLocation && (

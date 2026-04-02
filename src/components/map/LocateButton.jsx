@@ -47,7 +47,7 @@ function createLocationIcon() {
   });
 }
 
-function LocationMarker({ position, accuracy }) {
+export function LocationMarker({ position, accuracy }) {
   if (!position) return null;
   return (
     <>
@@ -67,44 +67,36 @@ function LocationMarker({ position, accuracy }) {
   );
 }
 
-function LocateControl({ locationData, onLocationUpdate }) {
+// LocationWatcher: lives inside MapContainer, handles geolocation tracking
+export function LocationWatcher({ onLocationUpdate }) {
   const map = useMap();
-  const [loading, setLoading] = useState(false);
   const watchRef = useRef(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
-
-    // Start continuous tracking
     watchRef.current = navigator.geolocation.watchPosition(
-      async (pos) => {
-        try {
-          const latlng = [pos.coords.latitude, pos.coords.longitude];
-          setLoading(false);
-          onLocationUpdate(prev => ({
-            ...prev,
-            position: latlng,
-            accuracy: pos.coords.accuracy,
-          }));
-        } catch (e) {
-          console.error('Location update error:', e);
-          setLoading(false);
-        }
+      (pos) => {
+        onLocationUpdate({
+          position: [pos.coords.latitude, pos.coords.longitude],
+          accuracy: pos.coords.accuracy,
+        });
       },
-      (err) => {
-        console.error('Geolocation error:', err);
-        setLoading(false);
-      },
+      (err) => { console.error('Geolocation error:', err); },
       { enableHighAccuracy: true }
     );
-
     return () => {
       if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current);
     };
   }, [onLocationUpdate]);
 
+  return null;
+}
+
+// LocateButton: standalone button for the top bar (outside MapContainer)
+export function LocateButton({ locationData, mapRef, loading, setLoading }) {
   function handleCenterOnMe() {
-    if (locationData?.position) {
+    const map = mapRef?.current;
+    if (locationData?.position && map) {
       map.flyTo(locationData.position, Math.max(map.getZoom(), 16), { duration: 1.2 });
     } else {
       setLoading(true);
@@ -112,36 +104,20 @@ function LocateControl({ locationData, onLocationUpdate }) {
   }
 
   return (
-    <div
-      className="absolute z-[1000]"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', right: '4.75rem' }}
+    <button
+      onClick={handleCenterOnMe}
+      disabled={loading}
+      title="Centre on my location"
+      className="w-11 h-11 flex-shrink-0 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center hover:bg-white transition-all disabled:opacity-60"
     >
-      <button
-        onClick={handleCenterOnMe}
-        disabled={loading}
-        title="Centre on my location"
-        className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center hover:bg-white transition-all disabled:opacity-60 md:w-auto md:h-auto md:rounded-xl md:p-2.5 md:bg-card/95 md:border md:border-border/50"
-      >
-        {loading
-          ? <Loader2 className="h-5 w-5 text-foreground animate-spin md:h-4 md:w-4" />
-          : <LocateFixed className={`h-5 w-5 md:h-4 md:w-4 ${locationData?.position ? 'text-blue-600' : 'text-gray-700'}`} />
-        }
-      </button>
-    </div>
+      {loading
+        ? <Loader2 className="h-5 w-5 text-foreground animate-spin" />
+        : <LocateFixed className={`h-5 w-5 ${locationData?.position ? 'text-blue-600' : 'text-gray-700'}`} />
+      }
+    </button>
   );
 }
 
-export default function LocateButton() {
-  const [locationData, setLocationData] = useState(null);
-  return (
-    <>
-      <LocateControl locationData={locationData} onLocationUpdate={setLocationData} />
-      {locationData?.position && (
-        <LocationMarker
-          position={locationData.position}
-          accuracy={locationData.accuracy}
-        />
-      )}
-    </>
-  );
+export default function LocateButtonLegacy() {
+  return null;
 }
