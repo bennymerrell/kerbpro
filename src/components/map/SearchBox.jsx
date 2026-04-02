@@ -51,9 +51,10 @@ export default function SearchBox({ mapRef, onLocationFound }) {
     } else if (onLocationFound) {
       onLocationFound({ lat, lng, name: result.display_name });
     }
-    setResults([]);
     setShowResults(false);
-    setQuery(result.display_name.split(',')[0]);
+    setResults([]);
+    setQuery('');
+    setShowResults(false);
   }
 
 
