@@ -173,7 +173,10 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
               <div className="space-y-2">
                 <div className="bg-muted/60 rounded-lg px-3 py-2.5 flex justify-between items-center">
                   <span className="text-xs text-muted-foreground font-medium">Total roads</span>
-                  <span className="text-xs font-bold text-foreground">{formatDistanceMiles(results.total)}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-bold text-foreground">{formatDistanceMiles(results.total * 2)}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatDistanceMiles(results.total)}</span>
+                  </div>
                 </div>
                 {results.source === 'ai' && (
                   <div className="text-[10px] text-amber-600 text-center">⚠ AI estimate (OSM servers unavailable)</div>
