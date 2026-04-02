@@ -99,7 +99,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-foreground">Map Settings</h1>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Managers */}
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-4">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-4 mt-6">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold text-foreground">Designated Managers</span>
@@ -234,7 +234,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-card rounded-2xl border border-red-200 shadow-sm p-6 space-y-3">
+        <div className="bg-card rounded-2xl border border-red-200 shadow-sm p-6 space-y-3 mt-6">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-500" />
             <span className="text-sm font-semibold text-red-600">Danger Zone</span>
