@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { buildMapCanvas } from '../../lib/mapExport';
-import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
 
@@ -16,6 +15,7 @@ export default function IOSNavSheet({
   selectedCell = null,
 }) {
   const [exporting, setExporting] = useState(false);
+  const navigate = useNavigate();
   const sheetRef = useRef(null);
 
   useEffect(() => {
