@@ -246,6 +246,7 @@ export default function MapPage() {
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
         zoomControl={false}
+        zoomAnimation={false}
         ref={mapRef}
         style={{ cursor: isPlotting || isSpeciesMode ? 'crosshair' : 'grab' }}
       >
