@@ -302,9 +302,7 @@ export default function MapPage() {
 
       {/* Search — iOS pill style */}
       <div className="absolute z-[999] flex items-center"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '4rem', right: '3.5rem' }}>
-        <SearchBox onLocationFound={handleLocationFound} />
-      </div>
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '4.75rem', right: '4.75rem' }}>
 
       {/* Area results */}
       {isAreaMode && (
@@ -354,9 +352,9 @@ export default function MapPage() {
         selectedCell={selectedCell}
       />
 
-      {/* Tile Layer Selector — bottom right */}
-      <div className="absolute z-[1000]" style={{ bottom: 'max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem))', right: '1rem' }}>
-        <TileLayerSelector />
+      {/* Tile Layer Selector — top right, mirrors burger */}
+      <div className="absolute z-[1000]" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', right: '1rem' }}>
+        <TileLayerSelector currentLayer={tileLayer} onChangeLayer={setTileLayer} />
       </div>
 
       {/* Species Modal */}
