@@ -112,16 +112,19 @@ function LocateControl({ locationData, onLocationUpdate }) {
   }
 
   return (
-    <div className="absolute z-[1000] top-4 right-4">
+    <div
+      className="absolute z-[1000] right-4"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+    >
       <button
         onClick={handleCenterOnMe}
         disabled={loading}
         title="Centre on my location"
-        className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 hover:bg-muted/80 transition-all disabled:opacity-60"
+        className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center hover:bg-white transition-all disabled:opacity-60 md:w-auto md:h-auto md:rounded-xl md:p-2.5 md:bg-card/95 md:border md:border-border/50"
       >
         {loading
-          ? <Loader2 className="h-4 w-4 text-foreground animate-spin" />
-          : <LocateFixed className={`h-4 w-4 ${locationData?.position ? 'text-blue-600' : 'text-foreground'}`} />
+          ? <Loader2 className="h-5 w-5 text-foreground animate-spin md:h-4 md:w-4" />
+          : <LocateFixed className={`h-5 w-5 md:h-4 md:w-4 ${locationData?.position ? 'text-blue-600' : 'text-gray-700'}`} />
         }
       </button>
     </div>
