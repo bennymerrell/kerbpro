@@ -10,7 +10,7 @@ export default function PrintMapControls({
 }) {
   return (
     <div className="fixed left-0 right-0 z-[1000] print:!hidden bg-background/95 backdrop-blur-md border-t border-border shadow-lg" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-4 items-end sm:items-center sm:justify-between @media print { display: none !important; }">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-4 items-end sm:items-center sm:justify-between">
         {/* Orientation Toggle */}
         <div className="flex flex-col gap-2">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
