@@ -57,7 +57,6 @@ export default function IOSNavSheet({
   const toolItems = [
     { label: 'Spotted', icon: Info, active: isSpeciesMode, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onToggleSpeciesMode(); onClose(); } },
     { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { onToggleAreaMode(); onClose(); } },
-    { label: 'Plot Route', icon: MousePointerClick, active: isPlotting, color: 'text-emerald-500', activeBg: 'bg-emerald-500', inactiveBg: 'bg-emerald-100', action: () => { onTogglePlotting(); onClose(); } },
     { label: exporting ? 'Exporting…' : 'Save PDF', icon: exporting ? Loader2 : Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handleDownloadPDF },
   ];
 

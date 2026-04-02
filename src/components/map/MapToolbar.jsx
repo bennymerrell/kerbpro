@@ -1,4 +1,4 @@
-import { MousePointerClick, Info, Shapes, Download, Loader2 } from 'lucide-react';
+import { Info, Shapes, Download, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from 'react';
@@ -13,18 +13,6 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
     const { default: jsPDF } = await import('jspdf');
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 297, 210);
-    if (selectedCell) {
-      const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
-      pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
-      pdf.roundedRect(boxX, boxY, boxW, 10 + rowH * 3 + 4, 2, 2, 'FD');
-      pdf.setFontSize(9); pdf.setFont('helvetica','bold'); pdf.setTextColor(30,58,95);
-      pdf.text('Cell', boxX+4, boxY+7);
-      pdf.setFont('helvetica','normal'); pdf.setTextColor(30,30,30); pdf.setFontSize(7.5);
-      pdf.text(`Name: ${(selectedCell.name||'Unnamed').substring(0,16)}`, boxX+4, boxY+15);
-      pdf.text(`Area: ${(selectedCell.area||'-').substring(0,16)}`, boxX+4, boxY+15+rowH);
-      const totalMi = (selectedCell.adopted_m!=null&&selectedCell.unadopted_m!=null) ? ((selectedCell.adopted_m+selectedCell.unadopted_m)/1609.34).toFixed(2) : '-';
-      pdf.text(`Total: ${totalMi} mi`, boxX+4, boxY+15+rowH*2);
-    }
     if (selectedCell) {
       const boxX = 6, boxY = 6, rowH = 7, boxW = 45;
       pdf.setFillColor(255,255,255); pdf.setDrawColor(200,200,200); pdf.setLineWidth(0.3);
@@ -69,19 +57,6 @@ export default function MapToolbar({ isPlotting, onTogglePlotting, onUndo, onCle
         >
           <Shapes className="h-3.5 w-3.5" />
           {isAreaMode ? "Drawing..." : "Draw Cell"}
-        </Button>
-
-        <Button
-          variant={isPlotting ? "default" : "ghost"}
-          size="sm"
-          onClick={onTogglePlotting}
-          className={cn(
-            "justify-start gap-2 h-9 px-3 text-xs font-medium rounded-lg transition-all",
-            isPlotting && "bg-primary hover:bg-primary/90 text-white shadow-md"
-          )}
-        >
-          <MousePointerClick className="h-3.5 w-3.5" />
-          {isPlotting ? "Plotting..." : "Plot Route"}
         </Button>
 
         <div className="h-px bg-border/50 my-0.5" />

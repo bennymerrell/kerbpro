@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MousePointerClick, Info, Shapes, Share2, Download, Loader2 } from 'lucide-react';
+import { Info, Shapes, Download, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { buildMapCanvas } from '../../lib/mapExport';
 
@@ -82,17 +82,6 @@ export default function MobileToolbar({
         >
           <Shapes className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">Draw Cell</span>
-        </button>
-
-        <button
-          onClick={onTogglePlotting}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl transition-all",
-            isPlotting ? "bg-blue-500 text-white" : "text-gray-500 hover:bg-gray-100"
-          )}
-        >
-          <MousePointerClick className="h-5 w-5" />
-          <span className="text-[10px] font-medium leading-none">Route</span>
         </button>
 
         <div className="w-px h-8 bg-gray-200 mx-0.5" />
