@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { notifyManagers } from '../lib/notifyManagers';
 import { useNavigate } from 'react-router-dom';
 import DrawerPicker from '../components/DrawerPicker';
 import { ArrowLeft, Plus, Trash2, FlaskConical, Pencil, Check, X, User, Building2 } from 'lucide-react';
@@ -50,12 +51,18 @@ function LogForm({ onSave, onCancel }) {
       start_amount: parseFloat(c.start_amount),
       end_amount: c.end_amount !== '' ? parseFloat(c.end_amount) : null,
     }));
-    await base44.entities.ChemicalLog.create({
+    const log = await base44.entities.ChemicalLog.create({
       week_start: weekStart,
       week_end: weekEnd || null,
       chemicals: JSON.stringify(cleaned),
       notes: notes || null,
     });
+    // Notify managers
+    const chemRows = cleaned.map(c => `<li><strong>${c.chemical_name}</strong>: Start ${c.start_amount} ${c.unit}${c.end_amount != null ? `, End ${c.end_amount} ${c.unit}` : ''}</li>`).join('');
+    await notifyManagers(
+      `New Chemical Log: w/c ${weekStart}`,
+      `<p>A new chemical log has been submitted for week commencing <strong>${weekStart}</strong>.</p><ul>${chemRows}</ul>${notes ? `<p>Notes: ${notes}</p>` : ''}`
+    );
     setSaving(false);
     onSave();
   }

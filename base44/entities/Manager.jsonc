@@ -1,0 +1,16 @@
+{
+  "name": "Manager",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

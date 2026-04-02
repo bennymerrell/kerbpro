@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle, Plus, X, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState(null);
   const [settingsId, setSettingsId] = useState(null);
+  const [managers, setManagers] = useState([]);
+  const [newManagerEmail, setNewManagerEmail] = useState('');
+  const [newManagerName, setNewManagerName] = useState('');
+  const [addingManager, setAddingManager] = useState(false);
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [zoom, setZoom] = useState('13');
@@ -15,6 +19,26 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    base44.entities.Manager.list().then(setManagers);
+  }, []);
+
+  async function handleAddManager(e) {
+    e.preventDefault();
+    if (!newManagerEmail.trim()) return;
+    setAddingManager(true);
+    const m = await base44.entities.Manager.create({ email: newManagerEmail.trim(), name: newManagerName.trim() || null });
+    setManagers(prev => [...prev, m]);
+    setNewManagerEmail('');
+    setNewManagerName('');
+    setAddingManager(false);
+  }
+
+  async function handleRemoveManager(id) {
+    await base44.entities.Manager.delete(id);
+    setManagers(prev => prev.filter(m => m.id !== id));
+  }
 
   useEffect(() => {
     base44.entities.AppSettings.list().then((records) => {
@@ -159,6 +183,53 @@ export default function SettingsPage() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Saved!' : 'Save Settings'}
           </button>
+        </div>
+
+        {/* Managers */}
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Designated Managers</span>
+          </div>
+          <p className="text-xs text-muted-foreground">These email addresses will receive notifications for all sightings, saved cells, and chemical logs.</p>
+
+          {managers.length > 0 && (
+            <div className="space-y-2">
+              {managers.map(m => (
+                <div key={m.id} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
+                  <div>
+                    <div className="text-xs font-medium text-foreground">{m.email}</div>
+                    {m.name && <div className="text-[10px] text-muted-foreground">{m.name}</div>}
+                  </div>
+                  <button onClick={() => handleRemoveManager(m.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleAddManager} className="space-y-2">
+            <input
+              type="email"
+              value={newManagerEmail}
+              onChange={e => setNewManagerEmail(e.target.value)}
+              placeholder="manager@example.com"
+              required
+              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <input
+              type="text"
+              value={newManagerName}
+              onChange={e => setNewManagerName(e.target.value)}
+              placeholder="Name (optional)"
+              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button type="submit" disabled={addingManager || !newManagerEmail.trim()} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
+              {addingManager ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              Add Manager
+            </button>
+          </form>
         </div>
 
         {/* Danger Zone */}

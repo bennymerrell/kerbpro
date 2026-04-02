@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2, SquareDashedBottom, AlertCircle, X } from 'lucide-react';
+import { notifyManagers } from '../../lib/notifyManagers';
 import { formatDistanceMiles } from '../../lib/mapUtils';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
@@ -212,7 +213,15 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
           </div>
 
           <Button
-            onClick={() => onSaveCell(cellName || 'Unnamed Cell', cellArea, results)}
+            onClick={async () => {
+              const name = cellName || 'Unnamed Cell';
+              onSaveCell(name, cellArea, results);
+              const totalMi = results ? ((results.total) / 1609.34).toFixed(2) : 'N/A';
+              await notifyManagers(
+                `New Cell Saved: ${name}`,
+                `<p>A new cell <strong>${name}</strong> has been saved.</p><p>Area: ${cellArea || '—'}</p><p>Total road mileage: ${totalMi} mi</p>`
+              );
+            }}
             disabled={loading}
             className="w-full h-9 text-sm bg-indigo-600 hover:bg-indigo-700"
           >
