@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { buildMapCanvas } from '../../lib/mapExport';
 
@@ -150,6 +151,19 @@ export default function IOSNavSheet({
                 );
               })}
             </div>
+          </div>
+
+          {/* Logout */}
+          <div className="px-4 mb-4">
+            <button
+              onClick={() => base44.auth.logout()}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-muted/40 rounded-2xl text-left hover:bg-red-50 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <LogOut className="h-4 w-4 text-red-500" />
+              </div>
+              <span className="text-sm font-medium text-red-500">Log Out</span>
+            </button>
           </div>
 
         </div>
