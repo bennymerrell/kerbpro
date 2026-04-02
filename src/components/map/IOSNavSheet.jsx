@@ -79,7 +79,7 @@ export default function IOSNavSheet({
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
+        <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)', WebkitOverflowScrolling: 'touch' }}>
 
           {/* Map Tools */}
           <div className="px-4 mb-4">
