@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const [settingsId, setSettingsId] = useState(null);
   const [managers, setManagers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [usersError, setUsersError] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [addingManager, setAddingManager] = useState(false);
   const [lat, setLat] = useState('');
@@ -22,7 +23,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     base44.entities.Manager.list().then(setManagers);
-    base44.entities.User.list().then(setAllUsers);
+    base44.entities.User.list().then(setAllUsers).catch(() => setUsersError(true));
   }, []);
 
   async function handleAddManager(e) {
@@ -211,6 +212,9 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {usersError && (
+            <p className="text-xs text-destructive">Could not load users — you may need admin access to manage managers.</p>
+          )}
           <form onSubmit={handleAddManager} className="flex gap-2">
             <select
               value={selectedUserId}
@@ -218,7 +222,7 @@ export default function SettingsPage() {
               required
               className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-              <option value="">Select a user…</option>
+              <option value="">{allUsers.length === 0 ? 'No users available' : 'Select a user…'}</option>
               {allUsers
                 .filter(u => !managers.some(m => m.email === u.email))
                 .map(u => (
