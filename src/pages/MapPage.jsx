@@ -21,9 +21,10 @@ import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
 import LocateButton from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick, FlaskConical } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
+import IOSNavSheet from '../components/map/IOSNavSheet';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -284,8 +285,9 @@ export default function MapPage() {
         )}
       </MapContainer>
 
-      {/* Search */}
-      <div className="absolute top-4 left-[70px] right-[70px] md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-[40%] z-[999] flex items-center">
+      {/* Search — iOS pill style */}
+      <div className="absolute z-[999] flex items-center"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: isMobile ? '4rem' : '50%', right: isMobile ? '1rem' : 'auto', transform: isMobile ? 'none' : 'translateX(-50%)', width: isMobile ? 'auto' : '40%' }}>
         <SearchBox onLocationFound={handleLocationFound} />
       </div>
 
@@ -324,14 +326,14 @@ export default function MapPage() {
         />
       )}
 
-      {/* Saved cell mileage popup (when returning from CellsPage) */}
+      {/* Saved cell mileage popup — iOS card style */}
       {location.state?.cellMileage && (
-        <div className="absolute bottom-6 left-4 z-[1000] w-72">
-          <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-3 space-y-2">
-            <div className="text-xs font-semibold text-foreground mb-1">{location.state.cellName || 'Cell'} — Road Mileage</div>
-            <div className="bg-muted/60 rounded-lg px-3 py-2 flex justify-between items-center">
-              <span className="text-xs text-muted-foreground font-medium">Total roads</span>
-              <span className="text-xs font-bold text-foreground">{((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34).toFixed(2)} mi</span>
+        <div className="absolute bottom-32 left-4 z-[1000] w-72">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-4 space-y-2">
+            <div className="text-sm font-semibold text-gray-900">{location.state.cellName || 'Cell'} — Road Mileage</div>
+            <div className="bg-gray-50 rounded-xl px-3 py-2.5 flex justify-between items-center">
+              <span className="text-sm text-gray-500">Total roads</span>
+              <span className="text-sm font-semibold text-gray-900">{((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34).toFixed(2)} mi</span>
             </div>
           </div>
         </div>
@@ -371,94 +373,27 @@ export default function MapPage() {
                 </div>
                 </div>
 
-                {/* Mobile Burger Menu */}
-      <div className="absolute top-4 left-4 z-[1000] md:hidden">
-          <div className="relative">
-            <button
-              onClick={() => setNavOpen(o => !o)}
-              className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 p-2.5 text-foreground hover:bg-muted/80 transition-all"
-            >
-              <List className="h-5 w-5" />
-            </button>
-            {navOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden min-w-[160px]">
-                {/* Map Controls */}
-                <button
-                  onClick={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); setNavOpen(false); }}
-                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
-                    isSpeciesMode ? 'bg-primary/20 text-primary' : 'text-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  <Info className="h-3.5 w-3.5" /> Spotted
-                </button>
-                <button
-                  onClick={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); setNavOpen(false); navigate('/'); }}
-                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
-                    isAreaMode ? 'bg-indigo-600/20 text-indigo-600' : 'text-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  <Shapes className="h-3.5 w-3.5" /> Draw Cell
-                </button>
-                <button
-                  onClick={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); setIsAreaMode(false); setNavOpen(false); }}
-                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors ${
-                    isPlotting ? 'bg-primary/20 text-primary' : 'text-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  <MousePointerClick className="h-3.5 w-3.5" /> Plot Route
-                </button>
-
-                <div className="h-px bg-border/50" />
-
-                {/* Pages */}
-                <button onClick={() => { setNavOpen(false); navigate('/chemical-logs'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                  <FlaskConical className="h-3.5 w-3.5" /> Chemical Logs
-                </button>
-                <div className="h-px bg-border/50" />
-                <button onClick={() => { setNavOpen(false); navigate('/sightings'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                  <List className="h-3.5 w-3.5" /> Sightings
-                </button>
-                <button onClick={() => { setNavOpen(false); navigate('/cells'); }} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors">
-                  <SquareDashedBottom className="h-3.5 w-3.5" /> Cells
-                </button>
-
-                <div className="h-px bg-border/50" />
-
-                {/* Categories */}
-                <div className="px-3 py-2">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="text-[10px] text-muted-foreground font-semibold uppercase">Sightings Filter</div>
-                    <button
-                      onClick={() => setActiveCategories(activeCategories.length === CATEGORIES.length ? [] : [...CATEGORIES])}
-                      className="text-[10px] text-primary font-medium hover:underline"
-                    >
-                      {activeCategories.length === CATEGORIES.length ? 'Hide all' : 'Show all'}
-                    </button>
-                  </div>
-                  <div className="space-y-1">
-                    {CATEGORIES.map(cat => (
-                      <label key={cat} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={activeCategories.includes(cat)}
-                          onChange={() => {
-                            if (activeCategories.includes(cat)) {
-                              setActiveCategories(activeCategories.filter(c => c !== cat));
-                            } else {
-                              setActiveCategories([...activeCategories, cat]);
-                            }
-                          }}
-                          className="w-3.5 h-3.5"
-                        />
-                        <span className="text-xs text-foreground">{cat}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Mobile Burger — iOS style */}
+      <div className="absolute z-[1000] md:hidden" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', left: '1rem' }}>
+        <button
+          onClick={() => setNavOpen(true)}
+          className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-xl shadow-md flex items-center justify-center"
+        >
+          <List className="h-5 w-5 text-gray-700" />
+        </button>
+      </div>
+      <IOSNavSheet
+        open={navOpen && isMobile}
+        onClose={() => setNavOpen(false)}
+        isSpeciesMode={isSpeciesMode}
+        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
+        isAreaMode={isAreaMode}
+        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); navigate('/'); }}
+        isPlotting={isPlotting}
+        onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
+        activeCategories={activeCategories}
+        onChangeCategories={setActiveCategories}
+      />
 
       {/* Zoom controls — desktop only */}
       <div className="hidden md:block"><div className="absolute right-4 z-[1000]" style={{bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))'}}><div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg border border-border/50 flex flex-col overflow-hidden">
@@ -489,27 +424,21 @@ export default function MapPage() {
         />
       )}
 
-      {/* Plotting hint */}
+      {/* Hint banners — iOS pill style */}
       {isAreaMode && !areaClosed && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>        
-          <div className="bg-indigo-600/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
+          <div className="bg-indigo-500 rounded-full shadow-lg px-5 py-2.5 text-sm text-white font-medium">
             {areaPoints.length < 3
-              ? `Click to place points (${areaPoints.length} placed, need at least 3)`
-              : `${areaPoints.length} points placed — cell`}
+              ? `Tap to place points (${areaPoints.length} placed, need at least 3)`
+              : `${areaPoints.length} points placed — close shape`}
           </div>
           {areaPoints.length > 0 && (
-            <button
-              onClick={handleUndoAreaPoint}
-              className="bg-white text-indigo-700 font-semibold text-xs rounded-full shadow-lg px-4 py-2.5 hover:bg-indigo-50 transition-colors border border-indigo-200"
-            >
+            <button onClick={handleUndoAreaPoint} className="bg-white text-indigo-600 font-semibold text-sm rounded-full shadow-lg px-4 py-2.5 border border-indigo-100">
               ↩ Undo
             </button>
           )}
           {areaPoints.length >= 3 && (
-            <button
-              onClick={() => setAreaClosed(true)}
-              className="bg-white text-indigo-700 font-semibold text-xs rounded-full shadow-lg px-4 py-2.5 hover:bg-indigo-50 transition-colors border border-indigo-200"
-            >
+            <button onClick={() => setAreaClosed(true)} className="bg-white text-indigo-600 font-semibold text-sm rounded-full shadow-lg px-4 py-2.5 border border-indigo-100">
               Close Shape ✓
             </button>
           )}
@@ -517,15 +446,15 @@ export default function MapPage() {
       )}
       {isSpeciesMode && (
         <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 8rem))'}}>
-          <div className="bg-primary/90 backdrop-blur-md rounded-full shadow-lg px-5 py-2.5 text-xs text-white font-medium">
-            ℹ️ Click anywhere to add a sighting
+          <div className="bg-blue-500 rounded-full shadow-lg px-5 py-2.5 text-sm text-white font-medium">
+            Tap anywhere to add a sighting
           </div>
         </div>
       )}
       {!isSpeciesMode && !isAreaMode && isPlotting && waypoints.length === 0 && (
         <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(9rem, calc(env(safe-area-inset-bottom) + 4rem))'}}>
-          <div className="bg-card/95 backdrop-blur-md rounded-full shadow-lg border border-border/50 px-5 py-2.5 text-xs text-muted-foreground font-medium">
-            Click on the map to start plotting your route
+          <div className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg px-5 py-2.5 text-sm text-gray-500 font-medium">
+            Tap the map to start plotting your route
           </div>
         </div>
       )}

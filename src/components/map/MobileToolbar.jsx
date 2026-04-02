@@ -61,49 +61,49 @@ export default function MobileToolbar({
       className="fixed left-1/2 -translate-x-1/2 z-[1000]"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
     >
-      <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-lg border border-border/50 flex items-center gap-1 px-2 py-1.5">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl flex items-center gap-0.5 px-2 py-2">
         <button
           onClick={onToggleSpeciesMode}
-          title="Spotted"
           className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isSpeciesMode ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
+            "flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl transition-all",
+            isSpeciesMode ? "bg-blue-500 text-white" : "text-gray-500 hover:bg-gray-100"
           )}
         >
-          <Info className="h-4 w-4" />
+          <Info className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Spotted</span>
         </button>
 
         <button
           onClick={onToggleAreaMode}
-          title="Draw Cell"
           className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isAreaMode ? "bg-indigo-600 text-white shadow" : "text-foreground hover:bg-muted"
+            "flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl transition-all",
+            isAreaMode ? "bg-indigo-500 text-white" : "text-gray-500 hover:bg-gray-100"
           )}
         >
-          <Shapes className="h-4 w-4" />
+          <Shapes className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Draw Cell</span>
         </button>
 
         <button
           onClick={onTogglePlotting}
-          title="Plot Route"
           className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-            isPlotting ? "bg-primary text-white shadow" : "text-foreground hover:bg-muted"
+            "flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl transition-all",
+            isPlotting ? "bg-blue-500 text-white" : "text-gray-500 hover:bg-gray-100"
           )}
         >
-          <MousePointerClick className="h-4 w-4" />
+          <MousePointerClick className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Route</span>
         </button>
 
-        <div className="w-px h-6 bg-border/60 mx-0.5" />
+        <div className="w-px h-8 bg-gray-200 mx-0.5" />
 
         <button
           onClick={handleDownloadPDF}
           disabled={exporting}
-          title="Save PDF"
-          className="h-10 w-10 rounded-xl flex items-center justify-center text-foreground hover:bg-muted transition-all disabled:opacity-50"
+          className="flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl text-gray-500 hover:bg-gray-100 transition-all disabled:opacity-40"
         >
-          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+          <span className="text-[10px] font-medium leading-none">Save PDF</span>
         </button>
       </div>
     </div>
