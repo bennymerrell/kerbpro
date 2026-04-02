@@ -186,7 +186,7 @@ export default function MapPage() {
     const cached = await indexedDBCache.getCells();
     await indexedDBCache.cacheCells(cached.filter(c => c.id !== cell.id));
   }
-  const CATEGORIES = ['Species', 'Parking', 'Hydrant', 'Map Support', 'Public Toilet', 'Cafe'];
+  const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
   const [activeCategories, setActiveCategories] = useState([]);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const mapRef = useRef(null);
