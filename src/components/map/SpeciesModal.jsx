@@ -39,7 +39,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
       photoUrl = file_url;
     }
 
-    const googleMapsLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
+    const googleMapsLink = `${window.location.origin}/?lat=${location.lat}&lng=${location.lng}`;
     const recordedAt = new Date().toLocaleString();
 
     await notifyManagers(

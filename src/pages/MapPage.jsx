@@ -50,8 +50,22 @@ export default function MapPage() {
   const [waypoints, setWaypoints] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);
 
-  // On mount, load saved default location then try geolocation
+  // On mount, handle ?lat=&lng= query params (from email links)
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get('lat'));
+    const lng = parseFloat(params.get('lng'));
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const attempt = (tries = 0) => {
+        if (mapRef.current) {
+          mapRef.current.setView([lat, lng], 18, { animate: false });
+        } else if (tries < 20) {
+          setTimeout(() => attempt(tries + 1), 100);
+        }
+      };
+      attempt();
+      return;
+    }
     base44.entities.AppSettings.list().then((records) => {
       if (!location.state?.flyTo && records.length > 0 && records[0].default_lat && records[0].default_lng) {
         setMapCenter([records[0].default_lat, records[0].default_lng]);
