@@ -383,7 +383,7 @@ export default function MapPage() {
         </button>
       </div>
       <IOSNavSheet
-        open={navOpen && isMobile}
+        open={navOpen}
         onClose={() => setNavOpen(false)}
         isSpeciesMode={isSpeciesMode}
         onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
