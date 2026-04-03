@@ -50,9 +50,9 @@ const AuthenticatedApp = () => {
         <Route path="/chemical-logs" element={<ChemicalLogPage />} />
         <Route path="/permissions" element={<PermissionsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/print-map/:cellId" element={<PrintMapPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
+      <Route path="/print-map/:cellId" element={<PrintMapPage />} />
     </Routes>
   );
 };
