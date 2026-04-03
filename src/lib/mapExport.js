@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { base44 } from '@/api/base44Client';
 
 export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null, overrideCenter = null, overlayPixels = null) {
   // Determine orientation first to set canvas dimensions
@@ -55,11 +56,8 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
 
   // Detect tile layer from live map
   const existingTile = document.querySelector('.leaflet-tile-pane img.leaflet-tile');
-  // Detect tile layer from live map - default to Esri World Street Map (CORS-friendly, OSM-style)
-  let tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
-  if (existingTile?.src?.includes('World_Imagery') || existingTile?.src?.includes('satellite')) {
-    tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
-  }
+  // Use backend proxy to fetch OSM tiles (avoids CORS/policy blocks)
+  const tileUrlFn = null; // tiles fetched via proxy below
 
   const tX0 = Math.floor(originX / TILE_SIZE);
   const tY0 = Math.floor(originY / TILE_SIZE);
@@ -72,14 +70,12 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
       const cx = tx * TILE_SIZE - originX;
       const cy = ty * TILE_SIZE - originY;
       tilePromises.push(
-        fetch(tileUrlFn(tx, ty, zoom))
-          .then(r => r.blob())
-          .then(blob => new Promise(resolve => {
-            const u = URL.createObjectURL(blob);
+        base44.functions.invoke('osmTileProxy', { z: zoom, x: tx, y: ty })
+          .then(res => new Promise(resolve => {
             const img = new Image();
-            img.onload = () => { ctx.drawImage(img, cx, cy, TILE_SIZE, TILE_SIZE); URL.revokeObjectURL(u); resolve(); };
-            img.onerror = () => { URL.revokeObjectURL(u); resolve(); };
-            img.src = u;
+            img.onload = () => { ctx.drawImage(img, cx, cy, TILE_SIZE, TILE_SIZE); resolve(); };
+            img.onerror = () => resolve();
+            img.src = `data:image/png;base64,${res.data.base64}`;
           }))
           .catch(() => {})
       );
