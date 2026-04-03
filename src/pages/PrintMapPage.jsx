@@ -148,6 +148,7 @@ export default function PrintMapPage() {
               center={[51.505, -0.09]}
               zoom={zoom}
               className="w-full h-full"
+              zoomControl={false}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
