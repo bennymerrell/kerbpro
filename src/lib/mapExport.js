@@ -16,7 +16,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   if (overrideCenter && overrideZoom !== null) {
     // Use exactly what the live map is showing
     center = L.latLng(overrideCenter.lat, overrideCenter.lng);
-    zoom = overrideZoom;
+    zoom = Math.round(overrideZoom);
   } else {
     // Fall back to auto-fit from cell bounds
     let pointsToUse = [];
