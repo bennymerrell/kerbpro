@@ -151,6 +151,7 @@ export default function PrintMapPage() {
               zoomControl={false}
               zoomSnap={0}
               zoomDelta={0.1}
+              maxZoom={16}
             >
               <TileLayer
                 url="https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key=7WyHISIynrtLqpEErdgi0CSfalJaux6I"
