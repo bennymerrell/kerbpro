@@ -72,24 +72,33 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   const tX1 = Math.ceil((originX + captureW) / scaledTileSize);
   const tY1 = Math.ceil((originY + captureH) / scaledTileSize);
 
-  const tilePromises = [];
+  const tileTasks = [];
   for (let tx = tX0; tx <= tX1; tx++) {
     for (let ty = tY0; ty <= tY1; ty++) {
       const cx = (tx * scaledTileSize - originX) * SCALE;
       const cy = (ty * scaledTileSize - originY) * SCALE;
-      tilePromises.push(
-        base44.functions.invoke('osmTileProxy', { z: tileZoom, x: tx, y: ty })
-          .then(res => new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => { ctx.drawImage(img, cx, cy, drawTileSize, drawTileSize); resolve(); };
-            img.onerror = () => resolve();
-            img.src = `data:image/png;base64,${res.data.base64}`;
-          }))
-          .catch(() => {})
-      );
+      tileTasks.push({ z: tileZoom, x: tx, y: ty, cx, cy });
     }
   }
-  await Promise.all(tilePromises);
+
+  // Fetch in small batches to avoid rate limiting
+  const BATCH_SIZE = 4;
+  for (let i = 0; i < tileTasks.length; i += BATCH_SIZE) {
+    const batch = tileTasks.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(({ z, x, y, cx, cy }) =>
+      base44.functions.invoke('osmTileProxy', { z, x, y })
+        .then(res => new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, cx, cy, drawTileSize, drawTileSize); resolve(); };
+          img.onerror = () => resolve();
+          img.src = `data:image/png;base64,${res.data.base64}`;
+        }))
+        .catch(() => {})
+    ));
+    if (i + BATCH_SIZE < tileTasks.length) {
+      await new Promise(r => setTimeout(r, 150));
+    }
+  }
 
   // Draw cell outlines using Leaflet's own projection at the same zoom
   const cellsToDraw = selectedCell ? [selectedCell] : cells.filter(c => c.visible !== false);
