@@ -55,9 +55,9 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
 
   // Detect tile layer from live map
   const existingTile = document.querySelector('.leaflet-tile-pane img.leaflet-tile');
-  // Use CartoDB (supports CORS) or ArcGIS satellite
-  let tileUrlFn = (x, y, z) => `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
-  if (existingTile?.src?.includes('arcgisonline')) {
+  // Detect tile layer from live map - default to Esri World Street Map (CORS-friendly, OSM-style)
+  let tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
+  if (existingTile?.src?.includes('World_Imagery') || existingTile?.src?.includes('satellite')) {
     tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
   }
 
