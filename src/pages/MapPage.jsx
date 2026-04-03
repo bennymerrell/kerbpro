@@ -252,6 +252,7 @@ export default function MapPage() {
           attribution={currentTile.attribution}
           url={currentTile.url}
           maxZoom={currentTile.maxZoom}
+          maxNativeZoom={currentTile.maxNativeZoom || currentTile.maxZoom}
         />
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode || (isAreaMode && !areaClosed)} />
         <LocationWatcher onLocationUpdate={setLocationData} />
