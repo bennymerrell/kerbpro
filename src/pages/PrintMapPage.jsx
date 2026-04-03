@@ -149,6 +149,8 @@ export default function PrintMapPage() {
               zoom={zoom}
               className="w-full h-full"
               zoomControl={false}
+              zoomSnap={0}
+              zoomDelta={0.1}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
