@@ -46,11 +46,15 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   // Use fractional zoom for pixel math, integer zoom for tile URLs
   const tileZoom = Math.floor(zoom);
   const scaleFactor = Math.pow(2, zoom - tileZoom);
-  const scaledTileSize = TILE_SIZE * scaleFactor;
+
+  // captureW/H = the CSS pixel size of the overlay (the actual area to capture)
+  // CANVAS is SCALE x larger for output quality only — it does NOT capture more area
+  const captureW = overlayPixels ? overlayPixels.width : CANVAS_W / SCALE;
+  const captureH = overlayPixels ? overlayPixels.height : CANVAS_H / SCALE;
 
   const centerPx = L.CRS.EPSG3857.latLngToPoint(center, zoom);
-  const originX = centerPx.x - CANVAS_W / 2;
-  const originY = centerPx.y - CANVAS_H / 2;
+  const originX = centerPx.x - captureW / 2;
+  const originY = centerPx.y - captureH / 2;
 
   const canvas = document.createElement('canvas');
   canvas.width = CANVAS_W;
@@ -59,21 +63,25 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   ctx.fillStyle = '#e8e0d8';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
+  // Tile size in capture coords (CSS px), drawn scaled up to canvas coords
+  const scaledTileSize = TILE_SIZE * scaleFactor; // in capture px
+  const drawTileSize = scaledTileSize * SCALE;     // in canvas px
+
   const tX0 = Math.floor(originX / scaledTileSize);
   const tY0 = Math.floor(originY / scaledTileSize);
-  const tX1 = Math.ceil((originX + CANVAS_W) / scaledTileSize);
-  const tY1 = Math.ceil((originY + CANVAS_H) / scaledTileSize);
+  const tX1 = Math.ceil((originX + captureW) / scaledTileSize);
+  const tY1 = Math.ceil((originY + captureH) / scaledTileSize);
 
   const tilePromises = [];
   for (let tx = tX0; tx <= tX1; tx++) {
     for (let ty = tY0; ty <= tY1; ty++) {
-      const cx = tx * scaledTileSize - originX;
-      const cy = ty * scaledTileSize - originY;
+      const cx = (tx * scaledTileSize - originX) * SCALE;
+      const cy = (ty * scaledTileSize - originY) * SCALE;
       tilePromises.push(
         base44.functions.invoke('osmTileProxy', { z: tileZoom, x: tx, y: ty })
           .then(res => new Promise(resolve => {
             const img = new Image();
-            img.onload = () => { ctx.drawImage(img, cx, cy, scaledTileSize, scaledTileSize); resolve(); };
+            img.onload = () => { ctx.drawImage(img, cx, cy, drawTileSize, drawTileSize); resolve(); };
             img.onerror = () => resolve();
             img.src = `data:image/png;base64,${res.data.base64}`;
           }))
@@ -92,7 +100,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
 
     const pts = points.map(p => {
       const px = L.CRS.EPSG3857.latLngToPoint(L.latLng(p.lat, p.lng), zoom);
-      return { x: px.x - originX, y: px.y - originY };
+      return { x: (px.x - originX) * SCALE, y: (px.y - originY) * SCALE };
     });
 
     ctx.beginPath();
