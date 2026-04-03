@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing z, x, y params' }, { status: 400 });
     }
 
-    const url = `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+    const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'KerbApp/1.0 (mapping tool)',
