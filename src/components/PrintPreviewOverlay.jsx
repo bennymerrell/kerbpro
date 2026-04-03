@@ -9,8 +9,8 @@ const PrintPreviewOverlay = forwardRef(function PrintPreviewOverlay({ orientatio
 
   // Size the overlay to fill 85% of the smaller dimension of the viewport
   const overlayStyle = isPortrait
-    ? { width: `min(85vw, calc(85vh * ${ratio}))`, aspectRatio: `${ratio}` }
-    : { height: `min(85vh, calc(85vw * ${1 / ratio}))`, aspectRatio: `${ratio}` };
+    ? { width: `min(100vw, calc(100vh * ${ratio}))`, aspectRatio: `${ratio}` }
+    : { width: '100vw', aspectRatio: `${ratio}` };
 
   return (
     <div className="absolute inset-0 pointer-events-none z-[500] flex items-center justify-center">
