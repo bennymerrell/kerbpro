@@ -1,5 +1,7 @@
+import { forwardRef } from 'react';
+
 // A visual overlay showing the A4 capture area on the map
-export default function PrintPreviewOverlay({ orientation }) {
+const PrintPreviewOverlay = forwardRef(function PrintPreviewOverlay({ orientation }, ref) {
   const isPortrait = orientation === 'portrait';
 
   // A4 ratio: 210:297 portrait, 297:210 landscape
@@ -17,6 +19,7 @@ export default function PrintPreviewOverlay({ orientation }) {
 
       {/* The A4 capture window */}
       <div
+        ref={ref}
         className="relative border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
         style={overlayStyle}
       >
@@ -37,4 +40,6 @@ export default function PrintPreviewOverlay({ orientation }) {
       </div>
     </div>
   );
-}
+});
+
+export default PrintPreviewOverlay;

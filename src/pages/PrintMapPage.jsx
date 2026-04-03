@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { buildMapCanvas, getPDFDimensions, calculateOptimalImageDimensions } from '../lib/mapExport';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
@@ -66,20 +66,48 @@ export default function PrintMapPage() {
   const [orientation, setOrientation] = useState('portrait');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const mapContainerRef = useRef(null);
+  const overlayRef = useRef(null);
 
   async function handleGeneratePDF() {
-    if (!selectedCell) return;
+    if (!selectedCell || !mapContainerRef.current || !overlayRef.current) return;
     setGenerating(true);
     try {
-      const canvas = await buildMapCanvas([], selectedCell, orientation, Math.round(zoom));
+      const { default: html2canvas } = await import('html2canvas');
       const { jsPDF } = await import('jspdf');
+
+      // Get the pixel bounds of the overlay relative to the map container
+      const mapRect = mapContainerRef.current.getBoundingClientRect();
+      const overlayRect = overlayRef.current.getBoundingClientRect();
+      const cropX = overlayRect.left - mapRect.left;
+      const cropY = overlayRect.top - mapRect.top;
+      const cropW = overlayRect.width;
+      const cropH = overlayRect.height;
+
+      // Capture only the map container (no UI chrome)
+      const fullCanvas = await html2canvas(mapContainerRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        logging: false,
+      });
+
+      // Crop to the overlay region
+      const scale = fullCanvas.width / mapRect.width;
+      const cropped = document.createElement('canvas');
+      cropped.width = cropW * scale;
+      cropped.height = cropH * scale;
+      cropped.getContext('2d').drawImage(
+        fullCanvas,
+        cropX * scale, cropY * scale, cropW * scale, cropH * scale,
+        0, 0, cropped.width, cropped.height
+      );
+
       const isPortrait = orientation === 'portrait';
       const pageW = isPortrait ? 210 : 297;
       const pageH = isPortrait ? 297 : 210;
       const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
-      const dims = calculateOptimalImageDimensions(canvas.width, canvas.height, pageW, pageH);
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      pdf.addImage(imgData, 'JPEG', dims.x, dims.y, dims.width, dims.height);
+      pdf.addImage(cropped.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
       const cellName = selectedCell?.name || 'map';
       pdf.save(`${cellName}-${orientation}.pdf`);
     } finally {
@@ -131,7 +159,7 @@ export default function PrintMapPage() {
       </div>
 
       {/* Map Container */}
-      <div className="absolute inset-0 top-16 bottom-24">
+      <div ref={mapContainerRef} className="absolute inset-0 top-16 bottom-24">
         {selectedCell ? (
           <>
             <MapContainer
@@ -146,7 +174,7 @@ export default function PrintMapPage() {
               />
               <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} />
             </MapContainer>
-            <PrintPreviewOverlay orientation={orientation} />
+            <PrintPreviewOverlay ref={overlayRef} orientation={orientation} />
           </>
         ) : (
           <div className="flex items-center justify-center h-full">
