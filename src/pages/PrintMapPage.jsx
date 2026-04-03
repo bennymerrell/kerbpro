@@ -6,6 +6,7 @@ import L from 'leaflet';
 import { base44 } from '@/api/base44Client';
 import { X } from 'lucide-react';
 import PrintMapControls from '../components/PrintMapControls';
+import PrintPreviewOverlay from '../components/PrintPreviewOverlay';
 
 function MapContent({ selectedCell, zoom, setZoom }) {
   const map = useMap();
@@ -130,20 +131,23 @@ export default function PrintMapPage() {
       </div>
 
       {/* Map Container */}
-      <div className="absolute inset-0 top-16 bottom-24 print:inset-0 print:top-0 print:bottom-0">
+      <div className="absolute inset-0 top-16 bottom-24">
         {selectedCell ? (
-          <MapContainer
-            center={[51.505, -0.09]}
-            zoom={zoom}
-            className="w-full h-full"
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              maxZoom={19}
-            />
-            <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} />
-          </MapContainer>
+          <>
+            <MapContainer
+              center={[51.505, -0.09]}
+              zoom={zoom}
+              className="w-full h-full"
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                maxZoom={19}
+              />
+              <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} />
+            </MapContainer>
+            <PrintPreviewOverlay orientation={orientation} />
+          </>
         ) : (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">No cell selected</p>
