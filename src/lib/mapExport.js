@@ -16,7 +16,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   if (overrideCenter && overrideZoom !== null) {
     // Use exactly what the live map is showing
     center = L.latLng(overrideCenter.lat, overrideCenter.lng);
-    zoom = Math.round(overrideZoom);
+    zoom = overrideZoom;
   } else {
     // Fall back to auto-fit from cell bounds
     let pointsToUse = [];
@@ -43,6 +43,11 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
     }
   }
 
+  // Use fractional zoom for pixel math, integer zoom for tile URLs
+  const tileZoom = Math.floor(zoom);
+  const scaleFactor = Math.pow(2, zoom - tileZoom);
+  const scaledTileSize = TILE_SIZE * scaleFactor;
+
   const centerPx = L.CRS.EPSG3857.latLngToPoint(center, zoom);
   const originX = centerPx.x - CANVAS_W / 2;
   const originY = centerPx.y - CANVAS_H / 2;
@@ -54,26 +59,21 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   ctx.fillStyle = '#e8e0d8';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // Detect tile layer from live map
-  const existingTile = document.querySelector('.leaflet-tile-pane img.leaflet-tile');
-  // Use backend proxy to fetch OSM tiles (avoids CORS/policy blocks)
-  const tileUrlFn = null; // tiles fetched via proxy below
-
-  const tX0 = Math.floor(originX / TILE_SIZE);
-  const tY0 = Math.floor(originY / TILE_SIZE);
-  const tX1 = Math.ceil((originX + CANVAS_W) / TILE_SIZE);
-  const tY1 = Math.ceil((originY + CANVAS_H) / TILE_SIZE);
+  const tX0 = Math.floor(originX / scaledTileSize);
+  const tY0 = Math.floor(originY / scaledTileSize);
+  const tX1 = Math.ceil((originX + CANVAS_W) / scaledTileSize);
+  const tY1 = Math.ceil((originY + CANVAS_H) / scaledTileSize);
 
   const tilePromises = [];
   for (let tx = tX0; tx <= tX1; tx++) {
     for (let ty = tY0; ty <= tY1; ty++) {
-      const cx = tx * TILE_SIZE - originX;
-      const cy = ty * TILE_SIZE - originY;
+      const cx = tx * scaledTileSize - originX;
+      const cy = ty * scaledTileSize - originY;
       tilePromises.push(
-        base44.functions.invoke('osmTileProxy', { z: zoom, x: tx, y: ty })
+        base44.functions.invoke('osmTileProxy', { z: tileZoom, x: tx, y: ty })
           .then(res => new Promise(resolve => {
             const img = new Image();
-            img.onload = () => { ctx.drawImage(img, cx, cy, TILE_SIZE, TILE_SIZE); resolve(); };
+            img.onload = () => { ctx.drawImage(img, cx, cy, scaledTileSize, scaledTileSize); resolve(); };
             img.onerror = () => resolve();
             img.src = `data:image/png;base64,${res.data.base64}`;
           }))
