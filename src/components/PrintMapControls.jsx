@@ -56,7 +56,7 @@ export default function PrintMapControls({
             <input
               type="range"
               min="5"
-              max="16"
+              max="17"
               step="0.01"
               value={zoom}
               onChange={(e) => onZoomChange(parseFloat(e.target.value))}

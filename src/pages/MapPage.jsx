@@ -244,7 +244,7 @@ export default function MapPage() {
         zoomAnimation={false}
         zoomSnap={1}
         zoomDelta={1}
-        maxZoom={16}
+        maxZoom={17}
         ref={mapRef}
         style={{ cursor: isPlotting || isSpeciesMode ? 'crosshair' : 'grab' }}
       >
