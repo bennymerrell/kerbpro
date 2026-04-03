@@ -62,6 +62,13 @@ export default function PrintMapControls({
               onChange={(e) => onZoomChange(parseFloat(e.target.value))}
               className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer"
             />
+            <button
+              onClick={() => onZoomChange(17)}
+              title="Snap to zoom 17 — shows all street names"
+              className="text-xs font-semibold px-2 py-1 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 whitespace-nowrap border border-amber-200"
+            >
+              Street Names
+            </button>
           </div>
 
           {/* Generate PDF */}
