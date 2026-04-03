@@ -70,8 +70,8 @@ export function getSegmentDistances(waypoints) {
 export const TILE_LAYERS = {
   osm: {
     name: "Standard",
-    url: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles &copy; <a href="https://www.openstreetmap.fr">OpenStreetMap France</a>',
+    url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles &copy; <a href="https://www.hotosm.org">Humanitarian OpenStreetMap Team</a>',
     maxZoom: 20,
   },
   satellite: {
