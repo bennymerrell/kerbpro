@@ -1,9 +1,9 @@
 import L from 'leaflet';
 
-export async function buildMapCanvas(cells = [], selectedCell = null) {
+export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null) {
   // Determine orientation first to set canvas dimensions
   const pdfDims = getPDFDimensions(cells, selectedCell);
-  const isPortrait = pdfDims.orientation === 'portrait';
+  const isPortrait = (overrideOrientation || pdfDims.orientation) === 'portrait';
   const CANVAS_W = isPortrait ? 990 : 1400;
   const CANVAS_H = isPortrait ? 1400 : 990;
   const TILE_SIZE = 256;
@@ -29,18 +29,22 @@ export async function buildMapCanvas(cells = [], selectedCell = null) {
       [Math.max(...lats), Math.max(...lngs)]
     );
     center = bounds.getCenter();
-    zoom = 18;
-    for (let z = 18; z >= 1; z--) {
-      const nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), z);
-      const se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), z);
-      if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.99 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.99) {
-        zoom = z;
-        break;
+    if (overrideZoom !== null) {
+      zoom = overrideZoom;
+    } else {
+      zoom = 18;
+      for (let z = 18; z >= 1; z--) {
+        const nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), z);
+        const se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), z);
+        if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.99 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.99) {
+          zoom = z;
+          break;
+        }
       }
     }
   } else {
     center = L.latLng(51.505, -1.27);
-    zoom = 13;
+    zoom = overrideZoom !== null ? overrideZoom : 13;
   }
 
   const centerPx = L.CRS.EPSG3857.latLngToPoint(center, zoom);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { buildMapCanvas, getPDFDimensions, calculateOptimalImageDimensions } from '../lib/mapExport';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -63,6 +64,27 @@ export default function PrintMapPage() {
   const [zoom, setZoom] = useState(18.0);
   const [orientation, setOrientation] = useState('portrait');
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  async function handleGeneratePDF() {
+    if (!selectedCell) return;
+    setGenerating(true);
+    try {
+      const canvas = await buildMapCanvas([], selectedCell, orientation, Math.round(zoom));
+      const { jsPDF } = await import('jspdf');
+      const isPortrait = orientation === 'portrait';
+      const pageW = isPortrait ? 210 : 297;
+      const pageH = isPortrait ? 297 : 210;
+      const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
+      const dims = calculateOptimalImageDimensions(canvas.width, canvas.height, pageW, pageH);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      pdf.addImage(imgData, 'JPEG', dims.x, dims.y, dims.width, dims.height);
+      const cellName = selectedCell?.name || 'map';
+      pdf.save(`${cellName}-${orientation}.pdf`);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchCell() {
@@ -129,13 +151,14 @@ export default function PrintMapPage() {
         )}
       </div>
 
-      {/* Controls - Hidden on print */}
+      {/* Controls */}
       <PrintMapControls
         zoom={zoom}
         onZoomChange={setZoom}
         orientation={orientation}
         onOrientationChange={setOrientation}
-        onPrint={() => window.print()}
+        onPrint={handleGeneratePDF}
+        generating={generating}
       />
     </div>
   );

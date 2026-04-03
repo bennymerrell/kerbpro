@@ -1,4 +1,4 @@
-import { Printer, Maximize2, Minimize2 } from 'lucide-react';
+import { Printer, Maximize2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function PrintMapControls({
@@ -6,7 +6,8 @@ export default function PrintMapControls({
   onZoomChange,
   orientation,
   onOrientationChange,
-  onPrint
+  onPrint,
+  generating = false
 }) {
   return (
     <div className="fixed left-0 right-0 z-[1000] print:!hidden bg-background/95 backdrop-blur-md border-t border-border shadow-lg" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
@@ -54,14 +55,15 @@ export default function PrintMapControls({
           />
         </div>
 
-        {/* Print Button */}
+        {/* Generate PDF Button */}
         <Button
           onClick={onPrint}
+          disabled={generating}
           className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90"
           size="sm"
         >
-          <Printer className="h-4 w-4" />
-          Print
+          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+          {generating ? 'Generating...' : 'Generate PDF'}
         </Button>
       </div>
     </div>
