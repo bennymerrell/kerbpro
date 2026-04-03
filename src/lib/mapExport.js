@@ -1,6 +1,6 @@
 import L from 'leaflet';
 
-export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null) {
+export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null, overrideCenter = null) {
   // Determine orientation first to set canvas dimensions
   const pdfDims = getPDFDimensions(cells, selectedCell);
   const isPortrait = (overrideOrientation || pdfDims.orientation) === 'portrait';
@@ -8,43 +8,36 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   const CANVAS_H = isPortrait ? 1400 : 990;
   const TILE_SIZE = 256;
 
-  // If a specific cell is selected, zoom to only that cell
-  let pointsToUse = [];
-  if (selectedCell) {
-    try {
-      pointsToUse = JSON.parse(selectedCell.points) || [];
-    } catch {}
-  } else {
-    pointsToUse = cells.filter(c => c.visible !== false).flatMap(c => {
-      try { return JSON.parse(c.points); } catch { return []; }
-    });
-  }
-
   let center, zoom;
-  if (pointsToUse.length > 0) {
-    const lats = pointsToUse.map(p => p.lat);
-    const lngs = pointsToUse.map(p => p.lng);
-    const bounds = L.latLngBounds(
-      [Math.min(...lats), Math.min(...lngs)],
-      [Math.max(...lats), Math.max(...lngs)]
-    );
-    center = bounds.getCenter();
-    if (overrideZoom !== null) {
-      zoom = overrideZoom;
-    } else {
-      zoom = 18;
-      for (let z = 18; z >= 1; z--) {
-        const nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), z);
-        const se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), z);
-        if (Math.abs(se.x - nw.x) <= CANVAS_W * 0.99 && Math.abs(se.y - nw.y) <= CANVAS_H * 0.99) {
-          zoom = z;
-          break;
-        }
-      }
-    }
+
+  if (overrideCenter && overrideZoom !== null) {
+    // Use exactly what the live map is showing
+    center = L.latLng(overrideCenter.lat, overrideCenter.lng);
+    zoom = overrideZoom;
   } else {
-    center = L.latLng(51.505, -1.27);
-    zoom = overrideZoom !== null ? overrideZoom : 13;
+    // Fall back to auto-fit from cell bounds
+    let pointsToUse = [];
+    if (selectedCell) {
+      try { pointsToUse = JSON.parse(selectedCell.points) || []; } catch {}
+    } else {
+      pointsToUse = cells.filter(c => c.visible !== false).flatMap(c => {
+        try { return JSON.parse(c.points); } catch { return []; }
+      });
+    }
+
+    if (pointsToUse.length > 0) {
+      const lats = pointsToUse.map(p => p.lat);
+      const lngs = pointsToUse.map(p => p.lng);
+      const bounds = L.latLngBounds(
+        [Math.min(...lats), Math.min(...lngs)],
+        [Math.max(...lats), Math.max(...lngs)]
+      );
+      center = bounds.getCenter();
+      zoom = overrideZoom !== null ? overrideZoom : 18;
+    } else {
+      center = L.latLng(51.505, -1.27);
+      zoom = overrideZoom !== null ? overrideZoom : 13;
+    }
   }
 
   const centerPx = L.CRS.EPSG3857.latLngToPoint(center, zoom);

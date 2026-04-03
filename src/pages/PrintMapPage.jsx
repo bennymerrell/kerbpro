@@ -8,8 +8,12 @@ import { X } from 'lucide-react';
 import PrintMapControls from '../components/PrintMapControls';
 import PrintPreviewOverlay from '../components/PrintPreviewOverlay';
 
-function MapContent({ selectedCell, zoom, setZoom }) {
+function MapContent({ selectedCell, zoom, setZoom, onMapReady }) {
   const map = useMap();
+
+  useEffect(() => {
+    if (onMapReady) onMapReady(map);
+  }, [map, onMapReady]);
 
   useEffect(() => {
     if (!selectedCell) return;
@@ -68,46 +72,22 @@ export default function PrintMapPage() {
   const [generating, setGenerating] = useState(false);
   const mapContainerRef = useRef(null);
   const overlayRef = useRef(null);
+  const leafletMapRef = useRef(null);
 
   async function handleGeneratePDF() {
-    if (!selectedCell || !mapContainerRef.current || !overlayRef.current) return;
+    if (!selectedCell) return;
     setGenerating(true);
     try {
-      const { default: html2canvas } = await import('html2canvas');
       const { jsPDF } = await import('jspdf');
-
-      // Get the pixel bounds of the overlay relative to the map container
-      const mapRect = mapContainerRef.current.getBoundingClientRect();
-      const overlayRect = overlayRef.current.getBoundingClientRect();
-      const cropX = overlayRect.left - mapRect.left;
-      const cropY = overlayRect.top - mapRect.top;
-      const cropW = overlayRect.width;
-      const cropH = overlayRect.height;
-
-      // Capture only the map container (no UI chrome)
-      const fullCanvas = await html2canvas(mapContainerRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2,
-        logging: false,
-      });
-
-      // Crop to the overlay region
-      const scale = fullCanvas.width / mapRect.width;
-      const cropped = document.createElement('canvas');
-      cropped.width = cropW * scale;
-      cropped.height = cropH * scale;
-      cropped.getContext('2d').drawImage(
-        fullCanvas,
-        cropX * scale, cropY * scale, cropW * scale, cropH * scale,
-        0, 0, cropped.width, cropped.height
-      );
-
+      // Read the live map's exact centre and zoom
+      const liveCenter = leafletMapRef.current ? leafletMapRef.current.getCenter() : null;
+      const liveZoom = leafletMapRef.current ? leafletMapRef.current.getZoom() : null;
+      const canvas = await buildMapCanvas([], selectedCell, orientation, liveZoom, liveCenter);
       const isPortrait = orientation === 'portrait';
       const pageW = isPortrait ? 210 : 297;
       const pageH = isPortrait ? 297 : 210;
       const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
-      pdf.addImage(cropped.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
       const cellName = selectedCell?.name || 'map';
       pdf.save(`${cellName}-${orientation}.pdf`);
     } finally {
@@ -172,7 +152,7 @@ export default function PrintMapPage() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 maxZoom={19}
               />
-              <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} />
+              <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} onMapReady={(m) => { leafletMapRef.current = m; }} />
             </MapContainer>
             <PrintPreviewOverlay ref={overlayRef} orientation={orientation} />
           </>
