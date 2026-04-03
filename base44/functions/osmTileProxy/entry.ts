@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('OS_MAPS_API_KEY');
-    const url = `https://api.os.uk/maps/raster/v1/zxy/Road_3857/${z}/${x}/${y}.png?key=${apiKey}`;
+    const url = `https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/${z}/${x}/${y}.png?key=${apiKey}`;
     const response = await fetch(url);
 
     if (!response.ok) {
