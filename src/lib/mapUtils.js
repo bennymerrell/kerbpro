@@ -70,9 +70,9 @@ export function getSegmentDistances(waypoints) {
 export const TILE_LAYERS = {
   osm: {
     name: "Standard",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
+    url: "https://api.os.uk/maps/raster/v1/zxy/Road_3857/{z}/{x}/{y}.png?key=7WyHISIynrtLqpEErdgi0CSfalJaux6I",
+    attribution: 'Contains OS data &copy; Crown copyright and database rights 2024',
+    maxZoom: 20,
   },
   satellite: {
     name: "Satellite",
