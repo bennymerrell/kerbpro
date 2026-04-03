@@ -48,7 +48,7 @@ export default function PrintMapControls({
             type="range"
             min="5"
             max="22"
-            step="0.5"
+            step="0.1"
             value={zoom}
             onChange={(e) => onZoomChange(parseFloat(e.target.value))}
             className="h-2 bg-muted rounded-lg appearance-none cursor-pointer"
