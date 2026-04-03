@@ -44,7 +44,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   }
 
   // Use fractional zoom for pixel math, integer zoom for tile URLs
-  const tileZoom = Math.floor(zoom);
+  const tileZoom = Math.min(Math.round(zoom), 19);
   const scaleFactor = Math.pow(2, zoom - tileZoom);
 
   // captureW/H = the CSS pixel size of the overlay (the actual area to capture)
