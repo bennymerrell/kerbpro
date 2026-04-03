@@ -11,13 +11,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing z, x, y params' }, { status: 400 });
     }
 
-    const url = `https://a.tile.openstreetmap.org/${z}/${x}/${y}.png`;
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'KerbApp/1.0 (mapping tool)',
-        'Referer': 'https://www.openstreetmap.org/',
-      }
-    });
+    const apiKey = Deno.env.get('OS_MAPS_API_KEY');
+    const url = `https://api.os.uk/maps/raster/v1/zxy/Road_3857/${z}/${x}/${y}.png?key=${apiKey}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       return Response.json({ error: 'Tile fetch failed', status: response.status }, { status: 502 });
