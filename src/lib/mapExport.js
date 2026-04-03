@@ -1,11 +1,13 @@
 import L from 'leaflet';
 
-export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null, overrideCenter = null) {
+export async function buildMapCanvas(cells = [], selectedCell = null, overrideOrientation = null, overrideZoom = null, overrideCenter = null, overlayPixels = null) {
   // Determine orientation first to set canvas dimensions
   const pdfDims = getPDFDimensions(cells, selectedCell);
   const isPortrait = (overrideOrientation || pdfDims.orientation) === 'portrait';
-  const CANVAS_W = isPortrait ? 990 : 1400;
-  const CANVAS_H = isPortrait ? 1400 : 990;
+  // Use overlay pixel size scaled up 2x for quality, so we capture EXACTLY what the overlay shows
+  const SCALE = 2;
+  const CANVAS_W = overlayPixels ? Math.round(overlayPixels.width * SCALE) : (isPortrait ? 990 : 1400);
+  const CANVAS_H = overlayPixels ? Math.round(overlayPixels.height * SCALE) : (isPortrait ? 1400 : 990);
   const TILE_SIZE = 256;
 
   let center, zoom;
@@ -53,7 +55,8 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
 
   // Detect tile layer from live map
   const existingTile = document.querySelector('.leaflet-tile-pane img.leaflet-tile');
-  let tileUrlFn = (x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  // Use CartoDB (supports CORS) or ArcGIS satellite
+  let tileUrlFn = (x, y, z) => `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
   if (existingTile?.src?.includes('arcgisonline')) {
     tileUrlFn = (x, y, z) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
   }

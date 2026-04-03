@@ -79,10 +79,12 @@ export default function PrintMapPage() {
     setGenerating(true);
     try {
       const { jsPDF } = await import('jspdf');
-      // Read the live map's exact centre and zoom
       const liveCenter = leafletMapRef.current ? leafletMapRef.current.getCenter() : null;
       const liveZoom = leafletMapRef.current ? leafletMapRef.current.getZoom() : null;
-      const canvas = await buildMapCanvas([], selectedCell, orientation, liveZoom, liveCenter);
+      // Pass the overlay's exact screen pixel size so canvas captures the same area
+      const overlayRect = overlayRef.current ? overlayRef.current.getBoundingClientRect() : null;
+      const overlayPixels = overlayRect ? { width: overlayRect.width, height: overlayRect.height } : null;
+      const canvas = await buildMapCanvas([], selectedCell, orientation, liveZoom, liveCenter, overlayPixels);
       const isPortrait = orientation === 'portrait';
       const pageW = isPortrait ? 210 : 297;
       const pageH = isPortrait ? 297 : 210;
