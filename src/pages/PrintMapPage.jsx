@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { base44 } from '@/api/base44Client';
 import { X } from 'lucide-react';
-import PrintMapControls from '../components/PrintMapControls';
+import PrintMapControls from '../components/PrintMapControls.jsx';
 import PrintPreviewOverlay from '../components/PrintPreviewOverlay';
 
 function MapContent({ selectedCell, zoom, setZoom, onMapReady }) {
@@ -141,7 +141,7 @@ export default function PrintMapPage() {
       </div>
 
       {/* Map Container */}
-      <div ref={mapContainerRef} className="absolute inset-0 top-16 bottom-24">
+      <div ref={mapContainerRef} className="absolute inset-0 top-16 bottom-0">
         {selectedCell ? (
           <>
             <MapContainer
