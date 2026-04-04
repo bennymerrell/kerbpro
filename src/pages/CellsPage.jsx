@@ -213,10 +213,10 @@ export default function CellsPage() {
                             >
                               {!isExcluded && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                             </button>
-                            <span className={`text-xs flex-1 capitalize ${isExcluded ? 'line-through text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                            <span className={`text-xs flex-1 capitalize text-muted-foreground`}>
                               {type.replace(/_/g, ' ')}
                             </span>
-                            <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/50 line-through' : 'text-foreground'}`}>
+                            <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/40' : 'text-foreground'}`}>
                               {(meters / 1609.34).toFixed(3)} mi
                             </span>
                           </div>
