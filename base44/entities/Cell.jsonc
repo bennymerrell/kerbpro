@@ -23,6 +23,10 @@
     "road_breakdown": {
       "type": "string",
       "description": "JSON object of {highway_type: meters}"
+    },
+    "excluded_road_types": {
+      "type": "string",
+      "description": "JSON array of excluded highway types"
     }
   },
   "required": [

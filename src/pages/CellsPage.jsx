@@ -158,16 +158,42 @@ export default function CellsPage() {
               try {
                 const bd = JSON.parse(cell.road_breakdown);
                 const entries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
+                const excluded = (() => { try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; } })();
+                const includedTotal = entries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
                 if (entries.length > 0) return (
-                  <div className="border-t border-border px-4 py-2.5 bg-muted/20">
-                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Road Type Breakdown</div>
-                    <div className="space-y-1">
-                      {entries.map(([type, meters]) => (
-                        <div key={type} className="flex justify-between items-center text-xs">
-                          <span className="text-muted-foreground capitalize">{type.replace(/_/g, ' ')}</span>
-                          <span className="font-medium text-foreground">{(meters / 1609.34).toFixed(3)} mi</span>
-                        </div>
-                      ))}
+                  <div className="border-t border-border px-4 py-3 bg-muted/20">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</div>
+                      <div className="text-xs font-bold text-blue-600">{((includedTotal / 1609.34) * 2).toFixed(3)} mi spray</div>
+                    </div>
+                    <div className="space-y-1.5">
+                      {entries.map(([type, meters]) => {
+                        const isExcluded = excluded.includes(type);
+                        return (
+                          <div key={type} className="flex items-center gap-2">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const newExcluded = isExcluded ? excluded.filter(t => t !== type) : [...excluded, type];
+                                const newExcludedStr = JSON.stringify(newExcluded);
+                                await base44.entities.Cell.update(cell.id, { excluded_road_types: newExcludedStr });
+                                setCells(prev => prev.map(c => c.id === cell.id ? { ...c, excluded_road_types: newExcludedStr } : c));
+                              }}
+                              className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
+                                isExcluded ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'
+                              }`}
+                            >
+                              {!isExcluded && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </button>
+                            <span className={`text-xs flex-1 capitalize ${isExcluded ? 'line-through text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                              {type.replace(/_/g, ' ')}
+                            </span>
+                            <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/50 line-through' : 'text-foreground'}`}>
+                              {(meters / 1609.34).toFixed(3)} mi
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
