@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
+const ADOPTED_TAGS = ['primary','secondary','tertiary','unclassified','residential','secondary_link','tertiary_link','living_street'];
 
 function haversineSegment(a, b) {
   const R = 6371000;
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
-    const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street';
+    const roadFilter = 'primary|secondary|tertiary|unclassified|residential|secondary_link|tertiary_link|living_street';
     const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
 
     const endpoints = [
