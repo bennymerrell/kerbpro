@@ -154,10 +154,9 @@ export default function PrintMapPage() {
               maxZoom={17}
             >
               <TileLayer
-                url="https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key=7WyHISIynrtLqpEErdgi0CSfalJaux6I"
-                attribution='Contains OS data &copy; Crown copyright and database rights 2024'
-                maxZoom={20}
-                maxNativeZoom={17}
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                maxZoom={19}
               />
               <MapContent selectedCell={selectedCell} zoom={zoom} setZoom={setZoom} onMapReady={(m) => { leafletMapRef.current = m; }} />
             </MapContainer>
