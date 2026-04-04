@@ -2,8 +2,54 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+function haversineSegment(a, b) {
+  const R = 6371000;
+  const dLat = (b[0] - a[0]) * Math.PI / 180;
+  const dLng = (b[1] - a[1]) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+function wayLength(nodes) {
+  let d = 0;
+  for (let i = 1; i < nodes.length; i++) d += haversineSegment([nodes[i-1].lat, nodes[i-1].lon], [nodes[i].lat, nodes[i].lon]);
+  return d;
+}
+
+const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
+const UNADOPTED_TAGS = ['service','track','road'];
+
+async function queryMileage(points) {
+  const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
+  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service|track|road';
+  const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
+  const encoded = encodeURIComponent(query);
+  const endpoints = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 95000);
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}`, signal: controller.signal });
+      clearTimeout(timer);
+      const text = await res.text();
+      if (!text.trim().startsWith('<')) {
+        const ways = JSON.parse(text).elements || [];
+        let adoptedM = 0, unadoptedM = 0;
+        ways.forEach(way => {
+          const tag = way.tags?.highway || '';
+          const len = wayLength(way.geometry || []);
+          if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
+          else if (UNADOPTED_TAGS.includes(tag)) unadoptedM += len;
+        });
+        return { adoptedM, unadoptedM };
+      }
+    } catch {}
+  }
+  return null;
+}
 
 function getCellCenter(cell) {
   try {
@@ -20,6 +66,7 @@ export default function CellsPage() {
   const [cells, setCells] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [recalculating, setRecalculating] = useState({});
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -39,6 +86,20 @@ export default function CellsPage() {
   async function handleToggle(cell) {
     await base44.entities.Cell.update(cell.id, { visible: !cell.visible });
     setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
+  }
+
+  async function handleRecalculate(cell) {
+    setRecalculating(prev => ({ ...prev, [cell.id]: true }));
+    try {
+      const points = JSON.parse(cell.points);
+      const result = await queryMileage(points);
+      if (result) {
+        await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM });
+        setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM } : c));
+      }
+    } finally {
+      setRecalculating(prev => ({ ...prev, [cell.id]: false }));
+    }
   }
 
   async function handleDelete(cell) {
@@ -132,21 +193,30 @@ export default function CellsPage() {
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
             <div className="flex border-t border-border">
-              <button
-                onClick={() => handleToggle(cell)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-              >
-                {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                {cell.visible !== false ? 'Visible' : 'Hidden'}
-              </button>
-              <div className="w-px bg-border" />
-              <button
-                onClick={() => handleDelete(cell)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
-              </button>
+            <button
+              onClick={() => handleToggle(cell)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+            >
+              {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              {cell.visible !== false ? 'Visible' : 'Hidden'}
+            </button>
+            <div className="w-px bg-border" />
+            <button
+              onClick={() => handleRecalculate(cell)}
+              disabled={recalculating[cell.id]}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${recalculating[cell.id] ? 'animate-spin' : ''}`} />
+              {recalculating[cell.id] ? 'Calculating…' : 'Recalc Miles'}
+            </button>
+            <div className="w-px bg-border" />
+            <button
+              onClick={() => handleDelete(cell)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
             </div>
           </div>
         ))}
