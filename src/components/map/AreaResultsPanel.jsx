@@ -20,11 +20,10 @@ function wayLength(nodes) {
 }
 
 const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
-const UNADOPTED_TAGS = ['service','track','road'];
 
 async function queryOverpass(polygon) {
   const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service|track|road';
+  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street';
   const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
   const encoded = encodeURIComponent(query);
 
@@ -83,23 +82,17 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
     const ways = await queryOverpass(points);
 
     if (ways !== null) {
-      let adoptedM = 0, unadoptedM = 0;
-      const unadoptedGeoms = [];
+      let adoptedM = 0;
 
       ways.forEach(way => {
         const tag = way.tags?.highway || '';
         const nodes = way.geometry || [];
         const len = wayLength(nodes);
-        if (ADOPTED_TAGS.includes(tag)) {
-          adoptedM += len;
-        } else if (UNADOPTED_TAGS.includes(tag)) {
-          unadoptedM += len;
-          unadoptedGeoms.push(nodes.map(n => [n.lat, n.lon]));
-        }
+        if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
       });
 
-      onUnadoptedRoads(unadoptedGeoms);
-      setResults({ adoptedM, unadoptedM, total: adoptedM + unadoptedM, source: 'osm' });
+      onUnadoptedRoads([]);
+      setResults({ adoptedM, unadoptedM: 0, total: adoptedM, source: 'osm' });
     } else {
       const coordList = points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(' | ');
       try {

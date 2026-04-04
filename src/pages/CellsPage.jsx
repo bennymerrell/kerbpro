@@ -20,11 +20,10 @@ function wayLength(nodes) {
 }
 
 const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
-const UNADOPTED_TAGS = ['service','track','road'];
 
 async function queryMileage(points) {
   const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service|track|road';
+  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street';
   const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
   const encoded = encodeURIComponent(query);
   const endpoints = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
@@ -37,14 +36,13 @@ async function queryMileage(points) {
       const text = await res.text();
       if (!text.trim().startsWith('<')) {
         const ways = JSON.parse(text).elements || [];
-        let adoptedM = 0, unadoptedM = 0;
+        let adoptedM = 0;
         ways.forEach(way => {
           const tag = way.tags?.highway || '';
           const len = wayLength(way.geometry || []);
           if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
-          else if (UNADOPTED_TAGS.includes(tag)) unadoptedM += len;
         });
-        return { adoptedM, unadoptedM };
+        return { adoptedM, unadoptedM: 0 };
       }
     } catch {}
   }
