@@ -5,48 +5,10 @@ import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-function haversineSegment(a, b) {
-  const R = 6371000;
-  const dLat = (b[0] - a[0]) * Math.PI / 180;
-  const dLng = (b[1] - a[1]) * Math.PI / 180;
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function wayLength(nodes) {
-  let d = 0;
-  for (let i = 1; i < nodes.length; i++) d += haversineSegment([nodes[i-1].lat, nodes[i-1].lon], [nodes[i].lat, nodes[i].lon]);
-  return d;
-}
-
-const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
-
 async function queryMileage(points) {
-  const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street';
-  const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
-  const encoded = encodeURIComponent(query);
-  const endpoints = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-  for (const url of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 95000);
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `data=${encoded}`, signal: controller.signal });
-      clearTimeout(timer);
-      const text = await res.text();
-      if (!text.trim().startsWith('<')) {
-        const ways = JSON.parse(text).elements || [];
-        let adoptedM = 0;
-        ways.forEach(way => {
-          const tag = way.tags?.highway || '';
-          const len = wayLength(way.geometry || []);
-          if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
-        });
-        return { adoptedM, unadoptedM: 0 };
-      }
-    } catch {}
-  }
-  return null;
+  const res = await base44.functions.invoke('queryMileage', { points });
+  if (res.data?.error) throw new Error(res.data.error);
+  return { adoptedM: res.data.adoptedM, unadoptedM: res.data.unadoptedM };
 }
 
 function getCellCenter(cell) {

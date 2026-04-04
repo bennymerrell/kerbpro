@@ -5,65 +5,10 @@ import { formatDistanceMiles } from '../../lib/mapUtils';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 
-function haversineSegment(a, b) {
-  const R = 6371000;
-  const dLat = (b[0] - a[0]) * Math.PI / 180;
-  const dLng = (b[1] - a[1]) * Math.PI / 180;
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function wayLength(nodes) {
-  let d = 0;
-  for (let i = 1; i < nodes.length; i++) d += haversineSegment([nodes[i - 1].lat, nodes[i - 1].lon], [nodes[i].lat, nodes[i].lon]);
-  return d;
-}
-
-const ADOPTED_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street'];
-
 async function queryOverpass(polygon) {
-  const polyStr = polygon.map(p => `${p.lat} ${p.lng}`).join(' ');
-  const roadFilter = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street';
-  const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
-  const encoded = encodeURIComponent(query);
-
-  const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-  ];
-
-  for (const url of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 95000);
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encoded}`,
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      const text = await res.text();
-      if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
-    } catch {}
-  }
-
-  try {
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://overpass-api.de/api/interpreter')}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 95000);
-    const res = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encoded}`,
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    const text = await res.text();
-    if (!text.trim().startsWith('<')) return JSON.parse(text).elements || [];
-  } catch {}
-
-  return null;
+  const res = await base44.functions.invoke('queryMileage', { points: polygon });
+  if (res.data?.error) return null;
+  return [{ tags: { highway: '_computed' }, _adoptedM: res.data.adoptedM }];
 }
 
 export default function AreaResultsPanel({ points, closed, onClearArea, onUnadoptedRoads, onSaveCell }) {
@@ -79,40 +24,14 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
     setResults(null);
     onUnadoptedRoads([]);
 
-    const ways = await queryOverpass(points);
-
-    if (ways !== null) {
-      let adoptedM = 0;
-
-      ways.forEach(way => {
-        const tag = way.tags?.highway || '';
-        const nodes = way.geometry || [];
-        const len = wayLength(nodes);
-        if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
-      });
-
+    try {
+      const res = await base44.functions.invoke('queryMileage', { points });
+      if (res.data?.error) throw new Error(res.data.error);
+      const { adoptedM, unadoptedM } = res.data;
       onUnadoptedRoads([]);
       setResults({ adoptedM, unadoptedM: 0, total: adoptedM, source: 'osm' });
-    } else {
-      const coordList = points.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(' | ');
-      try {
-        const result = await base44.integrations.Core.InvokeLLM({
-          model: 'gemini_3_flash',
-          prompt: `Using OpenStreetMap data, estimate the total length in metres of adopted roads (motorway, trunk, primary, secondary, tertiary, unclassified, residential, living_street) and unadopted roads (service, track, road) within the polygon defined by these lat,lng coordinates: ${coordList}. Return JSON with adoptedM (number) and unadoptedM (number).`,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              adoptedM: { type: 'number' },
-              unadoptedM: { type: 'number' },
-            },
-          },
-        });
-        const { adoptedM = 0, unadoptedM = 0 } = result;
-        setResults({ adoptedM, unadoptedM, total: adoptedM + unadoptedM, source: 'ai' });
-      } catch (e) {
-        setError('Could not reach mapping servers. Please check your connection and try again.');
-      }
+    } catch (e) {
+      setError('Could not reach mapping servers. Please check your connection and try again.');
     }
     setLoading(false);
   }
