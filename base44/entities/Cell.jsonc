@@ -19,6 +19,10 @@
     },
     "unadopted_m": {
       "type": "number"
+    },
+    "road_breakdown": {
+      "type": "string",
+      "description": "JSON object of {highway_type: meters}"
     }
   },
   "required": [

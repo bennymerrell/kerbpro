@@ -70,14 +70,18 @@ Deno.serve(async (req) => {
     }
 
     let adoptedM = 0;
+    const breakdown = {};
     ways.forEach(way => {
       const tag = way.tags?.highway || '';
       const nodes = way.geometry || [];
       const len = wayLength(nodes);
-      if (ADOPTED_TAGS.includes(tag)) adoptedM += len;
+      if (ADOPTED_TAGS.includes(tag)) {
+        adoptedM += len;
+        breakdown[tag] = (breakdown[tag] || 0) + len;
+      }
     });
 
-    return Response.json({ adoptedM, unadoptedM: 0, wayCount: ways.length });
+    return Response.json({ adoptedM, unadoptedM: 0, wayCount: ways.length, breakdown });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

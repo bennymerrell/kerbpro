@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 async function queryMileage(points) {
   const res = await base44.functions.invoke('queryMileage', { points });
   if (res.data?.error) throw new Error(res.data.error);
-  return { adoptedM: res.data.adoptedM, unadoptedM: res.data.unadoptedM };
+  return { adoptedM: res.data.adoptedM, unadoptedM: res.data.unadoptedM, breakdown: res.data.breakdown || {} };
 }
 
 function getCellCenter(cell) {
@@ -55,8 +55,8 @@ export default function CellsPage() {
     try {
       const points = JSON.parse(cell.points);
       const result = await queryMileage(points);
-      await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM });
-      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM } : c));
+      await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM, road_breakdown: JSON.stringify(result.breakdown) });
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM, road_breakdown: JSON.stringify(result.breakdown) } : c));
     } catch (e) {
       setRecalcError(prev => ({ ...prev, [cell.id]: 'Overpass server busy — try again in a moment' }));
     } finally {
@@ -154,35 +154,54 @@ export default function CellsPage() {
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
+            {cell.road_breakdown && (() => {
+              try {
+                const bd = JSON.parse(cell.road_breakdown);
+                const entries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
+                if (entries.length > 0) return (
+                  <div className="border-t border-border px-4 py-2.5 bg-muted/20">
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Road Type Breakdown</div>
+                    <div className="space-y-1">
+                      {entries.map(([type, meters]) => (
+                        <div key={type} className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground capitalize">{type.replace(/_/g, ' ')}</span>
+                          <span className="font-medium text-foreground">{(meters / 1609.34).toFixed(3)} mi</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
             <div className="flex border-t border-border">
-            <button
-              onClick={() => handleToggle(cell)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-            >
-              {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              {cell.visible !== false ? 'Visible' : 'Hidden'}
-            </button>
-            <div className="w-px bg-border" />
-            <button
-              onClick={() => handleRecalculate(cell)}
-              disabled={recalculating[cell.id]}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${recalculating[cell.id] ? 'animate-spin' : ''}`} />
-              {recalculating[cell.id] ? 'Calculating…' : 'Recalc Miles'}
-            </button>
+              <button
+                onClick={() => handleToggle(cell)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+              >
+                {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                {cell.visible !== false ? 'Visible' : 'Hidden'}
+              </button>
+              <div className="w-px bg-border" />
+              <button
+                onClick={() => handleRecalculate(cell)}
+                disabled={recalculating[cell.id]}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${recalculating[cell.id] ? 'animate-spin' : ''}`} />
+                {recalculating[cell.id] ? 'Calculating…' : 'Recalc Miles'}
+              </button>
+              <div className="w-px bg-border" />
+              <button
+                onClick={() => handleDelete(cell)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+            </div>
             {recalcError[cell.id] && (
               <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center">{recalcError[cell.id]}</div>
             )}
-            <div className="w-px bg-border" />
-            <button
-              onClick={() => handleDelete(cell)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete
-            </button>
-            </div>
           </div>
         ))}
       </div>
