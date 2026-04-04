@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw } from 'lucide-react';
+import CellSprayHistory from '../components/cells/CellSprayHistory';
 import { cn } from '@/lib/utils';
 
 async function queryMileage(points) {
@@ -28,6 +29,7 @@ export default function CellsPage() {
   const [search, setSearch] = useState('');
   const [recalculating, setRecalculating] = useState({});
   const [recalcError, setRecalcError] = useState({});
+  const [activeTab, setActiveTab] = useState({}); // cellId -> 'roads' | 'spray'
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -154,14 +156,40 @@ export default function CellsPage() {
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
-            {cell.road_breakdown && (() => {
+            {/* Tabs */}
+            {(cell.road_breakdown || true) && (
+              <div className="border-t border-border flex">
+                <button
+                  onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'roads' }))}
+                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                    (activeTab[cell.id] || 'roads') === 'roads'
+                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Road Types
+                </button>
+                <button
+                  onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'spray' }))}
+                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                    activeTab[cell.id] === 'spray'
+                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Spray History
+                </button>
+              </div>
+            )}
+
+            {(activeTab[cell.id] || 'roads') === 'roads' && cell.road_breakdown && (() => {
               try {
                 const bd = JSON.parse(cell.road_breakdown);
                 const entries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
                 const excluded = (() => { try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; } })();
                 const includedTotal = entries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
                 if (entries.length > 0) return (
-                  <div className="border-t border-border px-4 py-3 bg-muted/20">
+                  <div className="px-4 py-3 bg-muted/20">
                     <div className="flex justify-between items-center mb-2">
                       <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</div>
                       <div className="text-xs font-bold text-blue-600">{((includedTotal / 1609.34) * 2).toFixed(3)} mi spray</div>
@@ -199,6 +227,10 @@ export default function CellsPage() {
                 );
               } catch { return null; }
             })()}
+
+            {activeTab[cell.id] === 'spray' && (
+              <CellSprayHistory cellId={cell.id} />
+            )}
             <div className="flex border-t border-border">
               <button
                 onClick={() => handleToggle(cell)}

@@ -1,0 +1,23 @@
+{
+  "name": "SprayLog",
+  "type": "object",
+  "properties": {
+    "cell_id": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quantity_liters": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "cell_id",
+    "date"
+  ]
+}
