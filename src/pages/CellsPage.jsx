@@ -12,14 +12,12 @@ async function queryMileage(points) {
   return { adoptedM: res.data.adoptedM, unadoptedM: res.data.unadoptedM, breakdown: res.data.breakdown || {} };
 }
 
-function getCellCenter(cell) {
-  try {
-    const points = JSON.parse(cell.points);
-    if (!points.length) return null;
-    const lat = points.reduce((s, p) => s + p.lat, 0) / points.length;
-    const lng = points.reduce((s, p) => s + p.lng, 0) / points.length;
-    return [lat, lng];
-  } catch { return null; }
+function getExcluded(cell) {
+  try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; }
+}
+
+function getBreakdown(cell) {
+  try { return JSON.parse(cell.road_breakdown || '{}'); } catch { return {}; }
 }
 
 export default function CellsPage() {
@@ -29,7 +27,7 @@ export default function CellsPage() {
   const [search, setSearch] = useState('');
   const [recalculating, setRecalculating] = useState({});
   const [recalcError, setRecalcError] = useState({});
-  const [activeTab, setActiveTab] = useState({}); // cellId -> 'roads' | 'spray'
+  const [activeTab, setActiveTab] = useState({});
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -57,8 +55,13 @@ export default function CellsPage() {
     try {
       const points = JSON.parse(cell.points);
       const result = await queryMileage(points);
-      await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM, road_breakdown: JSON.stringify(result.breakdown) });
-      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM, road_breakdown: JSON.stringify(result.breakdown) } : c));
+      const excluded = getExcluded(cell);
+      const adoptedM = Object.entries(result.breakdown)
+        .filter(([t]) => !excluded.includes(t))
+        .reduce((s, [, m]) => s + m, 0);
+      const updates = { adopted_m: adoptedM, unadopted_m: 0, road_breakdown: JSON.stringify(result.breakdown) };
+      await base44.entities.Cell.update(cell.id, updates);
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, ...updates } : c));
     } catch (e) {
       setRecalcError(prev => ({ ...prev, [cell.id]: 'Overpass server busy — try again in a moment' }));
     } finally {
@@ -83,6 +86,58 @@ export default function CellsPage() {
     }
   }
 
+  async function handleToggleRoadType(cell, type, isExcluded) {
+    const excluded = getExcluded(cell);
+    const newExcluded = isExcluded ? excluded.filter(t => t !== type) : [...excluded, type];
+    const newExcludedStr = JSON.stringify(newExcluded);
+    await base44.entities.Cell.update(cell.id, { excluded_road_types: newExcludedStr });
+    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, excluded_road_types: newExcludedStr } : c));
+  }
+
+  function renderRoadTypes(cell) {
+    const bd = getBreakdown(cell);
+    const excluded = getExcluded(cell);
+    const allTypes = new Set([...Object.keys(bd), ...excluded]);
+    const entries = [...allTypes].map(t => [t, bd[t] || 0]).sort((a, b) => b[1] - a[1]);
+    const includedTotal = entries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
+
+    if (entries.length === 0) return (
+      <div className="px-4 py-3 text-xs text-muted-foreground text-center">Run Recalc Miles to populate road types.</div>
+    );
+
+    return (
+      <div className="px-4 py-3 bg-muted/20">
+        <div className="flex justify-between items-center mb-2">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</div>
+          <div className="text-xs font-bold text-blue-600">{((includedTotal / 1609.34) * 2).toFixed(3)} mi spray</div>
+        </div>
+        <div className="space-y-1.5">
+          {entries.map(([type, meters]) => {
+            const isExcluded = excluded.includes(type);
+            return (
+              <div key={type} className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleToggleRoadType(cell, type, isExcluded); }}
+                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcluded ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'}`}
+                >
+                  {!isExcluded && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+                <span className="text-xs flex-1 capitalize text-muted-foreground">{type.replace(/_/g, ' ')}</span>
+                <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/40' : 'text-foreground'}`}>
+                  {meters > 0 ? (meters / 1609.34).toFixed(3) + ' mi' : '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col pb-20">
       {refreshing && (
@@ -90,7 +145,6 @@ export default function CellsPage() {
           Refreshing…
         </div>
       )}
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => navigate('/')}
@@ -105,7 +159,6 @@ export default function CellsPage() {
         <span className="text-xs text-muted-foreground">{cells.length} saved</span>
       </div>
 
-      {/* Search */}
       <div className="px-4 py-3 border-b border-border">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -119,7 +172,6 @@ export default function CellsPage() {
         </div>
       </div>
 
-      {/* List */}
       <div className="flex-1 px-4 py-3 space-y-2 overflow-y-auto">
         {loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading…</div>
@@ -131,10 +183,7 @@ export default function CellsPage() {
           </div>
         )}
         {filtered.map(cell => (
-          <div
-            key={cell.id}
-            className="bg-card rounded-xl border border-border shadow-sm overflow-hidden"
-          >
+          <div key={cell.id} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
             <button
               onClick={() => handleSelect(cell)}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
@@ -150,87 +199,32 @@ export default function CellsPage() {
                   {cell.area && <span className="mr-2">{cell.area}</span>}
                   {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
                   {cell.adopted_m != null && (
-                    <span className="ml-2 text-blue-600 font-medium">{(((cell.adopted_m + (cell.unadopted_m||0)) / 1609.34) * 2).toFixed(2)} mi</span>
+                    <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
                   )}
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
+
             {/* Tabs */}
-            {(cell.road_breakdown || true) && (
-              <div className="border-t border-border flex">
-                <button
-                  onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'roads' }))}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    (activeTab[cell.id] || 'roads') === 'roads'
-                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Road Types
-                </button>
-                <button
-                  onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'spray' }))}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    activeTab[cell.id] === 'spray'
-                      ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Spray History
-                </button>
-              </div>
-            )}
+            <div className="border-t border-border flex">
+              <button
+                onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'roads' }))}
+                className={`flex-1 py-2 text-xs font-medium transition-colors ${(activeTab[cell.id] || 'roads') === 'roads' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Road Types
+              </button>
+              <button
+                onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'spray' }))}
+                className={`flex-1 py-2 text-xs font-medium transition-colors ${activeTab[cell.id] === 'spray' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Spray History
+              </button>
+            </div>
 
-            {(activeTab[cell.id] || 'roads') === 'roads' && cell.road_breakdown && (() => {
-              try {
-                const bd = JSON.parse(cell.road_breakdown);
-                const entries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
-                const excluded = (() => { try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; } })();
-                const includedTotal = entries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
-                if (entries.length > 0) return (
-                  <div className="px-4 py-3 bg-muted/20">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</div>
-                      <div className="text-xs font-bold text-blue-600">{((includedTotal / 1609.34) * 2).toFixed(3)} mi spray</div>
-                    </div>
-                    <div className="space-y-1.5">
-                      {entries.map(([type, meters]) => {
-                        const isExcluded = excluded.includes(type);
-                        return (
-                          <div key={type} className="flex items-center gap-2">
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                const newExcluded = isExcluded ? excluded.filter(t => t !== type) : [...excluded, type];
-                                const newExcludedStr = JSON.stringify(newExcluded);
-                                await base44.entities.Cell.update(cell.id, { excluded_road_types: newExcludedStr });
-                                setCells(prev => prev.map(c => c.id === cell.id ? { ...c, excluded_road_types: newExcludedStr } : c));
-                              }}
-                              className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
-                                isExcluded ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'
-                              }`}
-                            >
-                              {!isExcluded && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                            </button>
-                            <span className={`text-xs flex-1 capitalize text-muted-foreground`}>
-                              {type.replace(/_/g, ' ')}
-                            </span>
-                            <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/40' : 'text-foreground'}`}>
-                              {(meters / 1609.34).toFixed(3)} mi
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              } catch { return null; }
-            })()}
+            {(activeTab[cell.id] || 'roads') === 'roads' && renderRoadTypes(cell)}
+            {activeTab[cell.id] === 'spray' && <CellSprayHistory cellId={cell.id} />}
 
-            {activeTab[cell.id] === 'spray' && (
-              <CellSprayHistory cellId={cell.id} />
-            )}
             <div className="flex border-t border-border">
               <button
                 onClick={() => handleToggle(cell)}
