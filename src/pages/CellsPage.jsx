@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw } from 'lucide-react';
-import CellSprayHistory from '../components/cells/CellSprayHistory';
+
 import { cn } from '@/lib/utils';
 
 async function queryMileage(points) {
@@ -27,7 +27,6 @@ export default function CellsPage() {
   const [search, setSearch] = useState('');
   const [recalculating, setRecalculating] = useState({});
   const [recalcError, setRecalcError] = useState({});
-  const [activeTab, setActiveTab] = useState({});
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -206,24 +205,7 @@ export default function CellsPage() {
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
 
-            {/* Tabs */}
-            <div className="border-t border-border flex">
-              <button
-                onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'roads' }))}
-                className={`flex-1 py-2 text-xs font-medium transition-colors ${(activeTab[cell.id] || 'roads') === 'roads' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Road Types
-              </button>
-              <button
-                onClick={() => setActiveTab(prev => ({ ...prev, [cell.id]: 'spray' }))}
-                className={`flex-1 py-2 text-xs font-medium transition-colors ${activeTab[cell.id] === 'spray' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-background' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Spray History
-              </button>
-            </div>
-
-            {(activeTab[cell.id] || 'roads') === 'roads' && renderRoadTypes(cell)}
-            {activeTab[cell.id] === 'spray' && <CellSprayHistory cellId={cell.id} />}
+            {renderRoadTypes(cell)}
 
             <div className="flex border-t border-border">
               <button
