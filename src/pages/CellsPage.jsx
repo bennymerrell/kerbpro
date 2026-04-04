@@ -27,6 +27,7 @@ export default function CellsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [recalculating, setRecalculating] = useState({});
+  const [recalcError, setRecalcError] = useState({});
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -50,13 +51,14 @@ export default function CellsPage() {
 
   async function handleRecalculate(cell) {
     setRecalculating(prev => ({ ...prev, [cell.id]: true }));
+    setRecalcError(prev => ({ ...prev, [cell.id]: null }));
     try {
       const points = JSON.parse(cell.points);
       const result = await queryMileage(points);
-      if (result) {
-        await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM });
-        setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM } : c));
-      }
+      await base44.entities.Cell.update(cell.id, { adopted_m: result.adoptedM, unadopted_m: result.unadoptedM });
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, adopted_m: result.adoptedM, unadopted_m: result.unadoptedM } : c));
+    } catch (e) {
+      setRecalcError(prev => ({ ...prev, [cell.id]: 'Overpass server busy — try again in a moment' }));
     } finally {
       setRecalculating(prev => ({ ...prev, [cell.id]: false }));
     }
@@ -169,6 +171,9 @@ export default function CellsPage() {
               <RefreshCw className={`h-3.5 w-3.5 ${recalculating[cell.id] ? 'animate-spin' : ''}`} />
               {recalculating[cell.id] ? 'Calculating…' : 'Recalc Miles'}
             </button>
+            {recalcError[cell.id] && (
+              <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center">{recalcError[cell.id]}</div>
+            )}
             <div className="w-px bg-border" />
             <button
               onClick={() => handleDelete(cell)}

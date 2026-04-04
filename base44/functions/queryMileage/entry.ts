@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     const endpoints = [
       'https://overpass-api.de/api/interpreter',
       'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.openstreetmap.ru/api/interpreter',
     ];
 
     let ways = null;
@@ -44,7 +45,7 @@ Deno.serve(async (req) => {
     for (const url of endpoints) {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 85000);
+        const timer = setTimeout(() => controller.abort(), 120000);
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -57,15 +58,15 @@ Deno.serve(async (req) => {
           ways = JSON.parse(text).elements || [];
           break;
         } else {
-          lastError = `Unexpected response from ${url}: ${text.substring(0, 200)}`;
+          lastError = `Non-JSON response from ${url}: ${text.substring(0, 300)}`;
         }
       } catch (e) {
-        lastError = e.message;
+        lastError = `${url}: ${e.message}`;
       }
     }
 
     if (ways === null) {
-      return Response.json({ error: `Overpass query failed: ${lastError}` }, { status: 502 });
+      return Response.json({ error: `All Overpass servers failed. Last error: ${lastError}` }, { status: 502 });
     }
 
     let adoptedM = 0;
