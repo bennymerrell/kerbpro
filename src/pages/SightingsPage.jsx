@@ -123,21 +123,20 @@ export default function SightingsPage() {
                     <span>{s.lat?.toFixed(4)}, {s.lng?.toFixed(4)}</span>
                   </div>
                 </div>
-                <div className="flex border-t border-border">
+                <div className="flex gap-2 px-3 pb-3">
                   <button
                     onClick={() => {
                       const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
                       navigate('/', { state: { flyTo: [s.lat, s.lng], activateCategory: cat } });
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
                   >
                     <Map className="h-3.5 w-3.5" />
                     View on Map
                   </button>
-                  <div className="w-px bg-border" />
                   <button
                     onClick={() => setSelected(s)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     View Details
