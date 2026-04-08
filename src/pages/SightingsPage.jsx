@@ -101,7 +101,7 @@ export default function SightingsPage() {
             {filtered.map(s => (
               <div
                 key={s.id}
-                className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-all"
+                className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-all flex flex-col"
               >
                 {s.photo_url ? (
                   <img src={s.photo_url} alt={s.species} className="w-full h-40 object-cover" />
@@ -110,7 +110,7 @@ export default function SightingsPage() {
                     <Image className="h-8 w-8 text-muted-foreground/40" />
                   </div>
                 )}
-                <div className="p-3 space-y-1.5">
+                <div className="p-3 space-y-1.5 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-sm text-foreground leading-tight">{s.species}</h3>
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded whitespace-nowrap">
