@@ -8,7 +8,7 @@ import { buildMapCanvas } from '../../lib/mapExport';
 export default function MobileToolbar({
   isPlotting, onTogglePlotting,
   onUndo, onClear, waypointCount,
-  isSpeciesMode, onToggleSpeciesMode,
+  onSpotted,
   isAreaMode, onToggleAreaMode,
   cells = [],
   selectedCell = null,
@@ -63,11 +63,8 @@ export default function MobileToolbar({
     >
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl flex items-center gap-0.5 px-2 py-2">
         <button
-          onClick={onToggleSpeciesMode}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl transition-all",
-            isSpeciesMode ? "bg-blue-500 text-white" : "text-gray-500 hover:bg-gray-100"
-          )}
+          onClick={onSpotted}
+          className="flex flex-col items-center justify-center gap-1 h-14 w-16 rounded-xl text-gray-500 hover:bg-gray-100 transition-all"
         >
           <Info className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">Spotted</span>

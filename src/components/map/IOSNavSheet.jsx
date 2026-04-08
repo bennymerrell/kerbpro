@@ -7,7 +7,7 @@ const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public To
 
 export default function IOSNavSheet({
   open, onClose,
-  isSpeciesMode, onToggleSpeciesMode,
+  onSpotted,
   isAreaMode, onToggleAreaMode,
   isPlotting, onTogglePlotting,
   activeCategories, onChangeCategories,
@@ -36,7 +36,7 @@ export default function IOSNavSheet({
   }
 
   const toolItems = [
-    { label: 'Spotted', icon: Info, active: isSpeciesMode, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onToggleSpeciesMode(); onClose(); } },
+    { label: 'Spotted', icon: Info, active: false, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onSpotted(); onClose(); } },
     { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { onToggleAreaMode(); onClose(); } },
     { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handlePrintMap, disabled: !selectedCell },
   ];

@@ -92,7 +92,6 @@ export default function MapPage() {
   const [tileLayer, setTileLayer] = useState('osm');
   const [locationData, setLocationData] = useState(null);
   const [locating, setLocating] = useState(false);
-  const [isSpeciesMode, setIsSpeciesMode] = useState(false);
   const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
   const [speciesSightings, setSpeciesSightings] = useState([]);
   const [isAreaMode, setIsAreaMode] = useState(false);
@@ -198,15 +197,30 @@ export default function MapPage() {
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const mapRef = useRef(null);
 
+  const handleSpotted = useCallback(() => {
+    if (locationData?.position) {
+      setSpeciesModalLocation({ lat: locationData.position[0], lng: locationData.position[1] });
+    } else {
+      // Try to get current position
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          setSpeciesModalLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          alert('Unable to get your location. Please enable location services.');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }, [locationData]);
+
   const handleMapClick = useCallback((latlng) => {
-    if (isSpeciesMode) {
-      setSpeciesModalLocation({ lat: latlng.lat, lng: latlng.lng });
-    } else if (isAreaMode && !areaClosed) {
+    if (isAreaMode && !areaClosed) {
       setAreaPoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
     } else if (isPlotting) {
       setWaypoints(prev => [...prev, { lat: latlng.lat, lng: latlng.lng }]);
     }
-  }, [isSpeciesMode, isAreaMode, areaClosed, isPlotting]);
+  }, [isAreaMode, areaClosed, isPlotting]);
 
   const handleUndo = useCallback(() => {
     setWaypoints(prev => prev.slice(0, -1));
@@ -246,7 +260,7 @@ export default function MapPage() {
         zoomDelta={1}
         maxZoom={17}
         ref={mapRef}
-        style={{ cursor: isPlotting || isSpeciesMode ? 'crosshair' : 'grab' }}
+        style={{ cursor: isPlotting || isAreaMode ? 'crosshair' : 'grab' }}
       >
         <TileLayer
           key={tileLayer}
@@ -255,7 +269,7 @@ export default function MapPage() {
           maxZoom={currentTile.maxZoom}
           maxNativeZoom={currentTile.maxNativeZoom || currentTile.maxZoom}
         />
-        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || isSpeciesMode || (isAreaMode && !areaClosed)} />
+        <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || (isAreaMode && !areaClosed)} />
         <LocationWatcher onLocationUpdate={setLocationData} />
         <RouteLine waypoints={waypoints} />
         <WaypointMarkers waypoints={waypoints} onRemoveWaypoint={handleRemoveWaypoint} />
@@ -345,12 +359,11 @@ export default function MapPage() {
       <IOSNavSheet
         open={navOpen}
         onClose={() => setNavOpen(false)}
-        isSpeciesMode={isSpeciesMode}
-        onToggleSpeciesMode={() => { setIsSpeciesMode(!isSpeciesMode); setIsPlotting(false); setIsAreaMode(false); }}
+        onSpotted={() => { handleSpotted(); }}
         isAreaMode={isAreaMode}
-        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setIsSpeciesMode(false); setAreaPoints([]); setAreaClosed(false); navigate('/'); }}
+        onToggleAreaMode={() => { setIsAreaMode(!isAreaMode); setIsPlotting(false); setAreaPoints([]); setAreaClosed(false); navigate('/'); }}
         isPlotting={isPlotting}
-        onTogglePlotting={() => { setIsPlotting(!isPlotting); setIsSpeciesMode(false); }}
+        onTogglePlotting={() => { setIsPlotting(!isPlotting); }}
         activeCategories={activeCategories}
         onChangeCategories={setActiveCategories}
         cells={savedCells}
@@ -361,10 +374,9 @@ export default function MapPage() {
       {speciesModalLocation && (
         <SpeciesModal
           location={speciesModalLocation}
-          onClose={() => { setSpeciesModalLocation(null); setIsSpeciesMode(false); }}
+          onClose={() => { setSpeciesModalLocation(null); }}
           onSaved={async (sighting) => {
             setSpeciesModalLocation(null);
-            setIsSpeciesMode(false);
             setSpeciesSightings(prev => [...prev, sighting]);
             await base44.entities.Sighting.create({
               species: sighting.species,
@@ -398,14 +410,7 @@ export default function MapPage() {
           )}
         </div>
       )}
-      {isSpeciesMode && (
-        <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 10rem))'}}>
-          <div className="bg-blue-500 rounded-full shadow-lg px-5 py-2.5 text-sm text-white font-medium">
-            Tap anywhere to add a sighting
-          </div>
-        </div>
-      )}
-      {!isSpeciesMode && !isAreaMode && isPlotting && waypoints.length === 0 && (
+      {!isAreaMode && isPlotting && waypoints.length === 0 && (
         <div className="absolute left-1/2 -translate-x-1/2 z-[1000]" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 6rem))'}}>
           <div className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg px-5 py-2.5 text-sm text-gray-500 font-medium">
             Tap the map to start plotting your route
