@@ -27,6 +27,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import usePWA from '../hooks/usePWA';
 import OfflineIndicator from '../components/OfflineIndicator';
 import IOSNavSheet from '../components/map/IOSNavSheet';
+import SightingDetailModal from '../components/SightingDetailModal';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -93,6 +94,7 @@ export default function MapPage() {
   const [locationData, setLocationData] = useState(null);
   const [locating, setLocating] = useState(false);
   const [speciesModalLocation, setSpeciesModalLocation] = useState(null);
+  const [selectedSighting, setSelectedSighting] = useState(null);
   const [speciesSightings, setSpeciesSightings] = useState([]);
   const [isAreaMode, setIsAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState([]);
@@ -278,6 +280,7 @@ export default function MapPage() {
             const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
             return activeCategories.includes(cat);
           })}
+          onViewDetails={(s) => setSelectedSighting(s)}
           onRemove={(i) => {
             const visible = speciesSightings.filter(s => {
               const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
@@ -369,6 +372,10 @@ export default function MapPage() {
         cells={savedCells}
         selectedCell={selectedCell}
       />
+
+      {selectedSighting && (
+        <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
+      )}
 
       {/* Species Modal */}
       {speciesModalLocation && (
