@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
-import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map } from 'lucide-react';
+import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin } from 'lucide-react';
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 

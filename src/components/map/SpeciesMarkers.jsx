@@ -1,4 +1,4 @@
-import { Marker, Popup, useMapEvents } from 'react-leaflet';
+import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 
 const CATEGORY_SVGS = {
@@ -40,27 +40,12 @@ export default function SpeciesMarkers({ sightings, onRemove, onViewDetails }) {
   return sightings.map((s, i) => {
     const category = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
     return (
-    <Marker
-      key={`sighting-${i}-${s.lat}-${s.lng}`}
-      position={[s.lat, s.lng]}
-      icon={createSightingIcon(category)}
-      eventHandlers={{ click: () => onViewDetails && onViewDetails(s) }}
-    >
-      <Popup closeButton={false}>
-        <div className="font-sans text-sm p-1">
-          <div className="font-semibold text-foreground mb-1">{category}: {s.species?.replace(/^\[.+?\]\s*/, '')}</div>
-          {s.notes && <div className="text-xs text-muted-foreground mb-1">{s.notes}</div>}
-          <div className="text-xs text-muted-foreground">
-            {s.lat.toFixed(5)}, {s.lng.toFixed(5)}
-          </div>
-          <button
-            onClick={() => onRemove(i)}
-            className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
-          >
-            Remove
-          </button>
-        </div>
-      </Popup>
-    </Marker>
-  )});
+      <Marker
+        key={`sighting-${i}-${s.lat}-${s.lng}`}
+        position={[s.lat, s.lng]}
+        icon={createSightingIcon(category)}
+        eventHandlers={{ click: () => onViewDetails && onViewDetails(s) }}
+      />
+    );
+  });
 }
