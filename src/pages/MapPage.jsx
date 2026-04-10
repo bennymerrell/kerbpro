@@ -260,7 +260,7 @@ export default function MapPage() {
         zoomAnimation={false}
         zoomSnap={0}
         zoomDelta={1}
-        maxZoom={20}
+        maxZoom={19}
         ref={mapRef}
         style={{ cursor: isPlotting || isAreaMode ? 'crosshair' : 'grab' }}
       >
