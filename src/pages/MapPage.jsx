@@ -258,9 +258,9 @@ export default function MapPage() {
         className="h-full w-full"
         zoomControl={false}
         zoomAnimation={false}
-        zoomSnap={1}
+        zoomSnap={0}
         zoomDelta={1}
-        maxZoom={17}
+        maxZoom={20}
         ref={mapRef}
         style={{ cursor: isPlotting || isAreaMode ? 'crosshair' : 'grab' }}
       >
