@@ -14,7 +14,12 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [statusDetails, setStatusDetails] = useState('');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setStatusDetails('');
+  }, [category]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -49,7 +54,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
     setSending(false);
     setSent(true);
-    onSaved({ lat: location.lat, lng: location.lng, species: `[${category}] ${speciesName}`, notes, photoUrl });
+    onSaved({ lat: location.lat, lng: location.lng, species: `[${category}] ${speciesName}`, notes, photoUrl, status_details: statusDetails || null });
     setTimeout(onClose, 1500);
   }
 
@@ -88,6 +93,25 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
               ))}
             </div>
           </div>
+
+          {/* Category-specific fields */}
+          {category === 'Hydrant' && (
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-2">Hydrant Status <span className="text-destructive">*</span></label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[{ value: 'working', label: '✅ Working' }, { value: 'not_working', label: '❌ Not Working' }].map(opt => (
+                  <label key={opt.value} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-pointer text-xs font-medium transition-all ${
+                    statusDetails === opt.value
+                      ? opt.value === 'working' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-destructive bg-destructive/10 text-destructive'
+                      : 'border-border text-foreground hover:bg-muted/50'
+                  }`}>
+                    <input type="radio" name="hydrantStatus" value={opt.value} checked={statusDetails === opt.value} onChange={() => setStatusDetails(opt.value)} className="hidden" />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Name/Description */}
           <div>
@@ -153,7 +177,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
           <Button
             type="submit"
-            disabled={sending || sent}
+            disabled={sending || sent || (category === 'Hydrant' && !statusDetails)}
             className="w-full h-9 text-sm"
           >
             {sent ? (

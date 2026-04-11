@@ -405,6 +405,7 @@ export default function MapPage() {
               lng: sighting.lng,
               photo_url: sighting.photoUrl || null,
               reported_by: currentUser?.full_name || currentUser?.email || null,
+              status_details: sighting.status_details || null,
             };
             if (navigator.onLine) {
               await base44.entities.Sighting.create(sightingData);

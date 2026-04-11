@@ -24,6 +24,10 @@
       "type": "string",
       "format": "date-time",
       "description": "Date and time the sighting was recorded"
+    },
+    "status_details": {
+      "type": "string",
+      "description": "Category-specific status, e.g. 'working' or 'not_working' for Hydrants"
     }
   },
   "required": [
