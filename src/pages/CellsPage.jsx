@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -28,8 +28,7 @@ export default function CellsPage() {
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   const [search, setSearch] = useState('');
-  const [recalculating, setRecalculating] = useState({});
-  const [recalcError, setRecalcError] = useState({});
+  const [recalcTriggering, setRecalcTriggering] = useState({});
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -39,6 +38,16 @@ export default function CellsPage() {
   }, []);
 
   useEffect(() => { loadCells(); }, [loadCells]);
+
+  // Real-time updates for recalc status changes
+  useEffect(() => {
+    const unsub = base44.entities.Cell.subscribe((event) => {
+      if (event.type === 'update') {
+        setCells(prev => prev.map(c => c.id === event.id ? { ...c, ...event.data } : c));
+      }
+    });
+    return unsub;
+  }, []);
 
   const { refreshing } = usePullToRefresh(loadCells);
 
@@ -52,22 +61,12 @@ export default function CellsPage() {
   }
 
   async function handleRecalculate(cell) {
-    setRecalculating(prev => ({ ...prev, [cell.id]: true }));
-    setRecalcError(prev => ({ ...prev, [cell.id]: null }));
+    setRecalcTriggering(prev => ({ ...prev, [cell.id]: true }));
     try {
-      const points = JSON.parse(cell.points);
-      const result = await queryMileage(points);
-      const excluded = getExcluded(cell);
-      const adoptedM = Object.entries(result.breakdown)
-        .filter(([t]) => !excluded.includes(t))
-        .reduce((s, [, m]) => s + m, 0);
-      const updates = { adopted_m: adoptedM, unadopted_m: 0, road_breakdown: JSON.stringify(result.breakdown) };
-      await base44.entities.Cell.update(cell.id, updates);
-      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, ...updates } : c));
-    } catch (e) {
-      setRecalcError(prev => ({ ...prev, [cell.id]: 'Overpass server busy — try again in a moment' }));
+      await base44.functions.invoke('triggerMileageRecalc', { cellId: cell.id });
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, recalc_status: 'pending' } : c));
     } finally {
-      setRecalculating(prev => ({ ...prev, [cell.id]: false }));
+      setRecalcTriggering(prev => ({ ...prev, [cell.id]: false }));
     }
   }
 
@@ -221,11 +220,16 @@ export default function CellsPage() {
               <div className="w-px bg-border" />
               <button
                 onClick={() => handleRecalculate(cell)}
-                disabled={recalculating[cell.id]}
+                disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`h-3.5 w-3.5 ${recalculating[cell.id] ? 'animate-spin' : ''}`} />
-                {recalculating[cell.id] ? 'Calculating…' : 'Recalc Miles'}
+                {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
+                ) : recalcTriggering[cell.id] ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
+                ) : (
+                  <><RefreshCw className="h-3.5 w-3.5" />Recalc Miles</>
+                )}
               </button>
               <div className="w-px bg-border" />
               <button
@@ -236,8 +240,10 @@ export default function CellsPage() {
                 Delete
               </button>
             </div>
-            {recalcError[cell.id] && (
-              <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center">{recalcError[cell.id]}</div>
+            {cell.recalc_status === 'error' && cell.recalc_error && (
+              <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center flex items-center justify-center gap-1">
+                <AlertCircle className="h-3 w-3 flex-shrink-0" />{cell.recalc_error}
+              </div>
             )}
           </div>
         ))}

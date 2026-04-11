@@ -27,6 +27,20 @@
     "excluded_road_types": {
       "type": "string",
       "description": "JSON array of excluded highway types"
+    },
+    "recalc_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "done",
+        "error"
+      ],
+      "description": "Status of background mileage recalculation"
+    },
+    "recalc_error": {
+      "type": "string",
+      "description": "Error message if recalc failed"
     }
   },
   "required": [
