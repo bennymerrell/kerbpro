@@ -25,10 +25,13 @@ async function runRecalc(cellId, base44) {
   if (!cell) return;
 
   const rawPoints = JSON.parse(cell.points);
-  const points = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
-  const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
+
+  // Use bounding box query — much faster than polygon on Overpass
+  const lats = rawPoints.map(p => p.lat);
+  const lngs = rawPoints.map(p => p.lng);
+  const bbox = `${Math.min(...lats)},${Math.min(...lngs)},${Math.max(...lats)},${Math.max(...lngs)}`;
   const roadFilter = ALL_TAGS.join('|');
-  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
+  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](${bbox});way["highway"]["access"="private"](${bbox}););out geom qt;`;
 
   const endpoints = [
     'https://overpass-api.de/api/interpreter',
