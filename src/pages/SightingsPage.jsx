@@ -2,11 +2,29 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
-import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin } from 'lucide-react';
+import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin, Trees, ParkingSquare, Flame, AlertCircle, Bath, Coffee } from 'lucide-react';
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
+
+const CATEGORY_ICONS = {
+  'Species': Trees,
+  'Free Parking': ParkingSquare,
+  'Hydrant': Flame,
+  'Incident': AlertCircle,
+  'Public Toilet': Bath,
+  'Cafe / Van': Coffee,
+};
+
+const CATEGORY_COLORS = {
+  'Species': 'text-green-600',
+  'Free Parking': 'text-blue-600',
+  'Hydrant': 'text-yellow-500',
+  'Incident': 'text-purple-600',
+  'Public Toilet': 'text-amber-600',
+  'Cafe / Van': 'text-orange-600',
+};
 
 const SORT_OPTIONS = [
   { value: '-created_date', label: 'Newest first' },
@@ -141,7 +159,23 @@ export default function SightingsPage() {
                 )}
                 <div className="p-3 space-y-1.5 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-sm text-foreground leading-tight">{s.species}</h3>
+                    <div className="flex-1 min-w-0">
+                      {(() => {
+                        const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+                        const label = s.species?.replace(/^\[.+?\]\s*/, '') || s.species;
+                        const Icon = CATEGORY_ICONS[cat] || Trees;
+                        const iconColor = CATEGORY_COLORS[cat] || 'text-gray-500';
+                        return (
+                          <>
+                            <div className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${iconColor}`}>
+                              <Icon className="h-3 w-3" />
+                              <span>{cat}</span>
+                            </div>
+                            <h3 className="font-semibold text-sm text-foreground leading-tight">{label}</h3>
+                          </>
+                        );
+                      })()}
+                    </div>
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded whitespace-nowrap">
                       {s.created_date ? format(new Date(s.created_date), 'dd MMM yyyy') : '—'}
                     </span>
