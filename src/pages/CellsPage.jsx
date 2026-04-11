@@ -24,6 +24,9 @@ export default function CellsPage() {
   const navigate = useNavigate();
   const [cells, setCells] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   const [search, setSearch] = useState('');
   const [recalculating, setRecalculating] = useState({});
   const [recalcError, setRecalcError] = useState({});
@@ -205,7 +208,7 @@ export default function CellsPage() {
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
 
-            {renderRoadTypes(cell)}
+            {currentUser?.role === 'admin' && renderRoadTypes(cell)}
 
             <div className="flex border-t border-border">
               <button
