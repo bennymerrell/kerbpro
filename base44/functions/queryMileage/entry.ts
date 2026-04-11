@@ -29,7 +29,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Need at least 3 points' }, { status: 400 });
     }
 
-    const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
+    // Simplify polygon if too many points
+    const simplified = points.length > 60 ? points.filter((_, i) => i % Math.ceil(points.length / 60) === 0) : points;
+    const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
     const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
 
@@ -59,13 +61,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Race all endpoints in parallel — use whichever responds first
+    // Use Promise.any — resolves as soon as the FIRST endpoint succeeds
     let ways = null;
     let lastError = null;
-    const results = await Promise.allSettled(endpoints.map(tryEndpoint));
-    for (const r of results) {
-      if (r.status === 'fulfilled') { ways = r.value; break; }
-      lastError = r.reason?.message;
+    try {
+      ways = await Promise.any(endpoints.map(tryEndpoint));
+    } catch (aggErr) {
+      lastError = aggErr.errors?.map(e => e.message).join(' | ');
     }
 
     if (ways === null) {

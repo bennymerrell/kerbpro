@@ -32,7 +32,9 @@ Deno.serve(async (req) => {
     const cell = (await base44.asServiceRole.entities.Cell.filter({ id: cellId }))[0];
     if (!cell) return Response.json({ error: 'Cell not found' }, { status: 404 });
 
-    const points = JSON.parse(cell.points);
+    const rawPoints = JSON.parse(cell.points);
+    // Simplify polygon if too many points (reduces query complexity)
+    const points = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
     const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
     // Use out geom qt (quicksort) and skip node metadata for speed
@@ -64,13 +66,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Race all endpoints in parallel — use whichever responds first
+    // Use Promise.any — resolves as soon as the FIRST endpoint succeeds
     let ways = null;
     let lastError = null;
-    const results = await Promise.allSettled(endpoints.map(tryEndpoint));
-    for (const r of results) {
-      if (r.status === 'fulfilled') { ways = r.value; break; }
-      lastError = r.reason?.message;
+    try {
+      ways = await Promise.any(endpoints.map(tryEndpoint));
+    } catch (aggErr) {
+      lastError = aggErr.errors?.map(e => e.message).join(' | ');
     }
 
     if (ways === null) {
