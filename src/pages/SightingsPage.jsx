@@ -175,12 +175,8 @@ export default function SightingsPage() {
                 key={s.id}
                 className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-all flex flex-col"
               >
-                {s.photo_url ? (
+                {s.photo_url && (
                   <img src={s.photo_url} alt={s.species} className="w-full h-40 object-cover" />
-                ) : (
-                  <div className="w-full h-40 bg-muted flex items-center justify-center">
-                    <Image className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
                 )}
                 <div className="p-3 space-y-1.5 flex-1">
                   <div className="flex items-start justify-between gap-2">
