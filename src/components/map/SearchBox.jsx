@@ -33,7 +33,7 @@ export default function SearchBox({ mapRef, onLocationFound }) {
 
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&countrycodes=gb&addressdetails=1`
       );
       const data = await response.json();
       setResults(data);
@@ -83,17 +83,26 @@ export default function SearchBox({ mapRef, onLocationFound }) {
       </form>
 
       {showResults && results.length > 0 && (
-        <div onMouseDown={e => e.preventDefault()} className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden z-[2000]">
-          {results.map((result, i) => (
-            <button
-              key={i}
-              onClick={() => selectResult(result)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
-            >
-              <div className="text-[14px] font-medium text-gray-900 truncate">{result.display_name.split(',')[0]}</div>
-              <div className="text-xs text-gray-400 truncate mt-0.5">{result.display_name}</div>
-            </button>
-          ))}
+        <div
+          onMouseDown={e => e.preventDefault()}
+          className="absolute top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden z-[2000]"
+          style={{ left: 0, minWidth: '320px', width: 'max-content', maxWidth: 'calc(100vw - 2rem)' }}
+        >
+          {results.map((result, i) => {
+            const parts = result.display_name.split(',');
+            const title = parts[0].trim();
+            const subtitle = parts.slice(1).join(',').trim();
+            return (
+              <button
+                key={i}
+                onClick={() => selectResult(result)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+              >
+                <div className="text-[14px] font-medium text-gray-900">{title}</div>
+                {subtitle && <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">{subtitle}</div>}
+              </button>
+            );
+          })}
         </div>
       )}
 
