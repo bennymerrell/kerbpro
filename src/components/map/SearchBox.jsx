@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { base44 } from '@/api/base44Client';
 
 
 export default function SearchBox({ mapRef, onLocationFound }) {
@@ -30,14 +31,8 @@ export default function SearchBox({ mapRef, onLocationFound }) {
     const timer = setTimeout(async () => {
       setLoading(true);
       setShowResults(true);
-
-
-      const searchQuery = query.toLowerCase().includes('uk') ? query : `${query}, UK`;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8&countrycodes=gb&addressdetails=1`
-      );
-      const data = await response.json();
-      setResults(data);
+      const res = await base44.functions.invoke('searchAddress', { query });
+      setResults(res.data?.results || []);
       setLoading(false);
     }, 300);
 
@@ -46,7 +41,7 @@ export default function SearchBox({ mapRef, onLocationFound }) {
 
   function selectResult(result) {
     const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
+    const lng = parseFloat(result.lon || result.lng);
     if (mapRef?.current) {
       mapRef.current.flyTo([lat, lng], 16, { animate: true });
     } else if (onLocationFound) {
@@ -90,7 +85,8 @@ export default function SearchBox({ mapRef, onLocationFound }) {
           style={{ left: 0, minWidth: '320px', width: 'max-content', maxWidth: 'calc(100vw - 2rem)' }}
         >
           {results.map((result, i) => {
-            const parts = result.display_name.split(',');
+            const displayName = result.display_name || result.display_place || '';
+            const parts = displayName.split(',');
             const title = parts[0].trim();
             const subtitle = parts.slice(1).join(',').trim();
             return (
