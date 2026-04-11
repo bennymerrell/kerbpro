@@ -18,6 +18,88 @@ function wayLength(nodes) {
   return d;
 }
 
+async function runRecalc(cellId, base44) {
+  await base44.asServiceRole.entities.Cell.update(cellId, { recalc_status: 'processing' });
+
+  const cell = (await base44.asServiceRole.entities.Cell.filter({ id: cellId }))[0];
+  if (!cell) return;
+
+  const rawPoints = JSON.parse(cell.points);
+  const points = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
+  const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
+  const roadFilter = ALL_TAGS.join('|');
+  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
+
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter',
+  ];
+
+  async function tryEndpoint(url) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 58000);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      const text = await res.text();
+      if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url}`);
+      return JSON.parse(text).elements || [];
+    } catch (e) {
+      clearTimeout(timer);
+      throw new Error(`${url}: ${e.message}`);
+    }
+  }
+
+  let ways = null;
+  let lastError = null;
+  try {
+    ways = await Promise.any(endpoints.map(tryEndpoint));
+  } catch (aggErr) {
+    lastError = aggErr.errors?.map(e => e.message).join(' | ');
+  }
+
+  if (ways === null) {
+    await base44.asServiceRole.entities.Cell.update(cellId, {
+      recalc_status: 'error',
+      recalc_error: `All Overpass servers failed. ${lastError}`,
+    });
+    return;
+  }
+
+  let adoptedM = 0;
+  const breakdown = {};
+  const seenIds = new Set();
+  ways.forEach(way => {
+    if (seenIds.has(way.id)) return;
+    seenIds.add(way.id);
+    const tag = way.tags?.access === 'private' ? 'private' : (way.tags?.highway || '');
+    const nodes = way.geometry || [];
+    const len = wayLength(nodes);
+    adoptedM += len;
+    breakdown[tag] = (breakdown[tag] || 0) + len;
+  });
+
+  let excludedTypes = [];
+  try { excludedTypes = JSON.parse(cell.excluded_road_types || '[]'); } catch {}
+  const includedM = Object.entries(breakdown)
+    .filter(([t]) => !excludedTypes.includes(t))
+    .reduce((s, [, m]) => s + m, 0);
+
+  await base44.asServiceRole.entities.Cell.update(cellId, {
+    adopted_m: includedM,
+    unadopted_m: 0,
+    road_breakdown: JSON.stringify(breakdown),
+    recalc_status: 'done',
+    recalc_error: null,
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -26,92 +108,16 @@ Deno.serve(async (req) => {
     const cellId = body?.event?.entity_id || body?.cellId;
     if (!cellId) return Response.json({ error: 'cellId required' }, { status: 400 });
 
-    // Mark as processing
-    await base44.asServiceRole.entities.Cell.update(cellId, { recalc_status: 'processing' });
-
-    const cell = (await base44.asServiceRole.entities.Cell.filter({ id: cellId }))[0];
-    if (!cell) return Response.json({ error: 'Cell not found' }, { status: 404 });
-
-    const rawPoints = JSON.parse(cell.points);
-    // Simplify polygon if too many points (reduces query complexity)
-    const points = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
-    const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
-    const roadFilter = ALL_TAGS.join('|');
-    // Use out geom qt (quicksort) and skip node metadata for speed
-    const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
-
-    const endpoints = [
-      'https://overpass-api.de/api/interpreter',
-      'https://overpass.kumi.systems/api/interpreter',
-      'https://overpass.openstreetmap.ru/api/interpreter',
-    ];
-
-    async function tryEndpoint(url) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 95000);
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `data=${encodeURIComponent(query)}`,
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        const text = await res.text();
-        if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url}`);
-        return JSON.parse(text).elements || [];
-      } catch (e) {
-        clearTimeout(timer);
-        throw new Error(`${url}: ${e.message}`);
-      }
-    }
-
-    // Use Promise.any — resolves as soon as the FIRST endpoint succeeds
-    let ways = null;
-    let lastError = null;
-    try {
-      ways = await Promise.any(endpoints.map(tryEndpoint));
-    } catch (aggErr) {
-      lastError = aggErr.errors?.map(e => e.message).join(' | ');
-    }
-
-    if (ways === null) {
+    // Respond immediately — run heavy Overpass work in background
+    // This avoids Deno Deploy's wall-clock execution limit
+    runRecalc(cellId, base44).catch(async (err) => {
       await base44.asServiceRole.entities.Cell.update(cellId, {
         recalc_status: 'error',
-        recalc_error: `All Overpass servers failed. ${lastError}`,
+        recalc_error: err.message,
       });
-      return Response.json({ error: lastError }, { status: 502 });
-    }
-
-    let adoptedM = 0;
-    const breakdown = {};
-    const seenIds = new Set();
-    ways.forEach(way => {
-      if (seenIds.has(way.id)) return;
-      seenIds.add(way.id);
-      const tag = way.tags?.access === 'private' ? 'private' : (way.tags?.highway || '');
-      const nodes = way.geometry || [];
-      const len = wayLength(nodes);
-      adoptedM += len;
-      breakdown[tag] = (breakdown[tag] || 0) + len;
     });
 
-    // Respect excluded road types when saving adoptedM
-    let excludedTypes = [];
-    try { excludedTypes = JSON.parse(cell.excluded_road_types || '[]'); } catch {}
-    const includedM = Object.entries(breakdown)
-      .filter(([t]) => !excludedTypes.includes(t))
-      .reduce((s, [, m]) => s + m, 0);
-
-    await base44.asServiceRole.entities.Cell.update(cellId, {
-      adopted_m: includedM,
-      unadopted_m: 0,
-      road_breakdown: JSON.stringify(breakdown),
-      recalc_status: 'done',
-      recalc_error: null,
-    });
-
-    return Response.json({ ok: true, adoptedM: includedM, breakdown });
+    return Response.json({ ok: true, status: 'processing' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
