@@ -23,18 +23,22 @@ const CATEGORY_COLORS = {
 
 function createSightingIcon(sighting) {
   const category = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
-  const key = category === 'Hydrant' && sighting.status_details === 'not_working' ? 'Hydrant_not_working' : category;
+  const isNotWorking = category === 'Hydrant' && sighting.status_details === 'not_working';
+  const key = isNotWorking ? 'Hydrant_not_working' : category;
   const svg = CATEGORY_SVGS[key] || CATEGORY_SVGS['Species'];
   const color = CATEGORY_COLORS[key] || '#2563eb';
+  const badge = category === 'Hydrant' && sighting.status_details
+    ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '✕' : '✓'}</div>`
+    : '';
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div style="
+    html: `<div style="position:relative;width:34px;height:34px;"><div style="
       width: 34px; height: 34px; border-radius: 50%;
       background: ${color};
       border: 3px solid white;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
-    ">${svg}</div>`,
+    ">${svg}</div>${badge}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });

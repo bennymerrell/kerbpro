@@ -118,6 +118,13 @@ export default function SightingsPage() {
                       {s.created_date ? format(new Date(s.created_date), 'dd MMM yyyy') : '—'}
                     </span>
                   </div>
+                  {s.status_details && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                      s.status_details === 'working' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {s.status_details === 'working' ? '✅ Working' : '❌ Not Working'}
+                    </span>
+                  )}
                   {s.notes && <p className="text-xs text-muted-foreground line-clamp-2">{s.notes}</p>}
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3 flex-shrink-0" />

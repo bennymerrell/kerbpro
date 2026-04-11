@@ -50,6 +50,14 @@ export default function SightingDetailModal({ sighting, onClose }) {
           {sighting.reported_by && (
             <p className="text-xs text-muted-foreground">Reported by: {sighting.reported_by}</p>
           )}
+          {sighting.status_details && (
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+              sighting.status_details === 'working' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+            }`}>
+              <span>{sighting.status_details === 'working' ? '✅' : '❌'}</span>
+              <span>{sighting.status_details === 'working' ? 'Working' : 'Not Working'}</span>
+            </div>
+          )}
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5" />
