@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
-    const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom;`;
+    const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom;`;
 
     const endpoints = [
       'https://overpass-api.de/api/interpreter',
@@ -71,8 +71,11 @@ Deno.serve(async (req) => {
 
     let adoptedM = 0;
     const breakdown = {};
+    const seenIds = new Set();
     ways.forEach(way => {
-      const tag = way.tags?.highway || '';
+      if (seenIds.has(way.id)) return;
+      seenIds.add(way.id);
+      const tag = way.tags?.access === 'private' ? 'private' : (way.tags?.highway || '');
       const nodes = way.geometry || [];
       const len = wayLength(nodes);
       adoptedM += len;
