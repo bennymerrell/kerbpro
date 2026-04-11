@@ -32,8 +32,9 @@ export default function SearchBox({ mapRef, onLocationFound }) {
       setShowResults(true);
 
 
+      const searchQuery = query.toLowerCase().includes('uk') ? query : `${query}, UK`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&countrycodes=gb&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8&countrycodes=gb&addressdetails=1`
       );
       const data = await response.json();
       setResults(data);
