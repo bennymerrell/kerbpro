@@ -31,7 +31,7 @@ async function runRecalc(cellId, base44) {
   const lngs = rawPoints.map(p => p.lng);
   const bbox = `${Math.min(...lats)},${Math.min(...lngs)},${Math.max(...lats)},${Math.max(...lngs)}`;
   const roadFilter = ALL_TAGS.join('|');
-  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](${bbox});way["highway"]["access"="private"](${bbox}););out geom qt;`;
+  const query = `[out:json][timeout:30][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](${bbox});way["highway"]["access"="private"](${bbox}););out geom qt;`;
 
   const endpoints = [
     'https://overpass-api.de/api/interpreter',
@@ -41,7 +41,7 @@ async function runRecalc(cellId, base44) {
 
   async function tryEndpoint(url) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 58000);
+    const timer = setTimeout(() => controller.abort(), 32000);
     try {
       const res = await fetch(url, {
         method: 'POST',
