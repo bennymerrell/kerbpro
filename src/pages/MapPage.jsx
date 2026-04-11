@@ -22,6 +22,8 @@ import MobileToolbar from '../components/map/MobileToolbar';
 import { LocateButton, LocationWatcher, LocationMarker } from '../components/map/LocateButton';
 import CategoryFilter from '../components/map/CategoryFilter';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { addToQueue, getPendingQueue } from '@/lib/offlineQueue';
+import useOfflineSync from '@/hooks/useOfflineSync';
 import { List, Settings, SquareDashedBottom, ChevronDown, Info, Shapes, MousePointerClick, FlaskConical } from 'lucide-react';
 import useIsMobile from '../hooks/useIsMobile';
 import usePWA from '../hooks/usePWA';
@@ -48,6 +50,12 @@ export default function MapPage() {
   const { isOnline } = usePWA();
   const [navOpen, setNavOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [pendingCount, setPendingCount] = useState(() => getPendingQueue().length);
+
+  const handleSynced = useCallback((count) => {
+    setPendingCount(getPendingQueue().length);
+  }, []);
+  useOfflineSync(handleSynced);
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
@@ -252,6 +260,11 @@ export default function MapPage() {
   return (
     <div className="fixed inset-0 w-screen h-screen relative overflow-hidden">
       <OfflineIndicator isOnline={isOnline} />
+      {pendingCount > 0 && (
+        <div className="absolute z-[1100] left-1/2 -translate-x-1/2 flex items-center gap-2 bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}>
+          <span>⏳ {pendingCount} sighting{pendingCount > 1 ? 's' : ''} queued — waiting for signal</span>
+        </div>
+      )}
       <MapContainer
         center={mapCenter}
         zoom={DEFAULT_ZOOM}
@@ -385,14 +398,20 @@ export default function MapPage() {
           onSaved={async (sighting) => {
             setSpeciesModalLocation(null);
             setSpeciesSightings(prev => [...prev, sighting]);
-            await base44.entities.Sighting.create({
+            const sightingData = {
               species: sighting.species,
               notes: sighting.notes,
               lat: sighting.lat,
               lng: sighting.lng,
               photo_url: sighting.photoUrl || null,
               reported_by: currentUser?.full_name || currentUser?.email || null,
-            });
+            };
+            if (navigator.onLine) {
+              await base44.entities.Sighting.create(sightingData);
+            } else {
+              addToQueue(sightingData);
+              setPendingCount(getPendingQueue().length);
+            }
           }}
         />
       )}
