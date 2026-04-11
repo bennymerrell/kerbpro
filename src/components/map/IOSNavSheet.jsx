@@ -36,14 +36,14 @@ export default function IOSNavSheet({
   }
 
   const toolItems = [
-    { label: 'Spotted', icon: Info, active: false, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { onSpotted(); onClose(); } },
-    { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { onToggleAreaMode(); onClose(); } },
-    { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: handlePrintMap, disabled: !selectedCell },
+    { label: 'Spotted', icon: Info, active: false, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { base44.analytics.track({ eventName: 'nav_spotted_clicked' }); onSpotted(); onClose(); } },
+    { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { base44.analytics.track({ eventName: 'nav_draw_cell_clicked', properties: { activated: !isAreaMode } }); onToggleAreaMode(); onClose(); } },
+    { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: () => { base44.analytics.track({ eventName: 'nav_print_map_clicked' }); handlePrintMap(); }, disabled: !selectedCell },
   ];
 
   const pageItems = [
-    { label: 'Sightings', icon: List, path: '/sightings', bg: 'bg-green-500' },
-    { label: 'Cells', icon: SquareDashedBottom, path: '/cells', bg: 'bg-blue-500' },
+    { label: 'Sightings', icon: List, path: '/sightings', bg: 'bg-green-500', event: 'nav_sightings_clicked' },
+    { label: 'Cells', icon: SquareDashedBottom, path: '/cells', bg: 'bg-blue-500', event: 'nav_cells_clicked' },
   ];
 
   return (
@@ -102,10 +102,10 @@ export default function IOSNavSheet({
           <div className="px-4 mb-4">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Data</div>
             <div className="bg-muted/40 rounded-2xl overflow-hidden divide-y divide-border/60">
-              {pageItems.map(({ label, icon: Icon, path, bg }) => (
+              {pageItems.map(({ label, icon: Icon, path, bg, event }) => (
                 <button
                   key={path}
-                  onClick={() => navAndClose(path)}
+                  onClick={() => { base44.analytics.track({ eventName: event }); navAndClose(path); }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/60 transition-colors"
                 >
                   <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
@@ -148,7 +148,7 @@ export default function IOSNavSheet({
           {/* Logout */}
           <div className="px-4 mb-4">
             <button
-              onClick={() => base44.auth.logout()}
+              onClick={() => { base44.analytics.track({ eventName: 'logout_clicked' }); base44.auth.logout(); }}
               className="w-full flex items-center gap-3 px-4 py-3.5 bg-muted/40 rounded-2xl text-left hover:bg-red-50 transition-colors group"
             >
               <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">

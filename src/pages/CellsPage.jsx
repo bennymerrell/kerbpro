@@ -27,6 +27,7 @@ export default function CellsPage() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
+  useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
   const [search, setSearch] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
 
@@ -56,11 +57,13 @@ export default function CellsPage() {
   );
 
   async function handleToggle(cell) {
+    base44.analytics.track({ eventName: 'cell_visibility_toggled', properties: { visible: !cell.visible } });
     await base44.entities.Cell.update(cell.id, { visible: !cell.visible });
     setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
   }
 
   async function handleRecalculate(cell) {
+    base44.analytics.track({ eventName: 'cell_recalc_triggered' });
     setRecalcTriggering(prev => ({ ...prev, [cell.id]: true }));
     try {
       await base44.functions.invoke('triggerMileageRecalc', { cellId: cell.id });
@@ -71,11 +74,13 @@ export default function CellsPage() {
   }
 
   async function handleDelete(cell) {
+    base44.analytics.track({ eventName: 'cell_deleted' });
     await base44.entities.Cell.delete(cell.id);
     setCells(prev => prev.filter(c => c.id !== cell.id));
   }
 
   function handleSelect(cell) {
+    base44.analytics.track({ eventName: 'cell_selected', properties: { name: cell.name || 'Unnamed Cell' } });
     try {
       const points = JSON.parse(cell.points);
       const mileage = (cell.adopted_m != null && cell.unadopted_m != null)

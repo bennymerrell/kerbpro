@@ -58,6 +58,7 @@ export default function MapPage() {
   useOfflineSync(handleSynced);
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
+  useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'map' } }); }, []);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);

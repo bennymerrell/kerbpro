@@ -36,6 +36,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    base44.analytics.track({ eventName: 'sighting_submitted', properties: { category } });
     setSending(true);
 
     let photoUrl = null;

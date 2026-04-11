@@ -59,6 +59,7 @@ const SORT_OPTIONS = [
 
 export default function SightingsPage() {
   const navigate = useNavigate();
+  useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'sightings' } }); }, []);
   const [sightings, setSightings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -212,6 +213,7 @@ export default function SightingsPage() {
                   <button
                     onClick={() => {
                       const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+                      base44.analytics.track({ eventName: 'sightings_view_on_map_clicked', properties: { category: cat } });
                       navigate('/', { state: { flyTo: [s.lat, s.lng], activateCategory: cat } });
                     }}
                     className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
@@ -220,7 +222,7 @@ export default function SightingsPage() {
                     View on Map
                   </button>
                   <button
-                    onClick={() => setSelected(s)}
+                    onClick={() => { base44.analytics.track({ eventName: 'sightings_view_details_clicked' }); setSelected(s); }}
                     className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
                   >
                     <Eye className="h-3.5 w-3.5" />

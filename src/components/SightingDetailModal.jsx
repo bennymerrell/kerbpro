@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { X, MapPin, Calendar, Image, Map, Maximize2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -72,6 +73,7 @@ export default function SightingDetailModal({ sighting, onClose }) {
             <button
               onClick={() => {
                 const cat = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+                base44.analytics.track({ eventName: 'sighting_detail_view_on_map_clicked', properties: { category: cat } });
                 onClose();
                 navigate('/', { state: { flyTo: [sighting.lat, sighting.lng], activateCategory: cat } });
               }}
