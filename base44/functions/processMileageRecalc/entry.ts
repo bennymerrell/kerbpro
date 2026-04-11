@@ -26,12 +26,11 @@ async function runRecalc(cellId, base44) {
 
   const rawPoints = JSON.parse(cell.points);
 
-  // Use bounding box query — much faster than polygon on Overpass
-  const lats = rawPoints.map(p => p.lat);
-  const lngs = rawPoints.map(p => p.lng);
-  const bbox = `${Math.min(...lats)},${Math.min(...lngs)},${Math.max(...lats)},${Math.max(...lngs)}`;
+  // Simplify polygon to reduce query complexity
+  const simplified = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
+  const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
   const roadFilter = ALL_TAGS.join('|');
-  const query = `[out:json][timeout:30][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](${bbox});way["highway"]["access"="private"](${bbox}););out geom qt;`;
+  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
 
   const endpoints = [
     'https://overpass-api.de/api/interpreter',
@@ -41,7 +40,7 @@ async function runRecalc(cellId, base44) {
 
   async function tryEndpoint(url) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 32000);
+    const timer = setTimeout(() => controller.abort(), 58000);
     try {
       const res = await fetch(url, {
         method: 'POST',
