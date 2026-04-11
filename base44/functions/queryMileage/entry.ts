@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     // Simplify polygon if too many points
-    const simplified = points.length > 30 ? points.filter((_, i) => i % Math.ceil(points.length / 30) === 0) : points;
+    const simplified = points.length > 60 ? points.filter((_, i) => i % Math.ceil(points.length / 60) === 0) : points;
     const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
     const query = `[out:json][timeout:20][maxsize:33554432];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
