@@ -190,10 +190,7 @@ export default function SightingsPage() {
                         return (
                           <>
                             <CategoryMapIcon category={cat} statusDetails={s.status_details} />
-                            <div className="min-w-0">
-                              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">{cat}</div>
-                              <h3 className="font-semibold text-sm text-foreground leading-tight truncate">{label}</h3>
-                            </div>
+                            <h3 className="font-semibold text-sm text-foreground leading-tight truncate min-w-0">{label}</h3>
                           </>
                         );
                       })()}
