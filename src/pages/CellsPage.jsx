@@ -29,6 +29,7 @@ export default function CellsPage() {
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
   const [search, setSearch] = useState('');
+  const [areaFilter, setAreaFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
 
   const loadCells = useCallback(async () => {
@@ -52,9 +53,13 @@ export default function CellsPage() {
 
   const { refreshing } = usePullToRefresh(loadCells);
 
-  const filtered = cells.filter(c =>
-    (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase())
-  );
+  const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+
+  const filtered = cells.filter(c => {
+    const matchesSearch = (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase());
+    const matchesArea = !areaFilter || c.area === areaFilter;
+    return matchesSearch && matchesArea;
+  });
 
   async function handleToggle(cell) {
     base44.analytics.track({ eventName: 'cell_visibility_toggled', properties: { visible: !cell.visible } });
@@ -176,6 +181,25 @@ export default function CellsPage() {
             className="w-full h-10 pl-10 pr-4 rounded-xl border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
+        {areas.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <button
+              onClick={() => setAreaFilter('')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!areaFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+            >
+              All Areas
+            </button>
+            {areas.map(area => (
+              <button
+                key={area}
+                onClick={() => setAreaFilter(areaFilter === area ? '' : area)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${areaFilter === area ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 px-4 py-3 space-y-2 overflow-y-auto">
