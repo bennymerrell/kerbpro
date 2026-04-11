@@ -82,7 +82,7 @@ export default function SearchBox({ mapRef, onLocationFound }) {
         <div
           onMouseDown={e => e.preventDefault()}
           className="absolute top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden z-[2000]"
-          style={{ left: 0, minWidth: '320px', width: 'max-content', maxWidth: 'calc(100vw - 2rem)' }}
+          style={{ left: 0, right: 0, width: '100%' }}
         >
           {results.map((result, i) => {
             const displayName = result.display_name || result.display_place || '';
