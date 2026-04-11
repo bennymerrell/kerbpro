@@ -6,6 +6,8 @@ import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin } from 'l
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
+
 const SORT_OPTIONS = [
   { value: '-created_date', label: 'Newest first' },
   { value: 'created_date', label: 'Oldest first' },
@@ -19,6 +21,7 @@ export default function SightingsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('-created_date');
+  const [activeCategories, setActiveCategories] = useState([]);
   const [selected, setSelected] = useState(null);
 
   const loadSightings = useCallback(async () => {
@@ -32,10 +35,12 @@ export default function SightingsPage() {
 
   const { refreshing } = usePullToRefresh(loadSightings);
 
-  const filtered = sightings.filter(s =>
-    s.species?.toLowerCase().includes(search.toLowerCase()) ||
-    s.notes?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = sightings.filter(s => {
+    const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+    const matchesSearch = s.species?.toLowerCase().includes(search.toLowerCase()) || s.notes?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = activeCategories.length === 0 || activeCategories.includes(cat);
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -61,28 +66,51 @@ export default function SightingsPage() {
       </div>
 
       {/* Controls */}
-      <div className="px-4 py-3 flex flex-col sm:flex-row gap-2 border-b border-border bg-card/50">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search species or notes..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-          />
+      <div className="px-4 py-3 flex flex-col gap-2 border-b border-border bg-card/50">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search sighting or notes..."
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+            />
+          </div>
+          <div className="relative">
+            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              className="h-9 pl-9 pr-8 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none cursor-pointer"
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="relative">
-          <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-            className="h-9 pl-9 pr-8 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none cursor-pointer"
+        {/* Category filter chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveCategories(activeCategories.length === CATEGORIES.length ? [] : [...CATEGORIES])}
+            className="text-xs text-primary font-medium whitespace-nowrap"
           >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            {activeCategories.length === CATEGORIES.length ? 'Hide all' : 'Show all'}
+          </button>
+          {CATEGORIES.map(cat => {
+            const on = activeCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategories(on ? activeCategories.filter(c => c !== cat) : [...activeCategories, cat])}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${on ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </div>
 
