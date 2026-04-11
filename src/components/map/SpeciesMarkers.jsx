@@ -14,8 +14,8 @@ const CATEGORY_SVGS = {
 const CATEGORY_COLORS = {
   'Species':       '#16a34a',
   'Free Parking':  '#2563eb',
-  'Hydrant':             '#dc2626',
-  'Hydrant_not_working': '#6b7280',
+  'Hydrant':             '#f59e0b',
+  'Hydrant_not_working': '#9ca3af',
   'Incident':      '#7c3aed',
   'Public Toilet': '#d97706',
   'Cafe / Van':    '#ea580c',
@@ -25,20 +25,30 @@ function createSightingIcon(sighting) {
   const category = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
   const isNotWorking = category === 'Hydrant' && sighting.status_details === 'not_working';
   const key = isNotWorking ? 'Hydrant_not_working' : category;
-  const svg = CATEGORY_SVGS[key] || CATEGORY_SVGS['Species'];
   const color = CATEGORY_COLORS[key] || '#2563eb';
+
+  let innerHtml;
+  if (category === 'Hydrant') {
+    const textColor = isNotWorking ? '#ffffff' : '#000000';
+    innerHtml = `<span style="font-size:18px;font-weight:900;color:${textColor};font-family:Arial,sans-serif;line-height:1;">H</span>`;
+  } else {
+    const svg = CATEGORY_SVGS[key] || CATEGORY_SVGS['Species'];
+    innerHtml = svg;
+  }
+
   const badge = category === 'Hydrant' && sighting.status_details
-    ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '✕' : '✓'}</div>`
+    ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '\u2715' : '\u2713'}</div>`
     : '';
+
   return L.divIcon({
     className: 'custom-marker',
     html: `<div style="position:relative;width:34px;height:34px;"><div style="
-      width: 34px; height: 34px; border-radius: 50%;
+      width: 34px; height: 34px; border-radius: 4px;
       background: ${color};
-      border: 3px solid white;
+      border: 3px solid ${isNotWorking ? '#6b7280' : '#000'};
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
-    ">${svg}</div>${badge}</div>`,
+    ">${innerHtml}</div>${badge}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
