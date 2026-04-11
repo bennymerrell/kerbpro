@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     const points = JSON.parse(cell.points);
     const polyStr = points.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
-    const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom;`;
+    // Use out geom qt (quicksort) and skip node metadata for speed
+    const query = `[out:json][timeout:90][maxsize:536870912];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
 
     const endpoints = [
       'https://overpass-api.de/api/interpreter',
@@ -43,13 +44,10 @@ Deno.serve(async (req) => {
       'https://overpass.openstreetmap.ru/api/interpreter',
     ];
 
-    let ways = null;
-    let lastError = null;
-
-    for (const url of endpoints) {
+    async function tryEndpoint(url) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 95000);
       try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 120000);
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -58,15 +56,21 @@ Deno.serve(async (req) => {
         });
         clearTimeout(timer);
         const text = await res.text();
-        if (text.trim().startsWith('{')) {
-          ways = JSON.parse(text).elements || [];
-          break;
-        } else {
-          lastError = `Non-JSON from ${url}: ${text.substring(0, 200)}`;
-        }
+        if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url}`);
+        return JSON.parse(text).elements || [];
       } catch (e) {
-        lastError = `${url}: ${e.message}`;
+        clearTimeout(timer);
+        throw new Error(`${url}: ${e.message}`);
       }
+    }
+
+    // Race all endpoints in parallel — use whichever responds first
+    let ways = null;
+    let lastError = null;
+    const results = await Promise.allSettled(endpoints.map(tryEndpoint));
+    for (const r of results) {
+      if (r.status === 'fulfilled') { ways = r.value; break; }
+      lastError = r.reason?.message;
     }
 
     if (ways === null) {
