@@ -186,7 +186,7 @@ export default function SightingsPage() {
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {(() => {
                         const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
-                        const label = s.species?.replace(/^\[.+?\]\s*/, '') || s.species;
+                        const label = s.species?.replace(/^\[.+?\]\s*/, '').trim() || cat;
                         return (
                           <>
                             <CategoryMapIcon category={cat} statusDetails={s.status_details} />
