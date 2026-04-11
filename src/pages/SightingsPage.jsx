@@ -207,10 +207,6 @@ export default function SightingsPage() {
                     </span>
                   )}
                   {s.notes && <p className="text-xs text-muted-foreground line-clamp-2">{s.notes}</p>}
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span>{s.lat?.toFixed(4)}, {s.lng?.toFixed(4)}</span>
-                  </div>
                 </div>
                 <div className="flex gap-2 px-3 pb-3">
                   <button
