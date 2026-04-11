@@ -2,29 +2,53 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
-import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin, Trees, ParkingSquare, Flame, AlertCircle, Bath, Coffee } from 'lucide-react';
+import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin } from 'lucide-react';
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
-const CATEGORY_ICONS = {
-  'Species': Trees,
-  'Free Parking': ParkingSquare,
-  'Hydrant': Flame,
-  'Incident': AlertCircle,
-  'Public Toilet': Bath,
-  'Cafe / Van': Coffee,
+const CATEGORY_SVGS = {
+  'Species': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 9c0-4 3-7 7-7s7 3 7 7c0 5-7 11-7 11S5 14 5 9z"/></svg>`,
+  'Free Parking': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>`,
+  'Incident': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
+  'Public Toilet': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 0 0-4 0v5"/><path d="M5 11h4"/><path d="M7 11v7"/><path d="M15 7v11"/><path d="M13 7h4a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-4"/><circle cx="7" cy="3" r="1"/><circle cx="15" cy="3" r="1"/></svg>`,
+  'Cafe / Van': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>`,
 };
 
-const CATEGORY_COLORS = {
-  'Species': 'text-green-600',
-  'Free Parking': 'text-blue-600',
-  'Hydrant': 'text-yellow-500',
-  'Incident': 'text-purple-600',
-  'Public Toilet': 'text-amber-600',
-  'Cafe / Van': 'text-orange-600',
+const CATEGORY_BG = {
+  'Species':      '#16a34a',
+  'Free Parking': '#2563eb',
+  'Hydrant':      '#f59e0b',
+  'Incident':     '#7c3aed',
+  'Public Toilet':'#d97706',
+  'Cafe / Van':   '#ea580c',
 };
+
+function CategoryMapIcon({ category, statusDetails }) {
+  const isHydrant = category === 'Hydrant';
+  const isNotWorking = isHydrant && statusDetails === 'not_working';
+  const bg = isNotWorking ? '#9ca3af' : (CATEGORY_BG[category] || '#2563eb');
+  const border = isNotWorking ? '#6b7280' : '#000';
+
+  const inner = isHydrant
+    ? `<span style="font-size:13px;font-weight:900;color:${isNotWorking ? '#fff' : '#000'};font-family:Arial,sans-serif;line-height:1;">H</span>`
+    : (CATEGORY_SVGS[category] || CATEGORY_SVGS['Species']);
+
+  return (
+    <div
+      style={{
+        width: 26, height: 26, borderRadius: 4,
+        background: bg,
+        border: `2px solid ${border}`,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}
+      dangerouslySetInnerHTML={{ __html: inner }}
+    />
+  );
+}
 
 const SORT_OPTIONS = [
   { value: '-created_date', label: 'Newest first' },
@@ -159,19 +183,17 @@ export default function SightingsPage() {
                 )}
                 <div className="p-3 space-y-1.5 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       {(() => {
                         const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
                         const label = s.species?.replace(/^\[.+?\]\s*/, '') || s.species;
-                        const Icon = CATEGORY_ICONS[cat] || Trees;
-                        const iconColor = CATEGORY_COLORS[cat] || 'text-gray-500';
                         return (
                           <>
-                            <div className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${iconColor}`}>
-                              <Icon className="h-3 w-3" />
-                              <span>{cat}</span>
+                            <CategoryMapIcon category={cat} statusDetails={s.status_details} />
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">{cat}</div>
+                              <h3 className="font-semibold text-sm text-foreground leading-tight truncate">{label}</h3>
                             </div>
-                            <h3 className="font-semibold text-sm text-foreground leading-tight">{label}</h3>
                           </>
                         );
                       })()}
