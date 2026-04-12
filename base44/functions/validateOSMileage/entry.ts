@@ -1,13 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function haversine(a, b) {
-  // OS EPSG:4326 returns [lat, lng]
+  // GeoJSON coords are [lng, lat]
   const R = 6371000;
-  const dLat = (b[0] - a[0]) * Math.PI / 180;
-  const dLng = (b[1] - a[1]) * Math.PI / 180;
+  const dLat = (b[1] - a[1]) * Math.PI / 180;
+  const dLng = (b[0] - a[0]) * Math.PI / 180;
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
@@ -17,12 +17,18 @@ function lineLength(coords) {
   return d;
 }
 
-async function fetchRoadLinks(bbox, apiKey) {
+async function fetchRoadLinks(points, apiKey) {
   const base = 'https://api.os.uk/features/v1/wfs';
   const pageSize = 100;
   let startIndex = 0;
   let totalM = 0;
   const seenIds = new Set();
+
+  // Build WKT polygon for CQL spatial filter
+  const coordStr = points.map(p => `${p.lng} ${p.lat}`).join(',');
+  const firstPt = points[0];
+  const wkt = `POLYGON((${coordStr},${firstPt.lng} ${firstPt.lat}))`;
+  const cqlFilter = `INTERSECTS(shape,${wkt})`;
 
   while (true) {
     const params = new URLSearchParams({
@@ -34,7 +40,7 @@ async function fetchRoadLinks(bbox, apiKey) {
       srsName: 'EPSG:4326',
       count: String(pageSize),
       startIndex: String(startIndex),
-      bbox: bbox,
+      CQL_FILTER: cqlFilter,
       key: apiKey,
     });
 
@@ -53,7 +59,7 @@ async function fetchRoadLinks(bbox, apiKey) {
     if (features.length === 0) break;
 
     for (const f of features) {
-      const fid = f.id || f.properties?.gml_id || f.properties?.id;
+      const fid = f.id || f.properties?.GmlID || f.properties?.OBJECTID;
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
@@ -96,9 +102,7 @@ Deno.serve(async (req) => {
     const minLat = Math.min(...lats), maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
     // OS WFS EPSG:4326 uses lat/lng axis order
-    const bbox = `${minLat},${minLng},${maxLat},${maxLng},EPSG:4326`;
-
-    const osTotalM = await fetchRoadLinks(bbox, apiKey);
+    const osTotalM = await fetchRoadLinks(points, apiKey);
 
     const osmM = cell.adopted_m || 0;
     const diff = osmM > 0 ? Math.abs(osTotalM - osmM) / osmM : 1;
