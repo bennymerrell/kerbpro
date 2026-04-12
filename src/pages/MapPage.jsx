@@ -138,6 +138,16 @@ export default function MapPage() {
       let pts = [];
       try { pts = JSON.parse(cell.points); } catch {}
       setEditingCell({ cell, points: pts });
+      // Fly to the cell bounds
+      const attempt = (tries = 0) => {
+        if (mapRef.current && pts.length > 0) {
+          const bounds = pts.map(p => [p.lat, p.lng]);
+          mapRef.current.fitBounds(bounds, { padding: [60, 60], animate: true });
+        } else if (tries < 20) {
+          setTimeout(() => attempt(tries + 1), 100);
+        }
+      };
+      attempt();
     }
   }, [location.state?.selectedCell, location.state?.editCell]);
 
