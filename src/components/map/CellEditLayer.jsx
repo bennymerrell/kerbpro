@@ -35,9 +35,10 @@ function makePointIcon(index) {
   });
 }
 
-function MapClickInsert({ points, onChange }) {
+function MapClickInsert({ points, onChange, disabled }) {
   useMapEvents({
     click(e) {
+      if (disabled) return;
       const { lat, lng } = e.latlng;
       const idx = nearestSegmentIndex(points, lat, lng);
       const updated = [...points];
@@ -48,7 +49,7 @@ function MapClickInsert({ points, onChange }) {
   return null;
 }
 
-export default function CellEditLayer({ points, onChange }) {
+export default function CellEditLayer({ points, onChange, disableInsert = false }) {
   const positions = points.map(p => [p.lat, p.lng]);
 
   function handleDragEnd(index, e) {
@@ -64,7 +65,7 @@ export default function CellEditLayer({ points, onChange }) {
 
   return (
     <>
-      <MapClickInsert points={points} onChange={onChange} />
+      <MapClickInsert points={points} onChange={onChange} disabled={disableInsert} />
       <Polygon
         positions={positions}
         pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15, weight: 2, dashArray: '6 4' }}
