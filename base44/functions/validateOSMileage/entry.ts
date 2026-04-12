@@ -119,14 +119,20 @@ Deno.serve(async (req) => {
     if (!cell) return Response.json({ error: 'Cell not found' }, { status: 404 });
 
     const points = JSON.parse(cell.points);
-    const lats = points.map(p => p.lat);
-    const lngs = points.map(p => p.lng);
-    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-    // OS WFS EPSG:4326 uses lat/lng axis order
     const osTotalM = await fetchRoadLinks(points, apiKey);
 
-    const osmM = cell.adopted_m || 0;
+    // Compare OS against OSM with non-highway types auto-excluded (apples-to-apples)
+    const COMPARE_EXCLUDE = new Set(['service', 'private', 'track']);
+    let osmM = 0;
+    try {
+      const breakdown = JSON.parse(cell.road_breakdown || '{}');
+      osmM = Object.entries(breakdown)
+        .filter(([t]) => !COMPARE_EXCLUDE.has(t))
+        .reduce((s, [, m]) => s + m, 0);
+    } catch {
+      osmM = cell.adopted_m || 0;
+    }
+
     const diff = osmM > 0 ? Math.abs(osTotalM - osmM) / osmM : 1;
     const status = diff <= 0.15 ? 'pass' : 'fail';
 
