@@ -16,6 +16,7 @@ import SpeciesMarkers from '../components/map/SpeciesMarkers';
 import AreaDrawer from '../components/map/AreaDrawer';
 import AreaResultsPanel from '../components/map/AreaResultsPanel';
 import SavedCellsLayer from '../components/map/SavedCellsLayer';
+import CellEditLayer from '../components/map/CellEditLayer';
 import UnadoptedRoadsLayer from '../components/map/UnadoptedRoadsLayer';
 import ExportPanel from '../components/map/ExportPanel';
 import MobileToolbar from '../components/map/MobileToolbar';
@@ -132,7 +133,13 @@ export default function MapPage() {
     if (location.state?.selectedCell) {
       setSelectedCell(location.state.selectedCell);
     }
-  }, [location.state?.selectedCell]);
+    if (location.state?.editCell) {
+      const cell = location.state.editCell;
+      let pts = [];
+      try { pts = JSON.parse(cell.points); } catch {}
+      setEditingCell({ cell, points: pts });
+    }
+  }, [location.state?.selectedCell, location.state?.editCell]);
 
   useEffect(() => {
     if (!location.state?.flyTo) return;
@@ -206,6 +213,8 @@ export default function MapPage() {
   const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
   const [activeCategories, setActiveCategories] = useState([]);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
+  const [editingCell, setEditingCell] = useState(null); // { cell, points }
+
   const mapRef = useRef(null);
 
   const handleSpotted = useCallback(() => {
@@ -309,6 +318,12 @@ export default function MapPage() {
         )}
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
         <SavedCellsLayer cells={savedCells} />
+        {editingCell && (
+          <CellEditLayer
+            points={editingCell.points}
+            onChange={(pts) => setEditingCell(prev => ({ ...prev, points: pts }))}
+          />
+        )}
         {isAreaMode && (
           <AreaDrawer
             points={areaPoints}
@@ -416,6 +431,31 @@ export default function MapPage() {
             }
           }}
         />
+      )}
+
+      {/* Edit cell toolbar */}
+      {editingCell && (
+        <div className="absolute left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2" style={{bottom: 'max(11rem, calc(env(safe-area-inset-bottom) + 10rem))'}}>
+          <div className="bg-amber-500 rounded-full shadow-lg px-4 py-2.5 text-sm text-white font-medium">
+            Drag points to reshape
+          </div>
+          <button
+            onClick={async () => {
+              await base44.entities.Cell.update(editingCell.cell.id, { points: JSON.stringify(editingCell.points) });
+              setSavedCells(prev => prev.map(c => c.id === editingCell.cell.id ? { ...c, points: JSON.stringify(editingCell.points) } : c));
+              setEditingCell(null);
+            }}
+            className="bg-green-500 text-white font-semibold text-sm rounded-full shadow-lg px-4 py-2.5"
+          >
+            Save ✓
+          </button>
+          <button
+            onClick={() => setEditingCell(null)}
+            className="bg-white text-gray-600 font-semibold text-sm rounded-full shadow-lg px-4 py-2.5 border border-gray-200"
+          >
+            Cancel
+          </button>
+        </div>
       )}
 
       {/* Hint banners — iOS pill style */}

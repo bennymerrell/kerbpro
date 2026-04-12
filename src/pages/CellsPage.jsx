@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, Clock, AlertCircle, CheckCircle2, Pencil } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -245,6 +245,16 @@ export default function CellsPage() {
               >
                 {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 {cell.visible !== false ? 'Visible' : 'Hidden'}
+              </button>
+              <div className="w-px bg-border" />
+              <button
+                onClick={() => {
+                  navigate('/', { state: { editCell: cell } });
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-amber-50 hover:text-amber-600 transition-colors"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Shape
               </button>
               <div className="w-px bg-border" />
               <button
