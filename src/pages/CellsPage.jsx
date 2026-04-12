@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil, ShieldCheck } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function getExcluded(cell) {
@@ -21,7 +21,7 @@ export default function CellsPage() {
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
-  const [validating, setValidating] = useState({});
+
 
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
@@ -61,22 +61,7 @@ export default function CellsPage() {
     setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
   }
 
-  async function handleValidate(cell) {
-    base44.analytics.track({ eventName: 'cell_os_validate_triggered' });
-    setValidating(prev => ({ ...prev, [cell.id]: true }));
-    try {
-      const res = await base44.functions.invoke('validateOSMileage', { cellId: cell.id });
-      if (res.data?.error) throw new Error(res.data.error);
-      setCells(prev => prev.map(c => c.id === cell.id ? {
-        ...c,
-        os_validated_m: res.data.osTotalM,
-        os_validated_status: res.data.status,
-        os_validated_at: new Date().toISOString(),
-      } : c));
-    } finally {
-      setValidating(prev => ({ ...prev, [cell.id]: false }));
-    }
-  }
+
 
   async function handleRecalculate(cell) {
     base44.analytics.track({ eventName: 'cell_recalc_triggered' });
@@ -244,12 +229,7 @@ export default function CellsPage() {
                   {cell.adopted_m != null && (
                     <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
                   )}
-                  {cell.os_validated_status === 'pass' && (
-                    <span className="ml-2 text-emerald-600 font-semibold">✓ OS</span>
-                  )}
-                  {cell.os_validated_status === 'fail' && (
-                    <span className="ml-2 text-red-500 font-semibold">✗ OS</span>
-                  )}
+
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
@@ -287,18 +267,7 @@ export default function CellsPage() {
                   <><RefreshCw className="h-3.5 w-3.5" />Recalc Miles</>
                 )}
               </button>
-              <div className="w-px bg-border" />
-              <button
-                onClick={() => handleValidate(cell)}
-                disabled={validating[cell.id] || !cell.adopted_m}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 transition-colors disabled:opacity-50"
-              >
-                {validating[cell.id] ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />Validating…</>
-                ) : (
-                  <><ShieldCheck className="h-3.5 w-3.5" />Validate OS</>
-                )}
-              </button>
+
               <div className="w-px bg-border" />
               <button
                 onClick={() => handleDelete(cell)}
@@ -310,12 +279,7 @@ export default function CellsPage() {
             </div>
 
 
-            {cell.os_validated_m != null && (
-              <div className={`w-full px-3 py-2 text-[11px] flex items-center justify-between gap-2 ${cell.os_validated_status === 'pass' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                <span className="font-semibold">{cell.os_validated_status === 'pass' ? '✓ OS Validation Pass' : '✗ OS Validation Fail'}</span>
-                <span>OS: {((cell.os_validated_m / 1609.34) * 2).toFixed(2)} mi vs OSM: {((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
-              </div>
-            )}
+
             {cell.recalc_status === 'error' && cell.recalc_error && (
               <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center flex items-center justify-center gap-1">
                 <AlertCircle className="h-3 w-3 flex-shrink-0" />{cell.recalc_error}
