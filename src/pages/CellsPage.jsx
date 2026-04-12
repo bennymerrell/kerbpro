@@ -286,18 +286,6 @@ export default function CellsPage() {
               </button>
               <div className="w-px bg-border" />
               <button
-                onClick={() => handleValidate(cell)}
-                disabled={validating[cell.id] || !cell.adopted_m}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 transition-colors disabled:opacity-50"
-              >
-                {validating[cell.id] ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />Validating…</>
-                ) : (
-                  <><ShieldCheck className="h-3.5 w-3.5" />Validate</>
-                )}
-              </button>
-              <div className="w-px bg-border" />
-              <button
                 onClick={() => handleDelete(cell)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
               >
