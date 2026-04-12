@@ -2,15 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, Clock, AlertCircle, CheckCircle2, Pencil } from 'lucide-react';
-
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-async function queryMileage(points) {
-  const res = await base44.functions.invoke('queryMileage', { points });
-  if (res.data?.error) throw new Error(res.data.error);
-  return { adoptedM: res.data.adoptedM, unadoptedM: res.data.unadoptedM, breakdown: res.data.breakdown || {} };
-}
 
 function getExcluded(cell) {
   try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; }
@@ -25,12 +18,13 @@ export default function CellsPage() {
   const [cells, setCells] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
-  useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
+  const [validating, setValidating] = useState({});
+
+  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
+  useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
 
   const loadCells = useCallback(async () => {
     setLoading(true);
@@ -41,7 +35,6 @@ export default function CellsPage() {
 
   useEffect(() => { loadCells(); }, [loadCells]);
 
-  // Real-time updates for recalc status changes
   useEffect(() => {
     const unsub = base44.entities.Cell.subscribe((event) => {
       if (event.type === 'update') {
@@ -75,6 +68,23 @@ export default function CellsPage() {
       setCells(prev => prev.map(c => c.id === cell.id ? { ...c, recalc_status: 'pending' } : c));
     } finally {
       setRecalcTriggering(prev => ({ ...prev, [cell.id]: false }));
+    }
+  }
+
+  async function handleValidate(cell) {
+    base44.analytics.track({ eventName: 'cell_os_validate_triggered' });
+    setValidating(prev => ({ ...prev, [cell.id]: true }));
+    try {
+      const res = await base44.functions.invoke('validateOSMileage', { cellId: cell.id });
+      if (res.data?.error) throw new Error(res.data.error);
+      setCells(prev => prev.map(c => c.id === cell.id ? {
+        ...c,
+        os_validated_m: res.data.osTotalM,
+        os_validated_status: res.data.status,
+        os_validated_at: new Date().toISOString(),
+      } : c));
+    } finally {
+      setValidating(prev => ({ ...prev, [cell.id]: false }));
     }
   }
 
@@ -231,6 +241,12 @@ export default function CellsPage() {
                   {cell.adopted_m != null && (
                     <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
                   )}
+                  {cell.os_validated_status === 'pass' && (
+                    <span className="ml-2 text-emerald-600 font-semibold">✓ OS</span>
+                  )}
+                  {cell.os_validated_status === 'fail' && (
+                    <span className="ml-2 text-red-500 font-semibold">✗ OS</span>
+                  )}
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
@@ -248,9 +264,7 @@ export default function CellsPage() {
               </button>
               <div className="w-px bg-border" />
               <button
-                onClick={() => {
-                  navigate('/', { state: { editCell: cell } });
-                }}
+                onClick={() => navigate('/', { state: { editCell: cell } })}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-amber-50 hover:text-amber-600 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -272,6 +286,18 @@ export default function CellsPage() {
               </button>
               <div className="w-px bg-border" />
               <button
+                onClick={() => handleValidate(cell)}
+                disabled={validating[cell.id] || !cell.adopted_m}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 transition-colors disabled:opacity-50"
+              >
+                {validating[cell.id] ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />Validating…</>
+                ) : (
+                  <><ShieldCheck className="h-3.5 w-3.5" />Validate</>
+                )}
+              </button>
+              <div className="w-px bg-border" />
+              <button
                 onClick={() => handleDelete(cell)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
               >
@@ -279,6 +305,21 @@ export default function CellsPage() {
                 Delete
               </button>
             </div>
+
+            {cell.os_validated_m != null && (
+              <div className={`w-full px-3 py-2 text-[11px] flex items-center justify-between gap-2 ${
+                cell.os_validated_status === 'pass' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+              }`}>
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="font-semibold">OS: {cell.os_validated_status === 'pass' ? '✓ Pass' : '✗ Fail'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span>OSM {((cell.adopted_m || 0) / 1609.34).toFixed(2)} mi</span>
+                  <span>OS {(cell.os_validated_m / 1609.34).toFixed(2)} mi</span>
+                </div>
+              </div>
+            )}
             {cell.recalc_status === 'error' && cell.recalc_error && (
               <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center flex items-center justify-center gap-1">
                 <AlertCircle className="h-3 w-3 flex-shrink-0" />{cell.recalc_error}

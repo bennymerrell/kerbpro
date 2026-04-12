@@ -41,6 +41,24 @@
     "recalc_error": {
       "type": "string",
       "description": "Error message if recalc failed"
+    },
+    "os_validated_m": {
+      "type": "number",
+      "description": "Total road metres from OS Features API validation"
+    },
+    "os_validated_status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "error"
+      ],
+      "description": "Result of OS mileage validation"
+    },
+    "os_validated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last OS validation"
     }
   },
   "required": [
