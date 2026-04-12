@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('OS_MAPS_API_KEY');
     const bbox = '-1.32,51.49,-1.28,51.52,EPSG:4326';
-    const typeName = 'osfeatures:Zoomstack_RoadsLocal';
+    const typeName = 'osfeatures:Highways_RoadLink';
 
     const params = new URLSearchParams({
       service: 'WFS',
@@ -18,8 +18,6 @@ Deno.serve(async (req) => {
       outputFormat: 'GEOJSON',
       srsName: 'EPSG:4326',
       count: '5',
-      startIndex: '0',
-      bbox: bbox,
       key: apiKey,
     });
 

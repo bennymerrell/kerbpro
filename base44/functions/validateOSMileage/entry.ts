@@ -1,13 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function haversine(a, b) {
-  // a, b = [lng, lat]
+  // OS EPSG:4326 returns [lat, lng]
   const R = 6371000;
-  const dLat = (b[1] - a[1]) * Math.PI / 180;
-  const dLng = (b[0] - a[0]) * Math.PI / 180;
+  const dLat = (b[0] - a[0]) * Math.PI / 180;
+  const dLng = (b[1] - a[1]) * Math.PI / 180;
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
@@ -17,13 +17,7 @@ function lineLength(coords) {
   return d;
 }
 
-const ROAD_LAYERS = [
-  'osfeatures:Zoomstack_RoadsLocal',
-  'osfeatures:Zoomstack_RoadsRegional',
-  'osfeatures:Zoomstack_RoadsNational',
-];
-
-async function fetchLayerLength(typeName, bbox, apiKey) {
+async function fetchRoadLinks(bbox, apiKey) {
   const base = 'https://api.os.uk/features/v1/wfs';
   const pageSize = 100;
   let startIndex = 0;
@@ -35,7 +29,7 @@ async function fetchLayerLength(typeName, bbox, apiKey) {
       service: 'WFS',
       version: '2.0.0',
       request: 'GetFeature',
-      typeNames: typeName,
+      typeNames: 'osfeatures:Highways_RoadLink',
       outputFormat: 'GEOJSON',
       srsName: 'EPSG:4326',
       count: String(pageSize),
@@ -51,7 +45,7 @@ async function fetchLayerLength(typeName, bbox, apiKey) {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OS WFS error ${res.status} for ${typeName}: ${text.substring(0, 300)}`);
+      throw new Error(`OS WFS error ${res.status}: ${text.substring(0, 400)}`);
     }
 
     const data = await res.json();
@@ -59,7 +53,7 @@ async function fetchLayerLength(typeName, bbox, apiKey) {
     if (features.length === 0) break;
 
     for (const f of features) {
-      const fid = f.id || (f.properties && (f.properties.gml_id || f.properties.id));
+      const fid = f.id || f.properties?.gml_id || f.properties?.id;
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
@@ -78,11 +72,6 @@ async function fetchLayerLength(typeName, bbox, apiKey) {
   }
 
   return totalM;
-}
-
-async function fetchAllRoadLinks(bbox, apiKey) {
-  const results = await Promise.all(ROAD_LAYERS.map(layer => fetchLayerLength(layer, bbox, apiKey)));
-  return results.reduce((a, b) => a + b, 0);
 }
 
 Deno.serve(async (req) => {
@@ -106,11 +95,11 @@ Deno.serve(async (req) => {
     const lngs = points.map(p => p.lng);
     const minLat = Math.min(...lats), maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-    const bbox = `${minLng},${minLat},${maxLng},${maxLat},EPSG:4326`;
+    // OS WFS EPSG:4326 uses lat/lng axis order
+    const bbox = `${minLat},${minLng},${maxLat},${maxLng},EPSG:4326`;
 
-    const osTotalM = await fetchAllRoadLinks(bbox, apiKey);
+    const osTotalM = await fetchRoadLinks(bbox, apiKey);
 
-    // Compare with stored OSM mileage (15% tolerance = pass)
     const osmM = cell.adopted_m || 0;
     const diff = osmM > 0 ? Math.abs(osTotalM - osmM) / osmM : 1;
     const status = diff <= 0.15 ? 'pass' : 'fail';
