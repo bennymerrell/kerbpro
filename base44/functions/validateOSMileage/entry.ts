@@ -19,8 +19,8 @@ function lineLength(coords) {
 
 async function fetchAllRoadLinks(bbox, apiKey) {
   const base = 'https://api.os.uk/features/v1/wfs';
-  let startIndex = 0;
   const pageSize = 100;
+  let startIndex = 0;
   let totalM = 0;
   const seenIds = new Set();
 
@@ -45,7 +45,7 @@ async function fetchAllRoadLinks(bbox, apiKey) {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OS WFS error ${res.status}: ${text.substring(0, 200)}`);
+      throw new Error(`OS WFS error ${res.status}: ${text.substring(0, 300)}`);
     }
 
     const data = await res.json();
@@ -83,6 +83,9 @@ Deno.serve(async (req) => {
     const { cellId } = await req.json();
     if (!cellId) return Response.json({ error: 'cellId required' }, { status: 400 });
 
+    const apiKey = Deno.env.get('OS_MAPS_API_KEY');
+    if (!apiKey) return Response.json({ error: 'OS_MAPS_API_KEY secret not set' }, { status: 500 });
+
     const cells = await base44.asServiceRole.entities.Cell.filter({ id: cellId });
     const cell = cells[0];
     if (!cell) return Response.json({ error: 'Cell not found' }, { status: 404 });
@@ -92,11 +95,7 @@ Deno.serve(async (req) => {
     const lngs = points.map(p => p.lng);
     const minLat = Math.min(...lats), maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-    // bbox format: minX,minY,maxX,maxY (lng/lat for EPSG:4326)
     const bbox = `${minLng},${minLat},${maxLng},${maxLat},EPSG:4326`;
-
-    const apiKey = Deno.env.get('OS_MAPS_API_KEY');
-    if (!apiKey) return Response.json({ error: 'OS_MAPS_API_KEY secret not set' }, { status: 500 });
 
     const osTotalM = await fetchAllRoadLinks(bbox, apiKey);
 
