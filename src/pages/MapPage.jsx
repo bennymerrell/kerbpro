@@ -332,7 +332,6 @@ export default function MapPage() {
           <CellEditLayer
             points={editingCell.points}
             onChange={(pts) => setEditingCell(prev => ({ ...prev, points: pts }))}
-            disableInsert={isAreaMode || isPlotting}
           />
         )}
         {isAreaMode && (
