@@ -73,30 +73,25 @@ async function fetchRoadLinks(points, apiKey) {
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
-      // Filter: check if ANY coordinate of the geometry is inside the cell polygon
-      // (midpoint-only check was excluding boundary-crossing roads)
+      // Only count segments where BOTH endpoints are inside the cell polygon
+      // (using full Length property over-counts roads that only clip the boundary)
       const geom = f.geometry;
-      if (geom) {
-        let allCoords = [];
-        if (geom.type === 'LineString') allCoords = geom.coordinates;
-        else if (geom.type === 'MultiLineString') allCoords = geom.coordinates.flat();
-        if (allCoords.length > 0) {
-          // OS returns [lat, lng] in srsName EPSG:4326
-          const anyInside = allCoords.some(c => pointInPolygon(points, c[0], c[1]));
-          if (!anyInside) continue;
+      if (!geom) continue;
+      let coordArrays = [];
+      if (geom.type === 'LineString') coordArrays = [geom.coordinates];
+      else if (geom.type === 'MultiLineString') coordArrays = geom.coordinates;
+      let roadM = 0;
+      for (const coords of coordArrays) {
+        for (let i = 1; i < coords.length; i++) {
+          // OS returns [lat, lng]
+          const aLat = coords[i-1][0], aLng = coords[i-1][1];
+          const bLat = coords[i][0], bLng = coords[i][1];
+          if (pointInPolygon(points, aLat, aLng) || pointInPolygon(points, bLat, bLng)) {
+            roadM += haversine([aLat, aLng], [bLat, bLng]);
+          }
         }
       }
-
-      // Use OS-provided Length (metres) directly
-      const lengthM = parseFloat(f.properties?.Length);
-      if (!isNaN(lengthM) && lengthM > 0) {
-        totalM += lengthM;
-      } else {
-        const geom = f.geometry;
-        if (!geom) continue;
-        if (geom.type === 'LineString') totalM += lineLength(geom.coordinates);
-        else if (geom.type === 'MultiLineString') for (const line of geom.coordinates) totalM += lineLength(line);
-      }
+      totalM += roadM;
     }
 
     if (features.length < pageSize) break;
