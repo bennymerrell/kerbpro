@@ -24,11 +24,12 @@ async function fetchRoadLinks(points, apiKey) {
   let totalM = 0;
   const seenIds = new Set();
 
-  // Build WKT polygon for CQL spatial filter
+  // Build WKT polygon — WFS CQL expects lon lat order
   const coordStr = points.map(p => `${p.lng} ${p.lat}`).join(',');
   const firstPt = points[0];
   const wkt = `POLYGON((${coordStr},${firstPt.lng} ${firstPt.lat}))`;
-  const cqlFilter = `INTERSECTS(shape,${wkt})`;
+  // WITHIN = only road links fully inside the polygon (avoids counting entire boundary-crossing links)
+  const cqlFilter = `WITHIN(shape,${wkt})`;
 
   while (true) {
     const params = new URLSearchParams({
@@ -63,12 +64,19 @@ async function fetchRoadLinks(points, apiKey) {
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
-      const geom = f.geometry;
-      if (!geom) continue;
-      if (geom.type === 'LineString') {
-        totalM += lineLength(geom.coordinates);
-      } else if (geom.type === 'MultiLineString') {
-        for (const line of geom.coordinates) totalM += lineLength(line);
+      // Use the OS-provided Length value directly (metres) — more accurate than recalculating
+      const lengthM = parseFloat(f.properties?.Length);
+      if (!isNaN(lengthM) && lengthM > 0) {
+        totalM += lengthM;
+      } else {
+        // Fallback: calculate from geometry
+        const geom = f.geometry;
+        if (!geom) continue;
+        if (geom.type === 'LineString') {
+          totalM += lineLength(geom.coordinates);
+        } else if (geom.type === 'MultiLineString') {
+          for (const line of geom.coordinates) totalM += lineLength(line);
+        }
       }
     }
 
