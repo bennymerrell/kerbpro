@@ -110,16 +110,10 @@ Deno.serve(async (req) => {
     const cellId = body?.event?.entity_id || body?.cellId;
     if (!cellId) return Response.json({ error: 'cellId required' }, { status: 400 });
 
-    // Respond immediately — run heavy Overpass work in background
-    // This avoids Deno Deploy's wall-clock execution limit
-    runRecalc(cellId, base44).catch(async (err) => {
-      await base44.asServiceRole.entities.Cell.update(cellId, {
-        recalc_status: 'error',
-        recalc_error: err.message,
-      });
-    });
+    // Run synchronously so Deno doesn't kill the isolate before completion
+    await runRecalc(cellId, base44);
 
-    return Response.json({ ok: true, status: 'processing' });
+    return Response.json({ ok: true, status: 'done' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
