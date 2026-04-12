@@ -1,13 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Ray-casting point-in-polygon (polygon = [{lat,lng}], point = {lat,lng})
+function pointInPolygon(polygon, lat, lng) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].lng, yi = polygon[i].lat;
+    const xj = polygon[j].lng, yj = polygon[j].lat;
+    if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 function haversine(a, b) {
-  // GeoJSON coords are [lng, lat]
+  // OS returns coords as [lat, lng]
   const R = 6371000;
-  const dLat = (b[1] - a[1]) * Math.PI / 180;
-  const dLng = (b[0] - a[0]) * Math.PI / 180;
+  const dLat = (b[0] - a[0]) * Math.PI / 180;
+  const dLng = (b[1] - a[1]) * Math.PI / 180;
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
@@ -24,12 +35,10 @@ async function fetchRoadLinks(points, apiKey) {
   let totalM = 0;
   const seenIds = new Set();
 
-  // Build WKT polygon — WFS CQL expects lon lat order
-  const coordStr = points.map(p => `${p.lng} ${p.lat}`).join(',');
-  const firstPt = points[0];
-  const wkt = `POLYGON((${coordStr},${firstPt.lng} ${firstPt.lat}))`;
-  // WITHIN = only road links fully inside the polygon (avoids counting entire boundary-crossing links)
-  const cqlFilter = `WITHIN(shape,${wkt})`;
+  const lats = points.map(p => p.lat);
+  const lngs = points.map(p => p.lng);
+  // OS WFS requires lat/lon axis order for EPSG:4326 bbox
+  const bbox = `${Math.min(...lats)},${Math.min(...lngs)},${Math.max(...lats)},${Math.max(...lngs)},EPSG:4326`;
 
   while (true) {
     const params = new URLSearchParams({
@@ -41,7 +50,7 @@ async function fetchRoadLinks(points, apiKey) {
       srsName: 'EPSG:4326',
       count: String(pageSize),
       startIndex: String(startIndex),
-      CQL_FILTER: cqlFilter,
+      bbox,
       key: apiKey,
     });
 
@@ -60,23 +69,33 @@ async function fetchRoadLinks(points, apiKey) {
     if (features.length === 0) break;
 
     for (const f of features) {
-      const fid = f.id || f.properties?.GmlID || f.properties?.OBJECTID;
+      const fid = f.properties?.GmlID || f.properties?.OBJECTID;
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
-      // Use the OS-provided Length value directly (metres) — more accurate than recalculating
+      // Filter: check midpoint of geometry is inside the cell polygon
+      const geom = f.geometry;
+      if (geom) {
+        let coords = [];
+        if (geom.type === 'LineString') coords = geom.coordinates;
+        else if (geom.type === 'MultiLineString' && geom.coordinates[0]) coords = geom.coordinates[0];
+        if (coords.length > 0) {
+          const mid = coords[Math.floor(coords.length / 2)];
+          // OS returns [lat, lng] in srsName EPSG:4326
+          const midLat = mid[0], midLng = mid[1];
+          if (!pointInPolygon(points, midLat, midLng)) continue;
+        }
+      }
+
+      // Use OS-provided Length (metres) directly
       const lengthM = parseFloat(f.properties?.Length);
       if (!isNaN(lengthM) && lengthM > 0) {
         totalM += lengthM;
       } else {
-        // Fallback: calculate from geometry
         const geom = f.geometry;
         if (!geom) continue;
-        if (geom.type === 'LineString') {
-          totalM += lineLength(geom.coordinates);
-        } else if (geom.type === 'MultiLineString') {
-          for (const line of geom.coordinates) totalM += lineLength(line);
-        }
+        if (geom.type === 'LineString') totalM += lineLength(geom.coordinates);
+        else if (geom.type === 'MultiLineString') for (const line of geom.coordinates) totalM += lineLength(line);
       }
     }
 

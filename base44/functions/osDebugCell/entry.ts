@@ -17,7 +17,10 @@ Deno.serve(async (req) => {
     const coordStr = points.map(p => `${p.lng} ${p.lat}`).join(',');
     const firstPt = points[0];
     const wkt = `POLYGON((${coordStr},${firstPt.lng} ${firstPt.lat}))`;
-    const cqlFilter = `WITHIN(shape,${wkt})`;
+    const lats = points.map(p => p.lat);
+    const lngs = points.map(p => p.lng);
+    // OS uses lat/lon axis order for EPSG:4326
+    const bboxStr = `${Math.min(...lats)},${Math.min(...lngs)},${Math.max(...lats)},${Math.max(...lngs)},EPSG:4326`;
 
     const params = new URLSearchParams({
       service: 'WFS',
@@ -27,7 +30,7 @@ Deno.serve(async (req) => {
       outputFormat: 'GEOJSON',
       srsName: 'EPSG:4326',
       count: '10',
-      CQL_FILTER: cqlFilter,
+      bbox: bboxStr,
       key: apiKey,
     });
 
