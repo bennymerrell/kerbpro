@@ -17,7 +17,13 @@ function lineLength(coords) {
   return d;
 }
 
-async function fetchAllRoadLinks(bbox, apiKey) {
+const ROAD_LAYERS = [
+  'osfeatures:Zoomstack_RoadsLocal',
+  'osfeatures:Zoomstack_RoadsRegional',
+  'osfeatures:Zoomstack_RoadsNational',
+];
+
+async function fetchLayerLength(typeName, bbox, apiKey) {
   const base = 'https://api.os.uk/features/v1/wfs';
   const pageSize = 100;
   let startIndex = 0;
@@ -29,7 +35,7 @@ async function fetchAllRoadLinks(bbox, apiKey) {
       service: 'WFS',
       version: '2.0.0',
       request: 'GetFeature',
-      typeNames: 'Road_RoadLink',
+      typeNames: typeName,
       outputFormat: 'GEOJSON',
       srsName: 'EPSG:4326',
       count: String(pageSize),
@@ -45,7 +51,7 @@ async function fetchAllRoadLinks(bbox, apiKey) {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OS WFS error ${res.status}: ${text.substring(0, 300)}`);
+      throw new Error(`OS WFS error ${res.status} for ${typeName}: ${text.substring(0, 300)}`);
     }
 
     const data = await res.json();
@@ -68,10 +74,15 @@ async function fetchAllRoadLinks(bbox, apiKey) {
 
     if (features.length < pageSize) break;
     startIndex += pageSize;
-    if (startIndex > 20000) break; // safety cap
+    if (startIndex > 20000) break;
   }
 
   return totalM;
+}
+
+async function fetchAllRoadLinks(bbox, apiKey) {
+  const results = await Promise.all(ROAD_LAYERS.map(layer => fetchLayerLength(layer, bbox, apiKey)));
+  return results.reduce((a, b) => a + b, 0);
 }
 
 Deno.serve(async (req) => {
