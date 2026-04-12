@@ -73,17 +73,17 @@ async function fetchRoadLinks(points, apiKey) {
       if (fid && seenIds.has(fid)) continue;
       if (fid) seenIds.add(fid);
 
-      // Filter: check midpoint of geometry is inside the cell polygon
+      // Filter: check if ANY coordinate of the geometry is inside the cell polygon
+      // (midpoint-only check was excluding boundary-crossing roads)
       const geom = f.geometry;
       if (geom) {
-        let coords = [];
-        if (geom.type === 'LineString') coords = geom.coordinates;
-        else if (geom.type === 'MultiLineString' && geom.coordinates[0]) coords = geom.coordinates[0];
-        if (coords.length > 0) {
-          const mid = coords[Math.floor(coords.length / 2)];
+        let allCoords = [];
+        if (geom.type === 'LineString') allCoords = geom.coordinates;
+        else if (geom.type === 'MultiLineString') allCoords = geom.coordinates.flat();
+        if (allCoords.length > 0) {
           // OS returns [lat, lng] in srsName EPSG:4326
-          const midLat = mid[0], midLng = mid[1];
-          if (!pointInPolygon(points, midLat, midLng)) continue;
+          const anyInside = allCoords.some(c => pointInPolygon(points, c[0], c[1]));
+          if (!anyInside) continue;
         }
       }
 
