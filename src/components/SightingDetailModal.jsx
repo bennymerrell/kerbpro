@@ -28,6 +28,7 @@ export default function SightingDetailModal({ sighting, onClose }) {
     >
       <div
         className="bg-card rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden"
+        style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
         onClick={e => e.stopPropagation()}
       >
         {sighting.photo_url ? (
