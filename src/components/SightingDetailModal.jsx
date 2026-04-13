@@ -23,8 +23,8 @@ export default function SightingDetailModal({ sighting, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+      className="fixed inset-0 z-[4000] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
       onClick={onClose}
     >
       <div
