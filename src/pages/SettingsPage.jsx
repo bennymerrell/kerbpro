@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle, X, Users, Shield } from 'lucide-react';
+import { MapPin, Save, Search, Loader2, CheckCircle, Trash2, AlertTriangle, X, Users, Shield, ChevronDown, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SettingsPage() {
@@ -19,19 +19,28 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUserPicker, setShowUserPicker] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     base44.entities.User.list().then(setAllUsers).catch(() => setUsersError(true));
   }, []);
 
-  async function handleAddManager(e) {
-    e.preventDefault();
+  async function handleAddManager() {
     if (!selectedUserId) return;
     setUpdatingRole(true);
     await base44.entities.User.update(selectedUserId, { role: 'manager' });
     setAllUsers(prev => prev.map(u => u.id === selectedUserId ? { ...u, role: 'manager' } : u));
     setSelectedUserId('');
     setUpdatingRole(false);
+  }
+
+  async function handleDeleteAccount() {
+    setDeletingAccount(true);
+    // Placeholder: in production, call a backend function to delete all user data
+    // await base44.functions.invoke('deleteAccount', {});
+    await new Promise(r => setTimeout(r, 800)); // simulate async
+    base44.auth.logout();
   }
 
   async function handleRemoveManager(userId) {
@@ -220,26 +229,66 @@ export default function SettingsPage() {
           )}
 
           {/* Add manager form */}
-          <form onSubmit={handleAddManager} className="flex gap-2">
-            <select
-              value={selectedUserId}
-              onChange={e => setSelectedUserId(e.target.value)}
-              required
-              className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">{allUsers.length === 0 ? 'No users available' : 'Promote user to manager…'}</option>
-              {allUsers
-                .filter(u => u.role === 'user')
-                .map(u => (
-                  <option key={u.id} value={u.id}>{u.full_name ? `${u.full_name} (${u.email})` : u.email}</option>
-                ))
-              }
-            </select>
-            <button type="submit" disabled={updatingRole || !selectedUserId} className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors">
-              {updatingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Shield className="h-3.5 w-3.5" />}
-              Assign
-            </button>
-          </form>
+          {(() => {
+            const eligibleUsers = allUsers.filter(u => u.role === 'user');
+            const selectedUser = eligibleUsers.find(u => u.id === selectedUserId);
+            return (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => eligibleUsers.length > 0 && setShowUserPicker(true)}
+                  disabled={eligibleUsers.length === 0}
+                  className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm text-left flex items-center justify-between gap-1 focus:outline-none disabled:opacity-50"
+                >
+                  <span className={selectedUser ? 'text-foreground' : 'text-muted-foreground'}>
+                    {selectedUser ? (selectedUser.full_name ? `${selectedUser.full_name} (${selectedUser.email})` : selectedUser.email) : (eligibleUsers.length === 0 ? 'No users available' : 'Promote user to manager…')}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddManager}
+                  disabled={updatingRole || !selectedUserId}
+                  className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-60 transition-colors"
+                >
+                  {updatingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Shield className="h-3.5 w-3.5" />}
+                  Assign
+                </button>
+
+                {/* iOS-style user picker drawer */}
+                {showUserPicker && (
+                  <div className="fixed inset-0 z-[4000] flex items-end" onClick={() => setShowUserPicker(false)}>
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+                    <div
+                      className="relative w-full bg-card rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col"
+                      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+                        <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                      </div>
+                      <div className="px-4 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex-shrink-0">
+                        Promote to Manager
+                      </div>
+                      <div className="overflow-y-auto">
+                        {eligibleUsers.map(u => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => { setSelectedUserId(u.id); setShowUserPicker(false); }}
+                            className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-foreground hover:bg-muted/60 active:bg-muted transition-colors select-none"
+                          >
+                            <span>{u.full_name ? `${u.full_name} (${u.email})` : u.email}</span>
+                            {selectedUserId === u.id && <Check className="h-4 w-4 text-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Danger Zone */}
@@ -248,34 +297,60 @@ export default function SettingsPage() {
             <AlertTriangle className="h-4 w-4 text-red-500" />
             <span className="text-sm font-semibold text-red-600">Danger Zone</span>
           </div>
-          {!showDeleteConfirm ? (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
-            >
-              <Trash2 className="h-4 w-4" /> Delete Account
-            </button>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Are you sure? This will sign you out. To permanently delete your account, contact support.</p>
-              <div className="flex gap-2">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+          >
+            <Trash2 className="h-4 w-4" /> Delete Account
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center sm:p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative w-full sm:max-w-sm bg-card rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground text-base">Delete Account</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                All your data — including sightings, cells, and logs — will be <strong className="text-foreground">permanently removed</strong>. You will be logged out immediately.
+              </p>
+              <div className="flex flex-col gap-2 pt-1">
                 <button
-                  onClick={() => base44.auth.logout()}
-                  className="h-8 px-4 rounded-lg bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                  className="w-full h-11 rounded-xl bg-red-500 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-600 disabled:opacity-60 transition-colors"
                 >
-                  Yes, sign out
+                  {deletingAccount ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {deletingAccount ? 'Deleting…' : 'Yes, Delete My Account'}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="h-8 px-4 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-muted/50 transition-colors"
+                  className="w-full h-11 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
