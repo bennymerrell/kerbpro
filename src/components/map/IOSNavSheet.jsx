@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut } from 'lucide-react';
+import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut, LayoutDashboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
@@ -16,6 +16,11 @@ export default function IOSNavSheet({
 }) {
   const navigate = useNavigate();
   const sheetRef = useRef(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   useEffect(() => {
     function handleOutside(e) {
@@ -72,6 +77,22 @@ export default function IOSNavSheet({
 
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)', WebkitOverflowScrolling: 'touch' }}>
+
+          {/* Dashboard — admin/manager only */}
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <div className="px-4 mb-4">
+              <button
+                onClick={() => { base44.analytics.track({ eventName: 'nav_dashboard_clicked' }); navAndClose('/dashboard'); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 bg-primary/10 rounded-2xl text-left hover:bg-primary/20 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                  <LayoutDashboard className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-primary">Dashboard</span>
+                <span className="ml-auto text-primary">›</span>
+              </button>
+            </div>
+          )}
 
           {/* Map Tools */}
           <div className="px-4 mb-4">
