@@ -97,8 +97,39 @@ function EditModal({ section, item, onClose, onSave }) {
     </div>
   ) : null;
 
+  const isHydrant = (form.species || '').includes('[Hydrant]');
+  const statusField = isHydrant ? (
+    <div key="status_details">
+      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Status</label>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setForm(f => ({ ...f, status_details: 'working' }))}
+          className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+            form.status_details === 'working'
+              ? 'bg-emerald-500 text-white'
+              : 'bg-muted text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700'
+          }`}
+        >
+          ✅ Working
+        </button>
+        <button
+          type="button"
+          onClick={() => setForm(f => ({ ...f, status_details: 'not_working' }))}
+          className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+            form.status_details === 'not_working'
+              ? 'bg-red-500 text-white'
+              : 'bg-muted text-muted-foreground hover:bg-red-50 hover:text-red-700'
+          }`}
+        >
+          ❌ Not Working
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   const fields = section === 'sightings'
-    ? [photoField, field('Species', 'species'), field('Notes', 'notes', 'textarea'), field('Reported By', 'reported_by'), field('Lat', 'lat', 'number'), field('Lng', 'lng', 'number'), field('Status Details', 'status_details')]
+    ? [photoField, field('Species', 'species'), field('Notes', 'notes', 'textarea'), field('Reported By', 'reported_by'), field('Lat', 'lat', 'number'), field('Lng', 'lng', 'number'), statusField].filter(Boolean)
     : section === 'cells'
     ? [field('Name', 'name'), field('Area', 'area')]
     : [field('Week Start', 'week_start', 'date'), field('Week End', 'week_end', 'date'), field('Notes', 'notes', 'textarea')];
