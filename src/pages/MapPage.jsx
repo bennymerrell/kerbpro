@@ -86,7 +86,7 @@ export default function MapPage() {
         if (records[0].default_zoom) mapRef.current?.setZoom(records[0].default_zoom);
       }
     });
-    if (!location.state?.flyTo) {
+    if (!location.state?.flyTo && !location.state?.fitBounds) {
       navigator.geolocation?.getCurrentPosition(
         (pos) => {
           const latlng = [pos.coords.latitude, pos.coords.longitude];
