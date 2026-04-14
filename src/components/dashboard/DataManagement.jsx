@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Trash2, Pencil, MapPin, SquareDashedBottom, FlaskConical, X, Check } from 'lucide-react';
+import { Loader2, Trash2, Pencil, MapPin, SquareDashedBottom, FlaskConical, X, Check, Camera, Image } from 'lucide-react';
 
 const SECTIONS = [
   { key: 'sightings', label: 'Sightings', icon: MapPin },
@@ -11,6 +11,17 @@ const SECTIONS = [
 function EditModal({ section, item, onClose, onSave }) {
   const [form, setForm] = useState({ ...item });
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef(null);
+
+  async function handlePhotoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, photo_url: file_url }));
+    setUploadingPhoto(false);
+  }
 
   function field(label, key, type = 'text') {
     return (
@@ -46,8 +57,48 @@ function EditModal({ section, item, onClose, onSave }) {
     onClose();
   }
 
+  const photoField = section === 'sightings' ? (
+    <div key="photo">
+      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Photo</label>
+      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+      {form.photo_url ? (
+        <div className="relative rounded-lg overflow-hidden border border-border">
+          <img src={form.photo_url} alt="Sighting" className="w-full h-36 object-cover" />
+          <div className="absolute bottom-2 right-2 flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="h-7 px-2.5 rounded-lg bg-black/60 text-white text-xs font-medium flex items-center gap-1 hover:bg-black/80 transition-colors"
+            >
+              {uploadingPhoto ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              Change
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, photo_url: '' }))}
+              className="h-7 w-7 rounded-lg bg-black/60 text-white flex items-center justify-center hover:bg-red-600/80 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => photoInputRef.current?.click()}
+          disabled={uploadingPhoto}
+          className="w-full h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors"
+        >
+          {uploadingPhoto ? <Loader2 className="h-5 w-5 animate-spin" /> : <Image className="h-5 w-5" />}
+          <span className="text-xs">{uploadingPhoto ? 'Uploading…' : 'Add Photo'}</span>
+        </button>
+      )}
+    </div>
+  ) : null;
+
   const fields = section === 'sightings'
-    ? [field('Species', 'species'), field('Notes', 'notes', 'textarea'), field('Reported By', 'reported_by'), field('Lat', 'lat', 'number'), field('Lng', 'lng', 'number'), field('Status Details', 'status_details')]
+    ? [photoField, field('Species', 'species'), field('Notes', 'notes', 'textarea'), field('Reported By', 'reported_by'), field('Lat', 'lat', 'number'), field('Lng', 'lng', 'number'), field('Status Details', 'status_details')]
     : section === 'cells'
     ? [field('Name', 'name'), field('Area', 'area')]
     : [field('Week Start', 'week_start', 'date'), field('Week End', 'week_end', 'date'), field('Notes', 'notes', 'textarea')];
