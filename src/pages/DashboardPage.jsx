@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement';
 import DataManagement from '../components/dashboard/DataManagement';
 import Analytics from '../components/dashboard/Analytics';
@@ -42,7 +42,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center space-y-3">
@@ -50,7 +50,7 @@ export default function DashboardPage() {
             <LayoutDashboard className="h-7 w-7 text-destructive" />
           </div>
           <h1 className="text-lg font-bold text-foreground">Access Denied</h1>
-          <p className="text-sm text-muted-foreground">This area is restricted to admins only.</p>
+          <p className="text-sm text-muted-foreground">This area is restricted to admins and managers only.</p>
           <button onClick={() => navigate('/')} className="mt-2 h-9 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold">
             Back to Map
           </button>
@@ -70,7 +70,18 @@ export default function DashboardPage() {
           <LayoutDashboard className="h-4 w-4 text-primary" />
           <span className="font-semibold text-sm text-foreground">Admin Dashboard</span>
         </div>
-        <span className="ml-auto text-xs text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">Admin</span>
+        <div className="ml-auto flex items-center gap-2">
+          {user.role === 'admin' && (
+            <a
+              href="mailto:support@kerpro.app"
+              className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-muted hover:bg-muted/70 text-xs font-medium text-foreground transition-colors"
+            >
+              <Mail className="h-3 w-3" />
+              Contact Support
+            </a>
+          )}
+          <span className="text-xs text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium capitalize">{user.role}</span>
+        </div>
       </div>
 
       {/* Tabs */}
