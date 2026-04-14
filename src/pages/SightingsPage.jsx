@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
-import { ArrowLeft, Search, ArrowUpDown, Leaf, Image, Eye, Map, MapPin } from 'lucide-react';
+import { ArrowLeft, Search, ArrowUpDown, Leaf, Eye, Map, Check } from 'lucide-react';
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 
@@ -66,6 +66,7 @@ export default function SightingsPage() {
   const [sort, setSort] = useState('-created_date');
   const [activeCategories, setActiveCategories] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showSortPicker, setShowSortPicker] = useState(false);
 
   const loadSightings = useCallback(async () => {
     setLoading(true);
@@ -121,19 +122,43 @@ export default function SightingsPage() {
               className="w-full h-9 pl-9 pr-3 rounded-lg border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
             />
           </div>
-          <div className="relative">
-            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value)}
-              className="h-9 pl-9 pr-8 rounded-lg border border-input bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none cursor-pointer"
-            >
-              {SORT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowSortPicker(true)}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-input bg-background text-sm text-foreground hover:bg-muted/60 transition-colors select-none"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground hidden sm:inline">{SORT_OPTIONS.find(o => o.value === sort)?.label}</span>
+          </button>
         </div>
+
+        {/* Sort picker — iOS bottom sheet */}
+        {showSortPicker && (
+          <div className="fixed inset-0 z-[4000] flex items-end" onClick={() => setShowSortPicker(false)}>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+            <div
+              className="relative w-full bg-card rounded-t-2xl shadow-2xl border-t border-border"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+              </div>
+              <div className="px-4 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Sort By</div>
+              {SORT_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => { setSort(o.value); setShowSortPicker(false); }}
+                  className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-foreground hover:bg-muted/60 active:bg-muted transition-colors select-none"
+                >
+                  <span>{o.label}</span>
+                  {sort === o.value && <Check className="h-4 w-4 text-primary" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Category filter chips */}
         <div className="flex items-center gap-2 flex-wrap">
           <button

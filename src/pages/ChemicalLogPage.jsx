@@ -311,8 +311,10 @@ export default function ChemicalLogPage() {
   }
 
   async function handleDelete(id) {
-    await base44.entities.ChemicalLog.delete(id);
-    setLogs(prev => prev.filter(l => l.id !== id));
+    // Optimistic: remove immediately
+    const prev = logs;
+    setLogs(p => p.filter(l => l.id !== id));
+    base44.entities.ChemicalLog.delete(id).catch(() => setLogs(prev));
   }
 
   function handleUpdated(updated) {

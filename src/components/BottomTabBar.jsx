@@ -7,17 +7,34 @@ const TABS = [
   { path: '/cells', label: 'Cells', icon: SquareDashedBottom },
 ];
 
+// Save scroll position for the current tab before switching
+function saveScrollPosition(pathname) {
+  sessionStorage.setItem(`scroll:${pathname}`, String(window.scrollY));
+}
+
+// Restore scroll position when returning to a tab
+function restoreScrollPosition(pathname) {
+  const saved = sessionStorage.getItem(`scroll:${pathname}`);
+  if (saved) {
+    requestAnimationFrame(() => window.scrollTo({ top: parseInt(saved, 10) }));
+  }
+}
+
 export default function BottomTabBar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
   function handleTabClick(path) {
     if (pathname === path) {
-      // Already on this tab — reset by navigating to root of that tab
-      navigate(path, { replace: true });
+      // Already active — scroll to top (reset)
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      sessionStorage.removeItem(`scroll:${path}`);
     } else {
+      // Save current scroll before leaving
+      saveScrollPosition(pathname);
       navigate(path);
+      // Restore scroll for the tab we're navigating to
+      restoreScrollPosition(path);
     }
   }
 

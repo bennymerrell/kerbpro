@@ -57,8 +57,13 @@ export default function CellsPage() {
 
   async function handleToggle(cell) {
     base44.analytics.track({ eventName: 'cell_visibility_toggled', properties: { visible: !cell.visible } });
-    await base44.entities.Cell.update(cell.id, { visible: !cell.visible });
-    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: !cell.visible } : c));
+    const newVisible = !cell.visible;
+    // Optimistic update
+    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: newVisible } : c));
+    base44.entities.Cell.update(cell.id, { visible: newVisible }).catch(() => {
+      // Revert on error
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: cell.visible } : c));
+    });
   }
 
 
@@ -78,8 +83,10 @@ export default function CellsPage() {
 
   async function handleDelete(cell) {
     base44.analytics.track({ eventName: 'cell_deleted' });
-    await base44.entities.Cell.delete(cell.id);
+    // Optimistic update
+    const prevCells = cells;
     setCells(prev => prev.filter(c => c.id !== cell.id));
+    base44.entities.Cell.delete(cell.id).catch(() => setCells(prevCells));
   }
 
   function handleSelect(cell) {
