@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Pencil, X, Check, Lock } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 function LastSeenBadge({ lastSeen }) {
@@ -31,7 +32,7 @@ function EditUserModal({ user: u, onClose, onSave }) {
 
   async function handleSave() {
     setSaving(true);
-    await base44.entities.User.update(u.id, form);
+    await base44.functions.invoke('updateUser', { userId: u.id, data: form });
     onSave({ ...u, ...form });
     setSaving(false);
     onClose();
@@ -90,8 +91,8 @@ export default function UserManagement() {
   const [editing, setEditing] = useState(null);
 
   useEffect(() => {
-    base44.entities.User.list()
-      .then(data => { setUsers(data); setLoading(false); })
+    base44.functions.invoke('getUsers', {})
+      .then(res => { setUsers(res.data.users || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
