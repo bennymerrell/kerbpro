@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Pencil, X, Check, Lock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+
+function LastSeenBadge({ lastSeen }) {
+  if (!lastSeen) return <span className="text-[10px] text-muted-foreground/50">Never</span>;
+  const date = new Date(lastSeen);
+  const diffMs = Date.now() - date.getTime();
+  const isOnline = diffMs < 5 * 60 * 1000; // within 5 minutes
+  const isRecent = diffMs < 60 * 60 * 1000; // within 1 hour
+  return (
+    <div className="flex items-center gap-1">
+      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOnline ? 'bg-emerald-500' : isRecent ? 'bg-amber-400' : 'bg-gray-300'}`} />
+      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+        {isOnline ? 'Online' : formatDistanceToNow(date, { addSuffix: true })}
+      </span>
+    </div>
+  );
+}
 
 const ROLE_COLORS = {
   admin: 'bg-purple-100 text-purple-700',
@@ -102,6 +119,7 @@ export default function UserManagement() {
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium text-foreground truncate">{u.full_name || '—'}</div>
                 <div className="text-[11px] text-muted-foreground truncate">{u.email}</div>
+                <LastSeenBadge lastSeen={u.last_seen} />
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[u.role] || ROLE_COLORS.user}`}>
                 {u.role || 'user'}

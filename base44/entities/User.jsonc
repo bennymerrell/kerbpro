@@ -10,6 +10,12 @@
         "manager"
       ],
       "default": "user"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last app activity"
     }
-  }
+  },
+  "required": []
 }
