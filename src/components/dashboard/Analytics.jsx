@@ -22,12 +22,16 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       base44.entities.Sighting.list('-created_date', 500),
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.ChemicalLog.list('-week_start', 200),
-      base44.entities.User.list().catch(() => []),
-    ]).then(([sightings, cells, logs, users]) => {
+      base44.entities.User.list(),
+    ]).then(([s, c, l, u]) => {
+      const sightings = s.status === 'fulfilled' ? s.value : [];
+      const cells = c.status === 'fulfilled' ? c.value : [];
+      const logs = l.status === 'fulfilled' ? l.value : [];
+      const users = u.status === 'fulfilled' ? u.value : [];
       // Sightings by category
       const categoryMap = {};
       sightings.forEach(s => {
@@ -53,7 +57,7 @@ export default function Analytics() {
 
       setStats({ sightings, cells, logs, users, categoryData, weekData });
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
