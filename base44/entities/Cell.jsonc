@@ -59,6 +59,25 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp of last OS validation"
+    },
+    "work_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ],
+      "default": "not_started",
+      "description": "Current work status of this cell"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when cell was last marked as completed"
+    },
+    "completed_by": {
+      "type": "string",
+      "description": "Email of user who last marked as completed"
     }
   },
   "required": [

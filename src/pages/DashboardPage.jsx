@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement';
 import DataManagement from '../components/dashboard/DataManagement';
 import Analytics from '../components/dashboard/Analytics';
+import CompletedCellsLog from '../components/dashboard/CompletedCellsLog';
 
 const TABS = [
   { key: 'analytics', label: 'Analytics', icon: BarChart2 },
   { key: 'users', label: 'Users', icon: Users },
+  { key: 'cells', label: 'Cells', icon: SquareDashedBottom },
   { key: 'data', label: 'Data', icon: Database },
 ];
 
@@ -106,6 +108,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 pb-24">
         {tab === 'analytics' && <Analytics />}
         {tab === 'users' && <UserManagement />}
+        {tab === 'cells' && <CompletedCellsLog />}
         {tab === 'data' && <DataManagement />}
       </div>
     </div>

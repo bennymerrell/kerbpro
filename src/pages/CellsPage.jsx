@@ -2,7 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil, CheckCircle2, Circle, Clock } from 'lucide-react';
+
+const WORK_STATUS_OPTIONS = [
+  { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
+  { value: 'in_progress', label: 'In Progress', color: 'text-orange-600', bg: 'bg-orange-100', dot: 'bg-orange-500' },
+  { value: 'completed',   label: 'Completed',   color: 'text-green-600', bg: 'bg-green-100',  dot: 'bg-green-500' },
+];
+
+function WorkStatusBadge({ status }) {
+  const opt = WORK_STATUS_OPTIONS.find(o => o.value === status) || WORK_STATUS_OPTIONS[0];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${opt.color} ${opt.bg}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${opt.dot}`} />
+      {opt.label}
+    </span>
+  );
+}
 import { cn } from '@/lib/utils';
 
 function getExcluded(cell) {
@@ -80,6 +96,18 @@ export default function CellsPage() {
   }
 
 
+
+  async function handleWorkStatus(cell, newStatus) {
+    const update = { work_status: newStatus };
+    if (newStatus === 'completed') {
+      update.completed_at = new Date().toISOString();
+      update.completed_by = currentUser?.email || null;
+    }
+    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, ...update } : c));
+    base44.entities.Cell.update(cell.id, update).catch(() => {
+      setCells(prev => prev.map(c => c.id === cell.id ? cell : c));
+    });
+  }
 
   async function handleDelete(cell) {
     base44.analytics.track({ eventName: 'cell_deleted' });
@@ -227,22 +255,39 @@ export default function CellsPage() {
                 <MapPin className="h-4 w-4 text-indigo-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className={cn("font-medium text-sm text-foreground truncate", !cell.visible && "line-through text-muted-foreground")}>
-                  {cell.name || 'Unnamed Cell'}
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {cell.area && <span className="mr-2">{cell.area}</span>}
-                  {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
-                  {cell.adopted_m != null && (
-                    <span className="ml-2 text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
-                  )}
-
-                </div>
+              <div className={cn("font-medium text-sm text-foreground truncate", !cell.visible && "line-through text-muted-foreground")}>
+                {cell.name || 'Unnamed Cell'}
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5 flex items-center flex-wrap gap-2">
+                {cell.area && <span>{cell.area}</span>}
+                {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
+                {cell.adopted_m != null && (
+                  <span className="text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
+                )}
+                <WorkStatusBadge status={cell.work_status} />
+              </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
             </button>
 
             {currentUser?.role === 'admin' && renderRoadTypes(cell)}
+
+            {/* Work status row */}
+            <div className="flex border-t border-border">
+              {WORK_STATUS_OPTIONS.map((opt, idx) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleWorkStatus(cell, opt.value)}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors
+                    ${cell.work_status === opt.value
+                      ? `${opt.color} ${opt.bg}`
+                      : 'text-muted-foreground hover:bg-muted/40'}`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
 
             <div className="flex border-t border-border">
               <button

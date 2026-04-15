@@ -1,5 +1,11 @@
 import { Polygon, Tooltip } from 'react-leaflet';
 
+const STATUS_COLORS = {
+  completed:   { color: '#16a34a', fillColor: '#16a34a', fillOpacity: 0.2, weight: 2 },
+  in_progress: { color: '#ea580c', fillColor: '#ea580c', fillOpacity: 0.2, weight: 2 },
+  not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
+};
+
 export default function SavedCellsLayer({ cells }) {
   return cells
     .filter(c => c.visible !== false)
@@ -7,11 +13,12 @@ export default function SavedCellsLayer({ cells }) {
       let points = [];
       try { points = JSON.parse(cell.points); } catch { return null; }
       const positions = points.map(p => [p.lat, p.lng]);
+      const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
       return (
         <Polygon
           key={cell.id || i}
           positions={positions}
-          pathOptions={{ color: '#6366f1', fillColor: '#6366f1', fillOpacity: 0.15, weight: 2 }}
+          pathOptions={pathOptions}
         >
           {cell.name && (
             <Tooltip permanent direction="center" className="cell-label">
