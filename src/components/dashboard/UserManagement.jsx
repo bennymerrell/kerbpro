@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Pencil, X, Check, Lock } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 function LastSeenBadge({ lastSeen }) {
@@ -88,12 +87,13 @@ function EditUserModal({ user: u, onClose, onSave }) {
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     base44.functions.invoke('getUsers', {})
       .then(res => { setUsers(res.data.users || []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(err => { setError(err?.message || 'Failed to load users'); setLoading(false); });
   }, []);
 
   function handleSave(updated) {
@@ -102,8 +102,12 @@ export default function UserManagement() {
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
+  if (error) return (
+    <div className="text-center py-10 text-sm text-destructive">{error}</div>
+  );
+
   if (users.length === 0) return (
-    <div className="text-center py-10 text-sm text-muted-foreground">User management is only available to admins.</div>
+    <div className="text-center py-10 text-sm text-muted-foreground">No users found.</div>
   );
 
   return (
