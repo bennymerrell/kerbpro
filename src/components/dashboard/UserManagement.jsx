@@ -90,10 +90,9 @@ export default function UserManagement() {
   const [editing, setEditing] = useState(null);
 
   useEffect(() => {
-    base44.entities.User.list().then(data => {
-      setUsers(data);
-      setLoading(false);
-    });
+    base44.entities.User.list()
+      .then(data => { setUsers(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   function handleSave(updated) {
@@ -101,6 +100,10 @@ export default function UserManagement() {
   }
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+
+  if (users.length === 0) return (
+    <div className="text-center py-10 text-sm text-muted-foreground">User management is only available to admins.</div>
+  );
 
   return (
     <div className="space-y-4">

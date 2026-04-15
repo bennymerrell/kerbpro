@@ -26,7 +26,7 @@ export default function Analytics() {
       base44.entities.Sighting.list('-created_date', 500),
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.ChemicalLog.list('-week_start', 200),
-      base44.entities.User.list(),
+      base44.entities.User.list().catch(() => []),
     ]).then(([sightings, cells, logs, users]) => {
       // Sightings by category
       const categoryMap = {};
