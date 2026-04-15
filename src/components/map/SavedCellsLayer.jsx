@@ -6,14 +6,17 @@ const STATUS_COLORS = {
   not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
 };
 
-export default function SavedCellsLayer({ cells }) {
+const DEFAULT_STYLE = { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 };
+
+export default function SavedCellsLayer({ cells, userRole }) {
+  const isAdmin = userRole === 'admin';
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
       let points = [];
       try { points = JSON.parse(cell.points); } catch { return null; }
       const positions = points.map(p => [p.lat, p.lng]);
-      const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
+      const pathOptions = isAdmin ? (STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started) : DEFAULT_STYLE;
       return (
         <Polygon
           key={cell.id || i}

@@ -327,7 +327,7 @@ export default function MapPage() {
           <LocationMarker position={locationData.position} accuracy={locationData.accuracy} />
         )}
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
-        <SavedCellsLayer cells={savedCells} />
+        <SavedCellsLayer cells={savedCells} userRole={currentUser?.role} />
         {editingCell && (
           <CellEditLayer
             points={editingCell.points}
