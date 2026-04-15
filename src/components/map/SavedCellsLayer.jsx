@@ -9,7 +9,7 @@ const STATUS_COLORS = {
 const DEFAULT_STYLE = { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 };
 
 export default function SavedCellsLayer({ cells, userRole }) {
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === 'admin' || userRole === 'manager';
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
