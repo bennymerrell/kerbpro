@@ -264,7 +264,7 @@ export default function CellsPage() {
                 {cell.adopted_m != null && (
                   <span className="text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
                 )}
-                <WorkStatusBadge status={cell.work_status} />
+                {currentUser?.role === 'admin' && <WorkStatusBadge status={cell.work_status} />}
               </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
@@ -272,8 +272,8 @@ export default function CellsPage() {
 
             {currentUser?.role === 'admin' && renderRoadTypes(cell)}
 
-            {/* Work status row */}
-            <div className="flex border-t border-border">
+            {/* Work status row - admin only */}
+            {currentUser?.role === 'admin' && <div className="flex border-t border-border">
               {WORK_STATUS_OPTIONS.map((opt, idx) => (
                 <button
                   key={opt.value}
@@ -287,7 +287,7 @@ export default function CellsPage() {
                   {opt.label}
                 </button>
               ))}
-            </div>
+            </div>}
 
             <div className="flex border-t border-border">
               <button

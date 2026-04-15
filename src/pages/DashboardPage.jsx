@@ -7,11 +7,11 @@ import DataManagement from '../components/dashboard/DataManagement';
 import Analytics from '../components/dashboard/Analytics';
 import CompletedCellsLog from '../components/dashboard/CompletedCellsLog';
 
-const TABS = [
-  { key: 'analytics', label: 'Analytics', icon: BarChart2 },
-  { key: 'users', label: 'Users', icon: Users },
-  { key: 'cells', label: 'Cells', icon: SquareDashedBottom },
-  { key: 'data', label: 'Data', icon: Database },
+const ALL_TABS = [
+  { key: 'analytics', label: 'Analytics', icon: BarChart2, roles: ['admin', 'manager'] },
+  { key: 'users', label: 'Users', icon: Users, roles: ['admin', 'manager'] },
+  { key: 'cells', label: 'Cells', icon: SquareDashedBottom, roles: ['admin'] },
+  { key: 'data', label: 'Data', icon: Database, roles: ['admin', 'manager'] },
 ];
 
 export default function DashboardPage() {
@@ -88,7 +88,7 @@ export default function DashboardPage() {
 
       {/* Tabs */}
       <div className="bg-card border-b border-border px-4 flex gap-1">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {ALL_TABS.filter(t => t.roles.includes(user.role)).map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
