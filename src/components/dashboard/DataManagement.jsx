@@ -8,7 +8,7 @@ const SECTIONS = [
   { key: 'chemical_logs', label: 'Chemical Logs', icon: FlaskConical },
 ];
 
-function EditModal({ section, item, onClose, onSave }) {
+function EditModal({ section, item, offices, onClose, onSave }) {
   const [form, setForm] = useState({ ...item });
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -128,10 +128,24 @@ function EditModal({ section, item, onClose, onSave }) {
     </div>
   ) : null;
 
+  const officeField = section === 'cells' ? (
+    <div key="office_id">
+      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Office</label>
+      <select
+        value={form.office_id || ''}
+        onChange={e => setForm(f => ({ ...f, office_id: e.target.value }))}
+        className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
+        <option value="">— None —</option>
+        {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+      </select>
+    </div>
+  ) : null;
+
   const fields = section === 'sightings'
     ? [photoField, field('Species', 'species'), field('Notes', 'notes', 'textarea'), field('Reported By', 'reported_by'), field('Lat', 'lat', 'number'), field('Lng', 'lng', 'number'), statusField].filter(Boolean)
     : section === 'cells'
-    ? [field('Name', 'name'), field('Area', 'area')]
+    ? [field('Name', 'name'), field('Area', 'area'), officeField]
     : [field('Week Start', 'week_start', 'date'), field('Week End', 'week_end', 'date'), field('Notes', 'notes', 'textarea')];
 
   return (
@@ -175,6 +189,7 @@ function Row({ item, onDelete, onEdit, children }) {
 export default function DataManagement() {
   const [activeSection, setActiveSection] = useState('sightings');
   const [data, setData] = useState({ sightings: [], cells: [], chemical_logs: [] });
+  const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
 
@@ -183,8 +198,10 @@ export default function DataManagement() {
       base44.entities.Sighting.list('-created_date', 200),
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.ChemicalLog.list('-week_start', 200),
-    ]).then(([sightings, cells, chemical_logs]) => {
+      base44.entities.Office.list(),
+    ]).then(([sightings, cells, chemical_logs, offices]) => {
       setData({ sightings, cells, chemical_logs });
+      setOffices(offices);
       setLoading(false);
     });
   }, []);
@@ -235,12 +252,15 @@ export default function DataManagement() {
               <div className="text-[11px] text-muted-foreground">{i.lat?.toFixed(4)}, {i.lng?.toFixed(4)} · {i.reported_by || 'Unknown'}</div>
             </Row>
           ))}
-          {activeSection === 'cells' && items.map(i => (
-            <Row key={i.id} item={i} onDelete={id => handleDelete('cells', id)} onEdit={setEditing}>
-              <div className="text-xs font-medium text-foreground truncate">{i.name || 'Unnamed'}</div>
-              <div className="text-[11px] text-muted-foreground">{i.area || '—'} · {i.visible ? 'Visible' : 'Hidden'}</div>
-            </Row>
-          ))}
+          {activeSection === 'cells' && items.map(i => {
+            const officeName = offices.find(o => o.id === i.office_id)?.name;
+            return (
+              <Row key={i.id} item={i} onDelete={id => handleDelete('cells', id)} onEdit={setEditing}>
+                <div className="text-xs font-medium text-foreground truncate">{i.name || 'Unnamed'}</div>
+                <div className="text-[11px] text-muted-foreground">{i.area || '—'} · {officeName || 'No Office'}</div>
+              </Row>
+            );
+          })}
           {activeSection === 'chemical_logs' && items.map(i => (
             <Row key={i.id} item={i} onDelete={id => handleDelete('chemical_logs', id)} onEdit={setEditing}>
               <div className="text-xs font-medium text-foreground">w/c {i.week_start}</div>
@@ -254,6 +274,7 @@ export default function DataManagement() {
         <EditModal
           section={activeSection}
           item={editing}
+          offices={offices}
           onClose={() => setEditing(null)}
           onSave={handleSave}
         />
