@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone } from 'lucide-react';
 
-export default function CellCheckInModal({ currentUser, onCheckIn }) {
+export default function CellCheckInModal({ currentUser, onCheckIn, onPhoneSaved }) {
   const [office, setOffice] = useState(null);
   const [cells, setCells] = useState([]);
   const [selectedArea, setSelectedArea] = useState('');
@@ -73,6 +73,7 @@ export default function CellCheckInModal({ currentUser, onCheckIn }) {
     await base44.auth.updateMe({ phone: cleaned });
     setSavingPhone(false);
     setPhoneConfirmed(true);
+    onPhoneSaved?.({ ...currentUser, phone: cleaned });
   }
 
   // Show phone capture screen if no phone on record

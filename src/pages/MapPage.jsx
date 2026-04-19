@@ -479,7 +479,7 @@ export default function MapPage() {
         onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
-      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} />}
+      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
