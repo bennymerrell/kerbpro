@@ -5,9 +5,9 @@
     "role": {
       "type": "string",
       "enum": [
-        "admin",
+        "user",
         "manager",
-        "user"
+        "admin"
       ],
       "default": "user"
     },
@@ -17,25 +17,23 @@
     },
     "manager_id": {
       "type": "string",
-      "description": "ID of the Manager (User) this user is assigned to"
-    },
-    "active_cell_id": {
-      "type": "string",
-      "description": "ID of the Cell this user is currently logged into"
-    },
-    "active_cell_prev_status": {
-      "type": "string",
-      "description": "The work_status of the cell before the user logged in, so it can be restored on log off"
-    },
-    "active_cell_checkin_date": {
-      "type": "string",
-      "format": "date",
-      "description": "The date (YYYY-MM-DD GMT) the user last checked in, used to re-show the modal each morning"
+      "description": "ID of the User who is this user's manager"
     },
     "phone": {
       "type": "string",
-      "description": "Mobile phone number for SMS/WhatsApp notifications to manager"
+      "description": "Mobile phone number for SMS/WhatsApp notifications (e.g. +447700900000)"
+    },
+    "active_cell_id": {
+      "type": "string",
+      "description": "ID of the cell the user is currently checked into"
+    },
+    "active_cell_prev_status": {
+      "type": "string",
+      "description": "Previous work_status of the cell before check-in"
+    },
+    "active_cell_checkin_date": {
+      "type": "string",
+      "description": "Date the user checked into the active cell (YYYY-MM-DD)"
     }
-  },
-  "required": []
+  }
 }
