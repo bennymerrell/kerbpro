@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Building2, SquareDashedBottom, LogIn } from 'lucide-react';
+import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf } from 'lucide-react';
 
 export default function CellCheckInModal({ onCheckIn }) {
   const [offices, setOffices] = useState([]);
@@ -52,11 +52,14 @@ export default function CellCheckInModal({ onCheckIn }) {
     <div className="fixed inset-0 z-[9000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-primary px-5 py-5 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
-            <LogIn className="h-6 w-6 text-white" />
+        <div className="bg-primary px-5 py-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <Leaf className="h-5 w-5 text-green-300" />
+            </div>
+            <span className="text-white font-black text-2xl tracking-tight">Kerb</span>
           </div>
-          <h2 className="text-white font-bold text-lg">Good morning!</h2>
+          <h2 className="text-white font-bold text-lg">Good morning! 👋</h2>
           <p className="text-white/80 text-sm mt-1">Please log into your cell to begin work</p>
         </div>
 
