@@ -1,0 +1,17 @@
+{
+  "name": "Office",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the office"
+    },
+    "location": {
+      "type": "string",
+      "description": "Location or address of the office"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

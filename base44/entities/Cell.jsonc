@@ -78,6 +78,10 @@
     "completed_by": {
       "type": "string",
       "description": "Email of user who last marked as completed"
+    },
+    "office_id": {
+      "type": "string",
+      "description": "ID of the Office this cell belongs to"
     }
   },
   "required": [

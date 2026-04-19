@@ -5,17 +5,19 @@
     "role": {
       "type": "string",
       "enum": [
-        "user",
         "admin",
-        "manager"
+        "manager",
+        "user"
       ],
       "default": "user"
     },
-    "last_seen": {
+    "office_id": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp of last app activity"
+      "description": "ID of the Office this user (manager) belongs to"
+    },
+    "manager_id": {
+      "type": "string",
+      "description": "ID of the Manager (User) this user is assigned to"
     }
-  },
-  "required": []
+  }
 }

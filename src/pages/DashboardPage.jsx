@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom } from 'lucide-react';
+import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom, Building2 } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement';
 import DataManagement from '../components/dashboard/DataManagement';
 import Analytics from '../components/dashboard/Analytics';
 import CompletedCellsLog from '../components/dashboard/CompletedCellsLog';
+import OfficeManagement from '../components/dashboard/OfficeManagement';
 
 const ALL_TABS = [
   { key: 'analytics', label: 'Analytics', icon: BarChart2, roles: ['admin', 'manager'] },
+  { key: 'offices', label: 'Offices', icon: Building2, roles: ['admin', 'manager'] },
   { key: 'users', label: 'Users', icon: Users, roles: ['admin', 'manager'] },
   { key: 'cells', label: 'Cells', icon: SquareDashedBottom, roles: ['admin'] },
   { key: 'data', label: 'Data', icon: Database, roles: ['admin', 'manager'] },
@@ -107,6 +109,7 @@ export default function DashboardPage() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-6 pb-24">
         {tab === 'analytics' && <Analytics />}
+        {tab === 'offices' && <OfficeManagement userRole={user.role} />}
         {tab === 'users' && <UserManagement />}
         {tab === 'cells' && <CompletedCellsLog />}
         {tab === 'data' && <DataManagement />}
