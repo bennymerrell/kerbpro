@@ -15,6 +15,10 @@ async function sendSMS(to, body) {
     },
     body: form.toString(),
   });
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Twilio error:', err);
+  }
   return res.ok;
 }
 
@@ -24,16 +28,19 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // action: 'started' | 'completed'
     const { action, cellName, cellArea, managerId } = await req.json();
 
     if (!action || !cellName || !managerId) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Fetch the assigned manager user record
-    const allUsers = await base44.asServiceRole.entities.User.list();
-    const manager = allUsers.find(u => u.id === managerId);
+    // Fetch the specific manager directly by ID
+    let manager;
+    try {
+      manager = await base44.asServiceRole.entities.User.get(managerId);
+    } catch {
+      return Response.json({ error: 'Manager not found' }, { status: 404 });
+    }
 
     if (!manager) {
       return Response.json({ error: 'Manager not found' }, { status: 404 });
@@ -43,7 +50,7 @@ Deno.serve(async (req) => {
     const actionLabel = action === 'started' ? 'started work on' : 'completed';
     const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;
 
-    const message = `Kerb Update: ${userName} has ${actionLabel} cell ${cellDesc}.`;
+    const message = `Kerb: ${userName} has ${actionLabel} cell ${cellDesc}.`;
 
     const emailBody = `
       <p>Hi ${manager.full_name || manager.email},</p>
@@ -61,13 +68,14 @@ Deno.serve(async (req) => {
     });
     results.email = true;
 
-    // Send SMS/WhatsApp if manager has a phone number
+    // Send SMS if manager has a phone number
     if (manager.phone && TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM) {
       results.sms = await sendSMS(manager.phone, message);
     }
 
     return Response.json({ ok: true, results });
   } catch (error) {
+    console.error('notifyCellAction error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
