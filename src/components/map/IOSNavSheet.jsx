@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut, LayoutDashboard } from 'lucide-react';
+import { Info, Shapes, MousePointerClick, FlaskConical, List, SquareDashedBottom, X, Download, Loader2, LogOut, LayoutDashboard, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
@@ -14,6 +14,8 @@ export default function IOSNavSheet({
   cells = [],
   selectedCell = null,
   activeUserCell = null,
+  onCellContinue,
+  onCellFinish,
   onCellLogOff,
 }) {
   const navigate = useNavigate();
@@ -172,20 +174,39 @@ export default function IOSNavSheet({
           {activeUserCell && (
             <div className="px-4 mb-4">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Active Cell</div>
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
-                  <SquareDashedBottom className="h-4 w-4 text-white" />
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+                    <SquareDashedBottom className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
+                    {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
-                  {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => { onCellContinue?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    Continue This Cell
+                  </button>
+                  <button
+                    onClick={() => { onCellFinish?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Finish & Start New Cell
+                  </button>
+                  <button
+                    onClick={() => { onCellLogOff?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold hover:bg-orange-200 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Log Off (Keep In Progress)
+                  </button>
                 </div>
-                <button
-                  onClick={() => { onCellLogOff?.(); onClose(); }}
-                  className="flex-shrink-0 h-8 px-3 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors"
-                >
-                  Log Off
-                </button>
               </div>
             </div>
           )}

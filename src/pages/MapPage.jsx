@@ -259,17 +259,26 @@ export default function MapPage() {
     }
   }
 
-  async function handleCellLogOff() {
-    if (!activeUserCell || !currentUser) return;
-    const prevStatus = currentUser.active_cell_prev_status || 'not_started';
-    // Revert cell status
-    await base44.entities.Cell.update(activeUserCell.id, { work_status: prevStatus });
-    setSavedCells(prev => prev.map(c => c.id === activeUserCell.id ? { ...c, work_status: prevStatus } : c));
-    // Clear user's active cell
+  async function handleCellContinue() {
+    // Nothing to do — user already has an active cell, just close the menu
+  }
+
+  async function handleCellFinish() {
+    if (!activeUserCell) return;
+    await base44.entities.Cell.update(activeUserCell.id, { work_status: 'completed' });
+    setSavedCells(prev => prev.map(c => c.id === activeUserCell.id ? { ...c, work_status: 'completed' } : c));
     await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
     setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
     setActiveUserCell(null);
-    // Show check-in modal again
+    setShowCheckIn(true);
+  }
+
+  async function handleCellLogOff() {
+    if (!activeUserCell || !currentUser) return;
+    // Log off without completing — status stays in_progress
+    await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
+    setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
+    setActiveUserCell(null);
     setShowCheckIn(true);
   }
 
@@ -457,9 +466,11 @@ export default function MapPage() {
         cells={savedCells}
         selectedCell={selectedCell}
         activeUserCell={activeUserCell}
+        onCellContinue={handleCellContinue}
+        onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
-      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onLogOff={() => { setActiveUserCell(null); setShowCheckIn(false); setTimeout(() => setShowCheckIn(true), 50); }} />}
+      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
