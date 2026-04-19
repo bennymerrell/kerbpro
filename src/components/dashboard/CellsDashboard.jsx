@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -144,19 +144,23 @@ export default function CellsDashboard() {
         </div>
       </div>
 
-      {/* All cells with edit/delete */}
+      {/* All cells — single unified list */}
       <div>
         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">All Cells</div>
         <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
           {filteredCells.map(cell => {
             const s = STATUS_LABELS[cell.work_status] || STATUS_LABELS.not_started;
-            const officeName = offices.find(o => o.id === cell.office_id)?.name;
+            const isCompleted = cell.work_status === 'completed' && cell.completed_at;
             return (
-              <div key={cell.id} className="flex items-center gap-3 px-4 py-2.5">
+              <div key={cell.id} className="flex items-center gap-3 px-4 py-3">
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
                   <div className="text-[10px] text-muted-foreground">
-                    {[cell.area, officeName].filter(Boolean).join(' · ') || '—'}
+                    {isCompleted
+                      ? `${format(new Date(cell.completed_at), 'dd MMM yyyy')}${cell.completed_by ? ` · ${cell.completed_by}` : ''}`
+                      : [cell.area].filter(Boolean).join(' · ') || '—'
+                    }
                   </div>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
@@ -174,35 +178,6 @@ export default function CellsDashboard() {
           )}
         </div>
       </div>
-
-      {/* Completion log */}
-      {completedCells.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Completion Log</span>
-          </div>
-          <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
-            {completedCells.map(cell => (
-              <div key={cell.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
-                  {cell.area && <div className="text-[10px] text-muted-foreground">{cell.area}</div>}
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-[11px] font-medium text-green-700">
-                    {format(new Date(cell.completed_at), 'dd MMM yyyy')}
-                  </div>
-                  {cell.completed_by && (
-                    <div className="text-[10px] text-muted-foreground">{cell.completed_by}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {editing && (
         <EditCellModal
