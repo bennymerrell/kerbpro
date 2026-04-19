@@ -13,11 +13,25 @@
     },
     "office_id": {
       "type": "string",
-      "description": "ID of the Office this user (manager) belongs to"
+      "description": "ID of the Office this user belongs to"
     },
     "manager_id": {
       "type": "string",
       "description": "ID of the Manager (User) this user is assigned to"
+    },
+    "active_cell_id": {
+      "type": "string",
+      "description": "ID of the Cell this user is currently logged into"
+    },
+    "active_cell_prev_status": {
+      "type": "string",
+      "description": "The work_status of the cell before the user logged in, so it can be restored on log off"
+    },
+    "active_cell_checkin_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date (YYYY-MM-DD GMT) the user last checked in, used to re-show the modal each morning"
     }
-  }
+  },
+  "required": []
 }

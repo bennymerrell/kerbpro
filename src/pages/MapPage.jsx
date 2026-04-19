@@ -31,6 +31,7 @@ import usePWA from '../hooks/usePWA';
 import OfflineIndicator from '../components/OfflineIndicator';
 import IOSNavSheet from '../components/map/IOSNavSheet';
 import SightingDetailModal from '../components/SightingDetailModal';
+import CellCheckInModal from '../components/map/CellCheckInModal';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -58,7 +59,30 @@ export default function MapPage() {
   }, []);
   useOfflineSync(handleSynced);
 
-  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setCurrentUser(u);
+      if (!u) return;
+
+      // Restore active cell if user already checked in today
+      const todayGMT = new Date().toISOString().split('T')[0];
+      if (u.active_cell_id && u.active_cell_checkin_date === todayGMT) {
+        // User is already checked in — restore their active cell from saved cells
+        base44.entities.Cell.list('-created_date', 200).then(allCells => {
+          const cell = allCells.find(c => c.id === u.active_cell_id);
+          if (cell) setActiveUserCell(cell);
+        });
+        return;
+      }
+
+      // Show check-in modal if it's past 3am GMT
+      const nowGMT = new Date();
+      const hourGMT = nowGMT.getUTCHours();
+      if (hourGMT >= 3) {
+        setShowCheckIn(true);
+      }
+    }).catch(() => {});
+  }, []);
   useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'map' } }); }, []);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [waypoints, setWaypoints] = useState([]);
@@ -224,8 +248,40 @@ export default function MapPage() {
   const [activeCategories, setActiveCategories] = useState([]);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const [editingCell, setEditingCell] = useState(null); // { cell, points }
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [activeUserCell, setActiveUserCell] = useState(null); // the cell the user is logged into
 
   const mapRef = useRef(null);
+
+  function handleCheckIn(cell) {
+    setShowCheckIn(false);
+    setActiveUserCell(cell);
+    // Update local savedCells so the map shows orange
+    setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'in_progress' } : c));
+    // Enable all sighting categories
+    setActiveCategories([...['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van']]);
+    // Fly to the cell
+    let pts = [];
+    try { pts = JSON.parse(cell.points); } catch {}
+    if (pts.length > 0 && mapRef.current) {
+      const bounds = pts.map(p => [p.lat, p.lng]);
+      setTimeout(() => mapRef.current?.fitBounds(bounds, { padding: [60, 60], animate: true }), 300);
+    }
+  }
+
+  async function handleCellLogOff() {
+    if (!activeUserCell || !currentUser) return;
+    const prevStatus = currentUser.active_cell_prev_status || 'not_started';
+    // Revert cell status
+    await base44.entities.Cell.update(activeUserCell.id, { work_status: prevStatus });
+    setSavedCells(prev => prev.map(c => c.id === activeUserCell.id ? { ...c, work_status: prevStatus } : c));
+    // Clear user's active cell
+    await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
+    setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
+    setActiveUserCell(null);
+    // Show check-in modal again
+    setShowCheckIn(true);
+  }
 
   const handleSpotted = useCallback(() => {
     if (locationData?.position) {
@@ -410,7 +466,10 @@ export default function MapPage() {
         onChangeCategories={setActiveCategories}
         cells={savedCells}
         selectedCell={selectedCell}
+        activeUserCell={activeUserCell}
+        onCellLogOff={handleCellLogOff}
       />
+      {showCheckIn && <CellCheckInModal onCheckIn={handleCheckIn} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />

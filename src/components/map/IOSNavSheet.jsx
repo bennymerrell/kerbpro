@@ -13,6 +13,8 @@ export default function IOSNavSheet({
   activeCategories, onChangeCategories,
   cells = [],
   selectedCell = null,
+  activeUserCell = null,
+  onCellLogOff,
 }) {
   const navigate = useNavigate();
   const sheetRef = useRef(null);
@@ -165,6 +167,28 @@ export default function IOSNavSheet({
               })}
             </div>
           </div>
+
+          {/* Active Cell */}
+          {activeUserCell && (
+            <div className="px-4 mb-4">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Active Cell</div>
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+                  <SquareDashedBottom className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
+                  {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
+                </div>
+                <button
+                  onClick={() => { onCellLogOff?.(); onClose(); }}
+                  className="flex-shrink-0 h-8 px-3 rounded-lg bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition-colors"
+                >
+                  Log Off
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Logout */}
           <div className="px-4 mb-4">
