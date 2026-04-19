@@ -78,6 +78,7 @@ export default function CellsDashboard() {
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [filterArea, setFilterArea] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -99,17 +100,32 @@ export default function CellsDashboard() {
     setCells(prev => prev.map(c => c.id === updated.id ? updated : c));
   }
 
-  const completedCells = cells.filter(c => c.work_status === 'completed' && c.completed_at);
-  const inProgress = cells.filter(c => c.work_status === 'in_progress');
-  const notStarted = cells.filter(c => !c.work_status || c.work_status === 'not_started');
+  const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+  const filteredCells = filterArea ? cells.filter(c => c.area === filterArea) : cells;
+
+  const completedCells = filteredCells.filter(c => c.work_status === 'completed' && c.completed_at);
+  const inProgress = filteredCells.filter(c => c.work_status === 'in_progress');
+  const notStarted = filteredCells.filter(c => !c.work_status || c.work_status === 'not_started');
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-sm font-semibold text-foreground">Cell Status Overview</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">{cells.length} total cells</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Cell Status Overview</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{filteredCells.length} of {cells.length} cells</p>
+        </div>
+        {areas.length > 0 && (
+          <select
+            value={filterArea}
+            onChange={e => setFilterArea(e.target.value)}
+            className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">All Areas</option>
+            {areas.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Summary cards */}
@@ -132,7 +148,7 @@ export default function CellsDashboard() {
       <div>
         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">All Cells</div>
         <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
-          {cells.map(cell => {
+          {filteredCells.map(cell => {
             const s = STATUS_LABELS[cell.work_status] || STATUS_LABELS.not_started;
             const officeName = offices.find(o => o.id === cell.office_id)?.name;
             return (
@@ -153,7 +169,7 @@ export default function CellsDashboard() {
               </div>
             );
           })}
-          {cells.length === 0 && (
+          {filteredCells.length === 0 && (
             <div className="text-xs text-muted-foreground text-center py-10">No cells found.</div>
           )}
         </div>
