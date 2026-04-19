@@ -31,6 +31,10 @@
       "type": "string",
       "format": "date",
       "description": "The date (YYYY-MM-DD GMT) the user last checked in, used to re-show the modal each morning"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Mobile phone number for SMS/WhatsApp notifications to manager"
     }
   },
   "required": []

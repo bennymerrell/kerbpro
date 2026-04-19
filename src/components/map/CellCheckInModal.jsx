@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin } from 'lucide-react';
+import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone } from 'lucide-react';
 
 export default function CellCheckInModal({ currentUser, onCheckIn }) {
   const [office, setOffice] = useState(null);
@@ -9,6 +9,9 @@ export default function CellCheckInModal({ currentUser, onCheckIn }) {
   const [selectedCellId, setSelectedCellId] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [phoneConfirmed, setPhoneConfirmed] = useState(!!currentUser?.phone);
 
   useEffect(() => {
     const officeId = currentUser?.office_id;
@@ -50,6 +53,61 @@ export default function CellCheckInModal({ currentUser, onCheckIn }) {
 
     setSubmitting(false);
     onCheckIn({ ...cell, work_status: 'in_progress' });
+  }
+
+  async function handleSavePhone() {
+    const cleaned = phoneInput.trim();
+    if (!cleaned) return;
+    setSavingPhone(true);
+    await base44.auth.updateMe({ phone: cleaned });
+    setSavingPhone(false);
+    setPhoneConfirmed(true);
+  }
+
+  // Show phone capture screen if no phone on record
+  if (!phoneConfirmed) {
+    return (
+      <div className="fixed inset-0 z-[9000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden">
+          <div className="bg-primary px-5 py-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Leaf className="h-5 w-5 text-green-300" />
+              </div>
+              <span className="text-white font-black text-2xl tracking-tight">Kerb</span>
+            </div>
+            <h2 className="text-white font-bold text-lg">One quick thing 📱</h2>
+            <p className="text-white/80 text-sm mt-1">We need your mobile number to notify your manager</p>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-800">
+              <Phone className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-600" />
+              Your manager will be notified by SMS/WhatsApp when you check in and check out of cells.
+            </div>
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                <Phone className="h-3.5 w-3.5" /> Mobile Number
+              </label>
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={e => setPhoneInput(e.target.value)}
+                placeholder="+44 7700 900000"
+                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <button
+              onClick={handleSavePhone}
+              disabled={!phoneInput.trim() || savingPhone}
+              className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingPhone ? <Loader2 className="h-4 w-4 animate-spin" /> : <Phone className="h-4 w-4" />}
+              Save & Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
