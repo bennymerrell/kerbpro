@@ -482,7 +482,7 @@ export default function MapPage() {
         onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
-      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
+      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
