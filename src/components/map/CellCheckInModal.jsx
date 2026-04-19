@@ -117,11 +117,12 @@ export default function CellCheckInModal({ onCheckIn }) {
               <select
                 value={selectedCellId}
                 onChange={e => setSelectedCellId(e.target.value)}
-                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                disabled={!selectedArea}
+                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">— Select a cell —</option>
+                <option value="">{selectedArea ? '— Select a cell —' : '— Select an area first —'}</option>
                 {filteredCells.map(c => (
-                  <option key={c.id} value={c.id}>{c.name || 'Unnamed'}{c.area ? ` · ${c.area}` : ''}</option>
+                  <option key={c.id} value={c.id}>{c.name || 'Unnamed'}</option>
                 ))}
               </select>
             </div>
