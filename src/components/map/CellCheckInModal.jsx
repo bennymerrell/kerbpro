@@ -51,6 +51,17 @@ export default function CellCheckInModal({ currentUser, onCheckIn }) {
       active_cell_checkin_date: today,
     });
 
+    // Notify assigned manager
+    const me = await base44.auth.me();
+    if (me?.manager_id) {
+      base44.functions.invoke('notifyCellAction', {
+        action: 'started',
+        cellName: cell.name || 'Unnamed Cell',
+        cellArea: cell.area || '',
+        managerId: me.manager_id,
+      }).catch(() => {});
+    }
+
     setSubmitting(false);
     onCheckIn({ ...cell, work_status: 'in_progress' });
   }

@@ -8,6 +8,10 @@
     },
     "name": {
       "type": "string"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Mobile phone number for SMS/WhatsApp notifications (e.g. +447700900000)"
     }
   },
   "required": [

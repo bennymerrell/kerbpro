@@ -269,6 +269,15 @@ export default function MapPage() {
     setSavedCells(prev => prev.map(c => c.id === activeUserCell.id ? { ...c, work_status: 'completed' } : c));
     await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
     setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
+    // Notify assigned manager
+    if (currentUser?.manager_id) {
+      base44.functions.invoke('notifyCellAction', {
+        action: 'completed',
+        cellName: activeUserCell.name || 'Unnamed Cell',
+        cellArea: activeUserCell.area || '',
+        managerId: currentUser.manager_id,
+      }).catch(() => {});
+    }
     setActiveUserCell(null);
     setShowCheckIn(true);
   }

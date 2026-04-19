@@ -7,6 +7,7 @@ function EditUserModal({ user, offices, users, onClose, onSave }) {
     role: user.role || 'user',
     office_id: user.office_id || '',
     manager_id: user.manager_id || '',
+    phone: user.phone || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -70,6 +71,16 @@ function EditUserModal({ user, offices, users, onClose, onSave }) {
               </select>
             </div>
           )}
+          <div>
+            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Phone (SMS/WhatsApp notifications)</label>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              placeholder="+447700900000"
+              className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
         </div>
         <div className="flex gap-2 px-5 py-4 border-t border-border">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg bg-muted text-sm font-medium text-foreground hover:bg-muted/70 transition-colors">Cancel</button>
