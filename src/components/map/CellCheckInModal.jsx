@@ -1,28 +1,41 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf } from 'lucide-react';
+import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin } from 'lucide-react';
 
 export default function CellCheckInModal({ onCheckIn }) {
-  const [offices, setOffices] = useState([]);
+  const [office, setOffice] = useState(null);
   const [cells, setCells] = useState([]);
-  const [selectedOfficeId, setSelectedOfficeId] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
   const [selectedCellId, setSelectedCellId] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      base44.entities.Office.list(),
-      base44.entities.Cell.list('-created_date', 200),
-    ]).then(([o, c]) => {
-      setOffices(o);
-      setCells(c);
-      setLoading(false);
+    base44.auth.me().then(user => {
+      const officeId = user?.office_id;
+      Promise.all([
+        officeId ? base44.entities.Office.list() : Promise.resolve([]),
+        base44.entities.Cell.list('-created_date', 200),
+      ]).then(([offices, allCells]) => {
+        // Find user's office
+        const userOffice = offices.find(o => o.id === officeId) || null;
+        setOffice(userOffice);
+
+        // Only show cells belonging to the user's office (if assigned), otherwise all
+        const relevantCells = officeId
+          ? allCells.filter(c => c.office_id === officeId)
+          : allCells;
+        setCells(relevantCells);
+        setLoading(false);
+      });
     });
   }, []);
 
-  const filteredCells = selectedOfficeId
-    ? cells.filter(c => c.office_id === selectedOfficeId)
+  // Unique areas from cells
+  const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+
+  const filteredCells = selectedArea
+    ? cells.filter(c => c.area === selectedArea)
     : cells;
 
   async function handleSubmit() {
@@ -34,10 +47,7 @@ export default function CellCheckInModal({ onCheckIn }) {
     const prevStatus = cell.work_status || 'not_started';
     const today = new Date().toISOString().split('T')[0];
 
-    // Update cell to in_progress
     await base44.entities.Cell.update(cell.id, { work_status: 'in_progress' });
-
-    // Save active cell on user profile
     await base44.auth.updateMe({
       active_cell_id: cell.id,
       active_cell_prev_status: prevStatus,
@@ -69,22 +79,35 @@ export default function CellCheckInModal({ onCheckIn }) {
           </div>
         ) : (
           <div className="p-5 space-y-4">
-            {/* Office selector */}
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                <Building2 className="h-3.5 w-3.5" /> Office Area
-              </label>
-              <select
-                value={selectedOfficeId}
-                onChange={e => { setSelectedOfficeId(e.target.value); setSelectedCellId(''); }}
-                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                <option value="">All Offices</option>
-                {offices.map(o => (
-                  <option key={o.id} value={o.id}>{o.name}</option>
-                ))}
-              </select>
-            </div>
+            {/* Office — read-only display */}
+            {office && (
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
+                <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Your Office</div>
+                  <div className="text-sm font-semibold text-foreground">{office.name}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Area filter */}
+            {areas.length > 0 && (
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                  <MapPin className="h-3.5 w-3.5" /> Cell Area
+                </label>
+                <select
+                  value={selectedArea}
+                  onChange={e => { setSelectedArea(e.target.value); setSelectedCellId(''); }}
+                  className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">All Areas</option>
+                  {areas.map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Cell selector */}
             <div>
@@ -98,7 +121,7 @@ export default function CellCheckInModal({ onCheckIn }) {
               >
                 <option value="">— Select a cell —</option>
                 {filteredCells.map(c => (
-                  <option key={c.id} value={c.id}>{c.name || 'Unnamed'}{c.area ? ` (${c.area})` : ''}</option>
+                  <option key={c.id} value={c.id}>{c.name || 'Unnamed'}{c.area ? ` · ${c.area}` : ''}</option>
                 ))}
               </select>
             </div>
