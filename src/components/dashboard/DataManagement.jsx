@@ -5,7 +5,6 @@ import { Loader2, Trash2, Pencil, MapPin, SquareDashedBottom, FlaskConical, X, C
 const SECTIONS = [
   { key: 'sightings', label: 'Sightings', icon: MapPin },
   { key: 'cells', label: 'Cells', icon: SquareDashedBottom },
-  { key: 'chemical_logs', label: 'Chemical Logs', icon: FlaskConical },
 ];
 
 function EditModal({ section, item, offices, onClose, onSave }) {
