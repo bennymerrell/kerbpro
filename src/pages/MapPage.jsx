@@ -64,18 +64,7 @@ export default function MapPage() {
       setCurrentUser(u);
       if (!u) return;
 
-      // Restore active cell if user already checked in today
-      const todayGMT = new Date().toISOString().split('T')[0];
-      if (u.active_cell_id && u.active_cell_checkin_date === todayGMT) {
-        // User is already checked in — restore their active cell from saved cells
-        base44.entities.Cell.list('-created_date', 200).then(allCells => {
-          const cell = allCells.find(c => c.id === u.active_cell_id);
-          if (cell) setActiveUserCell(cell);
-        });
-        return;
-      }
-
-      // Show check-in modal if it's past 3am GMT
+      // Always show check-in modal if it's past 3am GMT
       const nowGMT = new Date();
       const hourGMT = nowGMT.getUTCHours();
       if (hourGMT >= 3) {
@@ -256,10 +245,11 @@ export default function MapPage() {
   function handleCheckIn(cell) {
     setShowCheckIn(false);
     setActiveUserCell(cell);
+    setCurrentUser(u => ({ ...u, active_cell_id: cell.id, active_cell_checkin_date: new Date().toISOString().split('T')[0] }));
     // Update local savedCells so the map shows orange
     setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'in_progress' } : c));
     // Enable all sighting categories
-    setActiveCategories([...['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van']]);
+    setActiveCategories(['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van']);
     // Fly to the cell
     let pts = [];
     try { pts = JSON.parse(cell.points); } catch {}
@@ -469,7 +459,7 @@ export default function MapPage() {
         activeUserCell={activeUserCell}
         onCellLogOff={handleCellLogOff}
       />
-      {showCheckIn && <CellCheckInModal onCheckIn={handleCheckIn} />}
+      {showCheckIn && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onLogOff={() => { setActiveUserCell(null); setShowCheckIn(false); setTimeout(() => setShowCheckIn(true), 50); }} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
