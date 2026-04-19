@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Database, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom, Building2 } from 'lucide-react';
-import UserManagement from '../components/dashboard/UserManagement';
+import UserManagement from '../components/dashboard/UserManagement.jsx';
 import DataManagement from '../components/dashboard/DataManagement';
 import Analytics from '../components/dashboard/Analytics';
 import CompletedCellsLog from '../components/dashboard/CompletedCellsLog';
