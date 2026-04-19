@@ -64,6 +64,9 @@ export default function MapPage() {
       setCurrentUser(u);
       if (!u) return;
 
+      // Only show check-in modal for regular users (not admin/manager)
+      if (u.role === 'admin' || u.role === 'manager') return;
+
       // Always show check-in modal if it's past 3am GMT
       const nowGMT = new Date();
       const hourGMT = nowGMT.getUTCHours();
