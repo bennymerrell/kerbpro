@@ -16,7 +16,7 @@ export default function SavedCellsLayer({ cells, userRole }) {
       let points = [];
       try { points = JSON.parse(cell.points); } catch { return null; }
       const positions = points.map(p => [p.lat, p.lng]);
-      const pathOptions = isAdmin ? (STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started) : DEFAULT_STYLE;
+      const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
       return (
         <Polygon
           key={cell.id || i}
