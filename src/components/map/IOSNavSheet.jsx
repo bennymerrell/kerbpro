@@ -82,6 +82,47 @@ export default function IOSNavSheet({
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)', WebkitOverflowScrolling: 'touch' }}>
 
+          {/* Active Cell — always first if present */}
+          {activeUserCell && (
+            <div className="px-4 mb-4">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Active Cell</div>
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+                    <SquareDashedBottom className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
+                    {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => { onCellContinue?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    Continue This Cell
+                  </button>
+                  <button
+                    onClick={() => { onCellFinish?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Finish & Start New Cell
+                  </button>
+                  <button
+                    onClick={() => { onCellLogOff?.(); onClose(); }}
+                    className="w-full h-9 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold hover:bg-orange-200 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Log Off (Keep In Progress)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Dashboard — admin/manager only */}
           {(user?.role === 'admin' || user?.role === 'manager') && (
             <div className="px-4 mb-4">
@@ -169,47 +210,6 @@ export default function IOSNavSheet({
               })}
             </div>
           </div>
-
-          {/* Active Cell */}
-          {activeUserCell && (
-            <div className="px-4 mb-4">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Active Cell</div>
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
-                    <SquareDashedBottom className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
-                    {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => { onCellContinue?.(); onClose(); }}
-                    className="w-full h-9 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    Continue This Cell
-                  </button>
-                  <button
-                    onClick={() => { onCellFinish?.(); onClose(); }}
-                    className="w-full h-9 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Finish & Start New Cell
-                  </button>
-                  <button
-                    onClick={() => { onCellLogOff?.(); onClose(); }}
-                    className="w-full h-9 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold hover:bg-orange-200 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Log Off (Keep In Progress)
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Logout */}
           <div className="px-4 mb-4">
