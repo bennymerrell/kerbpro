@@ -137,7 +137,7 @@ export default function SightingsDashboard() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeColor}`}>{cat}</span>
                     <span className="text-xs font-medium text-foreground truncate">{label}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground/60 flex-shrink-0">{s.id}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground/60 flex-shrink-0">#{s.id?.slice(0, 8)}</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     {s.reported_by || 'Unknown'} · {s.created_date ? format(new Date(s.created_date), 'dd MMM yyyy') : '—'}
