@@ -297,37 +297,38 @@ export default function CellsPage() {
                 {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 {cell.visible !== false ? 'Visible' : 'Hidden'}
               </button>
-              <div className="w-px bg-border" />
-              <button
-                onClick={() => navigate('/', { state: { editCell: cell } })}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-amber-50 hover:text-amber-600 transition-colors"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit Shape
-              </button>
-              <div className="w-px bg-border" />
-              <button
-                onClick={() => handleRecalculate(cell)}
-                disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
-              >
-                {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
-                ) : recalcTriggering[cell.id] ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
-                ) : (
-                  <><RefreshCw className="h-3.5 w-3.5" />Recalc Miles</>
-                )}
-              </button>
-
-              <div className="w-px bg-border" />
-              <button
-                onClick={() => handleDelete(cell)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
-              </button>
+              {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && <>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => navigate('/', { state: { editCell: cell } })}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit Shape
+                </button>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => handleRecalculate(cell)}
+                  disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
+                >
+                  {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
+                  ) : recalcTriggering[cell.id] ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
+                  ) : (
+                    <><RefreshCw className="h-3.5 w-3.5" />Recalc Miles</>
+                  )}
+                </button>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => handleDelete(cell)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </button>
+              </>}
             </div>
 
 
