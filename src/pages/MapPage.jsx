@@ -32,6 +32,7 @@ import OfflineIndicator from '../components/OfflineIndicator';
 import IOSNavSheet from '../components/map/IOSNavSheet';
 import SightingDetailModal from '../components/SightingDetailModal';
 import CellCheckInModal from '../components/map/CellCheckInModal';
+import UserLandingChoice from '../components/map/UserLandingChoice';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -64,14 +65,14 @@ export default function MapPage() {
       setCurrentUser(u);
       if (!u) return;
 
-      // Only show check-in modal for regular users (not admin/manager)
+      // Only show landing for regular users (not admin/manager)
       if (u.role === 'admin' || u.role === 'manager') return;
 
-      // Always show check-in modal if it's past 3am GMT
+      // Always show landing choice if it's past 3am GMT
       const nowGMT = new Date();
       const hourGMT = nowGMT.getUTCHours();
       if (hourGMT >= 3) {
-        setShowCheckIn(true);
+        setShowLanding(true);
       }
     }).catch(() => {});
   }, []);
@@ -240,6 +241,7 @@ export default function MapPage() {
   const [activeCategories, setActiveCategories] = useState([]);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const [editingCell, setEditingCell] = useState(null); // { cell, points }
+  const [showLanding, setShowLanding] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [activeUserCell, setActiveUserCell] = useState(null); // the cell the user is logged into
 
@@ -247,6 +249,7 @@ export default function MapPage() {
 
   function handleCheckIn(cell) {
     setShowCheckIn(false);
+    setShowLanding(false);
     setActiveUserCell(cell);
     setCurrentUser(u => ({ ...u, active_cell_id: cell.id, active_cell_checkin_date: new Date().toISOString().split('T')[0] }));
     // Update local savedCells so the map shows orange
@@ -282,7 +285,7 @@ export default function MapPage() {
       }).catch(() => {});
     }
     setActiveUserCell(null);
-    setShowCheckIn(true);
+    setShowLanding(true);
   }
 
   async function handleCellLogOff() {
@@ -291,7 +294,7 @@ export default function MapPage() {
     await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
     setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
     setActiveUserCell(null);
-    setShowCheckIn(true);
+    setShowLanding(true);
   }
 
   const handleSpotted = useCallback(() => {
@@ -482,6 +485,12 @@ export default function MapPage() {
         onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
+      {showLanding && !showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && (
+        <UserLandingChoice
+          onViewMap={() => setShowLanding(false)}
+          onStartCell={() => { setShowLanding(false); setShowCheckIn(true); }}
+        />
+      )}
       {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
 
       {selectedSighting && (
