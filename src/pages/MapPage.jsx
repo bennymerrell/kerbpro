@@ -72,6 +72,11 @@ export default function MapPage() {
       const nowGMT = new Date();
       const hourGMT = nowGMT.getUTCHours();
       if (hourGMT >= 3) {
+        // Check if user dismissed landing within the last hour
+        const dismissedAt = localStorage.getItem('landing_dismissed_at');
+        if (dismissedAt && Date.now() - parseInt(dismissedAt) < 60 * 60 * 1000) {
+          return; // Still within 1hr grace period
+        }
         setShowLanding(true);
       }
     }).catch(() => {});
@@ -487,7 +492,7 @@ export default function MapPage() {
       />
       {showLanding && !showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && (
         <UserLandingChoice
-          onViewMap={() => setShowLanding(false)}
+          onViewMap={() => { localStorage.setItem('landing_dismissed_at', Date.now().toString()); setShowLanding(false); }}
           onStartCell={() => { setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
