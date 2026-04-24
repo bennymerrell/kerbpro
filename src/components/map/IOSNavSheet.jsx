@@ -44,10 +44,14 @@ export default function IOSNavSheet({
     }
   }
 
+  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
+
   const toolItems = [
     { label: 'Spotted', icon: Info, active: false, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { base44.analytics.track({ eventName: 'nav_spotted_clicked' }); onSpotted(); onClose(); } },
-    { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { base44.analytics.track({ eventName: 'nav_draw_cell_clicked', properties: { activated: !isAreaMode } }); onToggleAreaMode(); onClose(); } },
-    { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: () => { base44.analytics.track({ eventName: 'nav_print_map_clicked' }); handlePrintMap(); }, disabled: !selectedCell },
+    ...(isAdminOrManager ? [
+      { label: 'Draw Cell', icon: Shapes, active: isAreaMode, color: 'text-indigo-500', activeBg: 'bg-indigo-500', inactiveBg: 'bg-indigo-100', action: () => { base44.analytics.track({ eventName: 'nav_draw_cell_clicked', properties: { activated: !isAreaMode } }); onToggleAreaMode(); onClose(); } },
+      { label: 'Print Map', icon: Download, active: false, color: 'text-gray-500', activeBg: 'bg-gray-500', inactiveBg: 'bg-gray-100', action: () => { base44.analytics.track({ eventName: 'nav_print_map_clicked' }); handlePrintMap(); }, disabled: !selectedCell },
+    ] : []),
   ];
 
   const pageItems = [
@@ -124,7 +128,7 @@ export default function IOSNavSheet({
           )}
 
           {/* Dashboard — admin/manager only */}
-          {(user?.role === 'admin' || user?.role === 'manager') && (
+          {isAdminOrManager && (
             <div className="px-4 mb-4">
               <button
                 onClick={() => { base44.analytics.track({ eventName: 'nav_dashboard_clicked' }); navAndClose('/dashboard'); }}
