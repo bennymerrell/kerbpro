@@ -19,7 +19,7 @@ export default function SavedCellsLayer({ cells, userRole, onCellClick }) {
           key={cell.id || i}
           positions={positions}
           pathOptions={pathOptions}
-          eventHandlers={onCellClick ? { click: () => onCellClick(cell) } : undefined}
+          eventHandlers={(onCellClick && cell.work_status !== 'completed') ? { click: () => onCellClick(cell) } : undefined}
         >
           {cell.name && (
             <Tooltip permanent direction="center" className="cell-label">
