@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, MapPin, Calendar, Image, Map, Maximize2, Camera, Loader2 } from 'lucide-react';
+import { compressImage } from '../lib/compressImage';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +16,8 @@ export default function SightingDetailModal({ sighting, onClose, onUpdate }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPhoto(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const compressed = await compressImage(file);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: compressed });
     await base44.entities.Sighting.update(sighting.id, { photo_url: file_url });
     setCurrentPhotoUrl(file_url);
     onUpdate?.({ ...sighting, photo_url: file_url });

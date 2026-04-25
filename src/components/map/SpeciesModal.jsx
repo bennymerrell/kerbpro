@@ -3,6 +3,7 @@ import { X, MapPin, Send, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 import { notifyManagers } from '../../lib/notifyManagers';
+import { compressImage } from '../../lib/compressImage';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
@@ -41,7 +42,8 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
     let photoUrl = null;
     if (photoFile) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: photoFile });
+      const compressed = await compressImage(photoFile);
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressed });
       photoUrl = file_url;
     }
 
