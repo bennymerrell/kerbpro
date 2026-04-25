@@ -418,9 +418,18 @@ export default function MapPage() {
         <SavedCellsLayer
           cells={savedCells}
           userRole={currentUser?.role}
+          activeUserCell={activeUserCell}
           onCellClick={
-            currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && !activeUserCell
-              ? (cell) => { setPreselectedCell(cell); setShowCheckIn(true); }
+            currentUser?.role !== 'admin' && currentUser?.role !== 'manager'
+              ? (cell) => {
+                  if (activeUserCell && cell.id === activeUserCell.id) {
+                    // Open nav sheet showing active cell options
+                    setNavOpen(true);
+                  } else if (!activeUserCell) {
+                    setPreselectedCell(cell);
+                    setShowCheckIn(true);
+                  }
+                }
               : undefined
           }
         />

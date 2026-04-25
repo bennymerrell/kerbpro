@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
 };
 
-export default function SavedCellsLayer({ cells, userRole, onCellClick }) {
+export default function SavedCellsLayer({ cells, userRole, activeUserCell, onCellClick }) {
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
@@ -14,12 +14,14 @@ export default function SavedCellsLayer({ cells, userRole, onCellClick }) {
       try { points = JSON.parse(cell.points); } catch { return null; }
       const positions = points.map(p => [p.lat, p.lng]);
       const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
+      const isActiveCell = activeUserCell && cell.id === activeUserCell.id;
+      const clickable = onCellClick && (cell.work_status !== 'completed' || isActiveCell);
       return (
         <Polygon
           key={cell.id || i}
           positions={positions}
           pathOptions={pathOptions}
-          eventHandlers={(onCellClick && cell.work_status !== 'completed') ? { click: () => onCellClick(cell) } : undefined}
+          eventHandlers={clickable ? { click: () => onCellClick(cell) } : undefined}
         >
           {cell.name && (
             <Tooltip permanent direction="center" className="cell-label">
