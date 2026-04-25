@@ -402,7 +402,15 @@ export default function MapPage() {
           <LocationMarker position={locationData.position} accuracy={locationData.accuracy} />
         )}
         <UnadoptedRoadsLayer roads={unadoptedRoads} />
-        <SavedCellsLayer cells={savedCells} userRole={currentUser?.role} />
+        <SavedCellsLayer
+          cells={savedCells}
+          userRole={currentUser?.role}
+          onCellClick={
+            currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && !activeUserCell
+              ? () => setShowCheckIn(true)
+              : undefined
+          }
+        />
         {editingCell && (
           <CellEditLayer
             points={editingCell.points}

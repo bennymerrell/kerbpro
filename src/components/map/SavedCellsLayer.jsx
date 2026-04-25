@@ -6,10 +6,7 @@ const STATUS_COLORS = {
   not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
 };
 
-const DEFAULT_STYLE = { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 };
-
-export default function SavedCellsLayer({ cells, userRole }) {
-  const isAdmin = userRole === 'admin';
+export default function SavedCellsLayer({ cells, userRole, onCellClick }) {
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
@@ -22,6 +19,7 @@ export default function SavedCellsLayer({ cells, userRole }) {
           key={cell.id || i}
           positions={positions}
           pathOptions={pathOptions}
+          eventHandlers={onCellClick ? { click: () => onCellClick(cell) } : undefined}
         >
           {cell.name && (
             <Tooltip permanent direction="center" className="cell-label">
