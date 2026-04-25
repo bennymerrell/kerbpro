@@ -40,7 +40,7 @@ export default function BottomTabBar() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[3000] bg-white/95 backdrop-blur-xl border-t border-gray-200/80 print:!hidden"
+      className="relative z-[3000] bg-white/95 backdrop-blur-xl border-t border-gray-200/80 print:!hidden flex-shrink-0"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex items-center">
