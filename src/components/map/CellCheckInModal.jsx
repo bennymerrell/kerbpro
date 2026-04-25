@@ -23,9 +23,11 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
       const userOffice = offices.find(o => o.id === officeId) || null;
       setOffice(userOffice);
 
-      const relevantCells = officeId
+      // Exclude completed cells — they are locked and cannot be booked onto
+      const relevantCells = (officeId
         ? allCells.filter(c => c.office_id === officeId)
-        : allCells;
+        : allCells
+      ).filter(c => c.work_status !== 'completed');
       setCells(relevantCells);
       setLoading(false);
     });

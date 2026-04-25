@@ -277,19 +277,16 @@ export default function MapPage() {
 
   async function handleCellFinish() {
     if (!activeUserCell) return;
-    await base44.entities.Cell.update(activeUserCell.id, { work_status: 'completed' });
+    // Use backend function — marks cell completed and logs off ALL users on that cell
+    await base44.functions.invoke('completeCellAndLogOffUsers', {
+      cellId: activeUserCell.id,
+      cellName: activeUserCell.name || 'Unnamed Cell',
+      cellArea: activeUserCell.area || '',
+      managerId: currentUser?.manager_id || null,
+    });
     setSavedCells(prev => prev.map(c => c.id === activeUserCell.id ? { ...c, work_status: 'completed' } : c));
     await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
     setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
-    // Notify assigned manager
-    if (currentUser?.manager_id) {
-      base44.functions.invoke('notifyCellAction', {
-        action: 'completed',
-        cellName: activeUserCell.name || 'Unnamed Cell',
-        cellArea: activeUserCell.area || '',
-        managerId: currentUser.manager_id,
-      }).catch(() => {});
-    }
     setActiveUserCell(null);
     setShowLanding(true);
   }

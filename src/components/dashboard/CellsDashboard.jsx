@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -96,6 +96,15 @@ export default function CellsDashboard() {
     setCells(prev => prev.filter(c => c.id !== id));
   }
 
+  async function handleResetCell(cell) {
+    await base44.entities.Cell.update(cell.id, {
+      work_status: 'not_started',
+      completed_at: null,
+      completed_by: null,
+    });
+    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'not_started', completed_at: null, completed_by: null } : c));
+  }
+
   function handleSave(updated) {
     setCells(prev => prev.map(c => c.id === updated.id ? updated : c));
   }
@@ -164,6 +173,15 @@ export default function CellsDashboard() {
                   </div>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
+                {cell.work_status === 'completed' && (
+                  <button
+                    onClick={() => handleResetCell(cell)}
+                    title="Reset to Not Started"
+                    className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
