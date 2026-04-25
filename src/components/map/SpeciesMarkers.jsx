@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Marker } from 'react-leaflet';
+import { useRef, useState } from 'react';
+import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { base44 } from '@/api/base44Client';
 
@@ -14,16 +14,16 @@ const CATEGORY_SVGS = {
 };
 
 const CATEGORY_COLORS = {
-  'Species':       '#16a34a',
-  'Free Parking':  '#2563eb',
+  'Species':             '#16a34a',
+  'Free Parking':        '#2563eb',
   'Hydrant':             '#f59e0b',
   'Hydrant_not_working': '#9ca3af',
-  'Incident':      '#7c3aed',
-  'Public Toilet': '#d97706',
-  'Cafe / Van':    '#ea580c',
+  'Incident':            '#7c3aed',
+  'Public Toilet':       '#d97706',
+  'Cafe / Van':          '#ea580c',
 };
 
-function createSightingIcon(sighting) {
+function createSightingIcon(sighting, isMoving = false) {
   const category = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
   const isNotWorking = category === 'Hydrant' && sighting.status_details === 'not_working';
   const key = isNotWorking ? 'Hydrant_not_working' : category;
@@ -42,12 +42,16 @@ function createSightingIcon(sighting) {
     ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '\u2715' : '\u2713'}</div>`
     : '';
 
+  const movingRing = isMoving
+    ? `position:relative;outline:3px solid #f59e0b;outline-offset:2px;animation:pulse 1s infinite;`
+    : 'position:relative;';
+
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div style="position:relative;width:34px;height:34px;"><div style="
+    html: `<div style="${movingRing}width:34px;height:34px;"><div style="
       width: 34px; height: 34px; border-radius: 4px;
       background: ${color};
-      border: 3px solid ${isNotWorking ? '#6b7280' : '#000'};
+      border: 3px solid ${isMoving ? '#f59e0b' : (isNotWorking ? '#6b7280' : '#000')};
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
     ">${innerHtml}</div>${badge}</div>`,
@@ -56,31 +60,96 @@ function createSightingIcon(sighting) {
   });
 }
 
-function DraggableSightingMarker({ sighting, onViewDetails, onMoved }) {
+function SightingMarker({ sighting, onViewDetails, onMoved }) {
   const markerRef = useRef(null);
+  const [movingId, setMovingId] = useState(null); // id of marker in move mode
+  const isMoving = movingId === sighting.id;
+
+  function handleClick() {
+    if (isMoving) return; // ignore clicks while dragging
+    markerRef.current?.openPopup();
+  }
+
+  async function handleDragEnd() {
+    const latlng = markerRef.current?.getLatLng();
+    if (!latlng || !sighting.id) return;
+    await base44.entities.Sighting.update(sighting.id, { lat: latlng.lat, lng: latlng.lng });
+    onMoved?.(sighting.id, latlng.lat, latlng.lng);
+    setMovingId(null);
+  }
 
   return (
     <Marker
       ref={markerRef}
       position={[sighting.lat, sighting.lng]}
-      icon={createSightingIcon(sighting)}
-      draggable
+      icon={createSightingIcon(sighting, isMoving)}
+      draggable={isMoving}
       eventHandlers={{
-        click: () => onViewDetails && onViewDetails(sighting),
-        dragend: async () => {
-          const latlng = markerRef.current?.getLatLng();
-          if (!latlng || !sighting.id) return;
-          await base44.entities.Sighting.update(sighting.id, { lat: latlng.lat, lng: latlng.lng });
-          onMoved?.(sighting.id, latlng.lat, latlng.lng);
-        },
+        click: handleClick,
+        dragend: handleDragEnd,
       }}
-    />
+    >
+      {!isMoving && (
+        <Popup
+          closeButton={false}
+          className="sighting-action-popup"
+          offset={[0, -20]}
+        >
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            padding: '4px 2px',
+            minWidth: '130px',
+          }}>
+            <button
+              onClick={() => {
+                markerRef.current?.closePopup();
+                onViewDetails?.(sighting);
+              }}
+              style={{
+                background: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '7px 12px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              👁 View Details
+            </button>
+            <button
+              onClick={() => {
+                markerRef.current?.closePopup();
+                setMovingId(sighting.id);
+              }}
+              style={{
+                background: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '7px 12px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              ✥ Move Icon
+            </button>
+          </div>
+        </Popup>
+      )}
+    </Marker>
   );
 }
 
 export default function SpeciesMarkers({ sightings, onRemove, onViewDetails, onSightingMoved }) {
   return sightings.map((s, i) => (
-    <DraggableSightingMarker
+    <SightingMarker
       key={`sighting-${s.id || i}-${s.lat}-${s.lng}`}
       sighting={s}
       onViewDetails={onViewDetails}
