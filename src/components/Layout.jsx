@@ -14,7 +14,7 @@ export default function Layout() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.15, ease: 'easeInOut' }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden' }}
           >
             <Outlet />
           </motion.div>
