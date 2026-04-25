@@ -61,12 +61,24 @@ export default function MapPage() {
   useOfflineSync(handleSynced);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    base44.auth.me().then(async u => {
       setCurrentUser(u);
       if (!u) return;
 
       // Only show landing for regular users (not admin/manager)
       if (u.role === 'admin' || u.role === 'manager') return;
+
+      // Restore active cell from user profile if they're already checked in
+      if (u.active_cell_id) {
+        try {
+          const cells = await base44.entities.Cell.list('-created_date', 200);
+          const cell = cells.find(c => c.id === u.active_cell_id);
+          if (cell && cell.work_status !== 'completed') {
+            setActiveUserCell(cell);
+            return; // Skip landing — they're already checked in
+          }
+        } catch {}
+      }
 
       // Always show landing choice if it's past 3am GMT
       const nowGMT = new Date();
