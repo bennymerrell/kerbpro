@@ -4,6 +4,36 @@ import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 import { notifyManagers } from '../../lib/notifyManagers';
 import { compressImage } from '../../lib/compressImage';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+
+const PIN_ICON = L.divIcon({
+  className: '',
+  html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#1d4ed8;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);transform:rotate(-45deg);"></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
+function DraggableMarker({ position, onChange }) {
+  const markerRef = useRef(null);
+  useMapEvents({
+    click(e) { onChange({ lat: e.latlng.lat, lng: e.latlng.lng }); },
+  });
+  return (
+    <Marker
+      position={[position.lat, position.lng]}
+      icon={PIN_ICON}
+      draggable
+      ref={markerRef}
+      eventHandlers={{
+        dragend() {
+          const latlng = markerRef.current?.getLatLng();
+          if (latlng) onChange({ lat: latlng.lat, lng: latlng.lng });
+        },
+      }}
+    />
+  );
+}
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
 
@@ -16,6 +46,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [statusDetails, setStatusDetails] = useState('');
+  const [pinLocation, setPinLocation] = useState({ lat: location.lat, lng: location.lng });
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -47,7 +78,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
       photoUrl = file_url;
     }
 
-    const googleMapsLink = `${window.location.origin}/?lat=${location.lat}&lng=${location.lng}`;
+    const googleMapsLink = `${window.location.origin}/?lat=${pinLocation.lat}&lng=${pinLocation.lng}`;
     const recordedAt = new Date().toLocaleString();
 
     const statusRow = category === 'Hydrant' && statusDetails
@@ -61,7 +92,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
     setSending(false);
     setSent(true);
-    onSaved({ lat: location.lat, lng: location.lng, species: `[${category}] ${speciesName}`, notes, photoUrl, status_details: statusDetails || null });
+    onSaved({ lat: pinLocation.lat, lng: pinLocation.lng, species: `[${category}] ${speciesName}`, notes, photoUrl, status_details: statusDetails || null });
     setTimeout(onClose, 1500);
   }
 
@@ -76,7 +107,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
           <div className="flex-1">
             <h2 className="font-semibold text-foreground text-sm">Spotted</h2>
             <p className="text-xs text-muted-foreground">
-              {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+              {pinLocation.lat.toFixed(5)}, {pinLocation.lng.toFixed(5)}
             </p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -86,6 +117,29 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1">
+
+          {/* Pin adjuster map */}
+          <div>
+            <label className="text-xs font-medium text-foreground block mb-1.5">
+              Pin Location <span className="text-muted-foreground font-normal">(drag or tap to adjust)</span>
+            </label>
+            <div className="rounded-xl overflow-hidden border border-border" style={{ height: 160 }}>
+              <MapContainer
+                center={[pinLocation.lat, pinLocation.lng]}
+                zoom={18}
+                style={{ height: '100%', width: '100%' }}
+                zoomControl={false}
+                attributionControl={false}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} />
+                <DraggableMarker position={pinLocation} onChange={setPinLocation} />
+              </MapContainer>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 text-center">
+              {pinLocation.lat.toFixed(5)}, {pinLocation.lng.toFixed(5)}
+            </p>
+          </div>
+
           {/* Category */}
           <div>
             <label className="text-xs font-medium text-foreground block mb-2">Category <span className="text-destructive">*</span></label>
