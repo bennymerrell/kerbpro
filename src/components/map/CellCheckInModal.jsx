@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone } from 'lucide-react';
 
-export default function CellCheckInModal({ currentUser, onCheckIn, onPhoneSaved }) {
+export default function CellCheckInModal({ currentUser, preselectedCell, onCheckIn, onPhoneSaved }) {
   const [office, setOffice] = useState(null);
   const [cells, setCells] = useState([]);
-  const [selectedArea, setSelectedArea] = useState('');
-  const [selectedCellId, setSelectedCellId] = useState('');
+  const [selectedArea, setSelectedArea] = useState(preselectedCell?.area || '');
+  const [selectedCellId, setSelectedCellId] = useState(preselectedCell?.id || '');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');

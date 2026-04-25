@@ -248,6 +248,7 @@ export default function MapPage() {
   const [editingCell, setEditingCell] = useState(null); // { cell, points }
   const [showLanding, setShowLanding] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
+  const [preselectedCell, setPreselectedCell] = useState(null);
   const [activeUserCell, setActiveUserCell] = useState(null); // the cell the user is logged into
 
   const mapRef = useRef(null);
@@ -407,7 +408,7 @@ export default function MapPage() {
           userRole={currentUser?.role}
           onCellClick={
             currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && !activeUserCell
-              ? () => setShowCheckIn(true)
+              ? (cell) => { setPreselectedCell(cell); setShowCheckIn(true); }
               : undefined
           }
         />
@@ -501,10 +502,10 @@ export default function MapPage() {
       {showLanding && !showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && (
         <UserLandingChoice
           onViewMap={() => { localStorage.setItem('landing_dismissed_at', Date.now().toString()); setShowLanding(false); }}
-          onStartCell={() => { setShowLanding(false); setShowCheckIn(true); }}
+          onStartCell={() => { setPreselectedCell(null); setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
-      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
+      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
