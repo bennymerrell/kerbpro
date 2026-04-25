@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone } from 'lucide-react';
+import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone, ArrowLeft } from 'lucide-react';
 
-export default function CellCheckInModal({ currentUser, preselectedCell, onCheckIn, onPhoneSaved }) {
+export default function CellCheckInModal({ currentUser, preselectedCell, onCheckIn, onPhoneSaved, onDismiss }) {
   const [office, setOffice] = useState(null);
   const [cells, setCells] = useState([]);
   const [selectedArea, setSelectedArea] = useState(preselectedCell?.area || '');
@@ -199,6 +199,16 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
               Start Work
             </button>
+
+            {preselectedCell && onDismiss && (
+              <button
+                onClick={onDismiss}
+                className="w-full h-10 rounded-xl bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/70 transition-colors flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Map
+              </button>
+            )}
           </div>
         )}
       </div>

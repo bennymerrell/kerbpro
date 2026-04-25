@@ -502,7 +502,7 @@ export default function MapPage() {
           onStartCell={() => { setPreselectedCell(null); setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
-      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} />}
+      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} onDismiss={preselectedCell ? () => { setShowCheckIn(false); setPreselectedCell(null); } : undefined} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
