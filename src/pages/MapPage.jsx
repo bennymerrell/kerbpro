@@ -395,6 +395,9 @@ export default function MapPage() {
             const target = visible[i];
             setSpeciesSightings(prev => prev.filter(s => s !== target));
           }}
+          onSightingMoved={(id, lat, lng) => {
+            setSpeciesSightings(prev => prev.map(s => s.id === id ? { ...s, lat, lng } : s));
+          }}
         />
         {locationData?.position && (
           <LocationMarker position={locationData.position} accuracy={locationData.accuracy} />

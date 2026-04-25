@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { base44 } from '@/api/base44Client';
 
 const CATEGORY_SVGS = {
   'Species': `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 9c0-4 3-7 7-7s7 3 7 7c0 5-7 11-7 11S5 14 5 9z"/></svg>`,
@@ -54,15 +56,35 @@ function createSightingIcon(sighting) {
   });
 }
 
-export default function SpeciesMarkers({ sightings, onRemove, onViewDetails }) {
-  return sightings.map((s, i) => {
-    return (
-      <Marker
-        key={`sighting-${i}-${s.lat}-${s.lng}`}
-        position={[s.lat, s.lng]}
-        icon={createSightingIcon(s)}
-        eventHandlers={{ click: () => onViewDetails && onViewDetails(s) }}
-      />
-    );
-  });
+function DraggableSightingMarker({ sighting, onViewDetails, onMoved }) {
+  const markerRef = useRef(null);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[sighting.lat, sighting.lng]}
+      icon={createSightingIcon(sighting)}
+      draggable
+      eventHandlers={{
+        click: () => onViewDetails && onViewDetails(sighting),
+        dragend: async () => {
+          const latlng = markerRef.current?.getLatLng();
+          if (!latlng || !sighting.id) return;
+          await base44.entities.Sighting.update(sighting.id, { lat: latlng.lat, lng: latlng.lng });
+          onMoved?.(sighting.id, latlng.lat, latlng.lng);
+        },
+      }}
+    />
+  );
+}
+
+export default function SpeciesMarkers({ sightings, onRemove, onViewDetails, onSightingMoved }) {
+  return sightings.map((s, i) => (
+    <DraggableSightingMarker
+      key={`sighting-${s.id || i}-${s.lat}-${s.lng}`}
+      sighting={s}
+      onViewDetails={onViewDetails}
+      onMoved={onSightingMoved}
+    />
+  ));
 }
