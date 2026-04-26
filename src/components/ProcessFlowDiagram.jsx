@@ -1,130 +1,112 @@
 import { forwardRef } from 'react';
 
-/* ─── Colour palette ─── */
-const C = {
-  purple:  { bg: '#f3e8ff', border: '#a855f7', icon: '#7e22ce', text: '#581c87' },
-  blue:    { bg: '#dbeafe', border: '#3b82f6', icon: '#1d4ed8', text: '#1e3a8a' },
-  indigo:  { bg: '#e0e7ff', border: '#6366f1', icon: '#4338ca', text: '#312e81' },
-  emerald: { bg: '#d1fae5', border: '#10b981', icon: '#047857', text: '#064e3b' },
-  amber:   { bg: '#fef3c7', border: '#f59e0b', icon: '#b45309', text: '#78350f' },
-  orange:  { bg: '#ffedd5', border: '#f97316', icon: '#c2410c', text: '#7c2d12' },
-  gray:    { bg: '#f1f5f9', border: '#94a3b8', icon: '#475569', text: '#1e293b' },
-  primary: { bg: '#dbeafe', border: '#2563eb', icon: '#1d4ed8', text: '#1e3a8a' },
-};
-
-const ROLE_COLORS = {
-  admin:   { bg: '#ede9fe', text: '#5b21b6', border: '#a78bfa' },
-  manager: { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
-  user:    { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
-};
-
-function RolePill({ role }) {
-  const labels = { admin: 'Admin', manager: 'Manager', user: 'Field User' };
-  const s = ROLE_COLORS[role];
-  return (
-    <span style={{
-      background: s.bg, color: s.text, border: `1px solid ${s.border}`,
-      borderRadius: 999, fontSize: 9, fontWeight: 700, padding: '1px 7px',
-      display: 'inline-block', lineHeight: '16px', marginRight: 3,
-    }}>
-      {labels[role]}
-    </span>
-  );
-}
-
-function Step({ title, description, roles = [], color = C.gray, icon }) {
+/* ── helpers ── */
+function Box({ label, sub, color, textColor = '#fff', width = 130, height = 44, fontSize = 11 }) {
   return (
     <div style={{
-      background: color.bg,
-      border: `1.5px solid ${color.border}`,
-      borderRadius: 12,
-      padding: '10px 14px',
-      display: 'flex',
-      gap: 10,
-      alignItems: 'flex-start',
-      marginBottom: 0,
+      width, height,
+      background: color,
+      borderRadius: 8,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '4px 8px',
+      boxSizing: 'border-box',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
     }}>
-      {icon && (
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: color.border, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', flexShrink: 0, fontSize: 15,
-        }}>
-          {icon}
-        </div>
-      )}
-      <div>
-        <div style={{ fontWeight: 700, fontSize: 12, color: color.text, marginBottom: 2 }}>{title}</div>
-        <div style={{ fontSize: 10.5, color: '#475569', lineHeight: 1.5 }}>{description}</div>
-        {roles.length > 0 && (
-          <div style={{ marginTop: 5 }}>
-            {roles.map(r => <RolePill key={r} role={r} />)}
-          </div>
-        )}
-      </div>
+      <div style={{ fontSize, fontWeight: 700, color: textColor, textAlign: 'center', lineHeight: 1.3 }}>{label}</div>
+      {sub && <div style={{ fontSize: 9, color: textColor, opacity: 0.75, textAlign: 'center', marginTop: 2, lineHeight: 1.2 }}>{sub}</div>}
     </div>
   );
 }
 
-function Arrow({ label } = {}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4px 0' }}>
-      <div style={{ width: 2, height: 12, background: '#cbd5e1' }} />
-      <div style={{
-        width: 0, height: 0,
-        borderLeft: '6px solid transparent',
-        borderRight: '6px solid transparent',
-        borderTop: '8px solid #cbd5e1',
-      }} />
-      {label && <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 600, marginTop: 2 }}>{label}</div>}
-    </div>
-  );
-}
-
-function SectionHeader({ num, title, subtitle, color = C.gray }) {
+function Layer({ title, color, children, style = {} }) {
   return (
     <div style={{
-      background: color.border,
-      borderRadius: '10px 10px 0 0',
-      padding: '10px 16px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 24, height: 24, borderRadius: 6,
-          background: 'rgba(255,255,255,0.25)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 800, color: '#fff',
-        }}>{num}</div>
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 13, color: '#fff' }}>{title}</div>
-          {subtitle && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)' }}>{subtitle}</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Section({ num, title, subtitle, color, children }) {
-  return (
-    <div style={{
-      border: `2px solid ${color.border}`,
+      border: `2px solid ${color}`,
       borderRadius: 12,
       overflow: 'hidden',
       background: '#fff',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+      ...style,
     }}>
-      <SectionHeader num={num} title={title} subtitle={subtitle} color={color} />
-      <div style={{ padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ background: color, padding: '6px 14px' }}>
+        <div style={{ fontWeight: 800, fontSize: 11, color: '#fff', letterSpacing: 0.3 }}>{title}</div>
+      </div>
+      <div style={{ padding: '14px 12px' }}>
         {children}
       </div>
     </div>
   );
 }
 
-function TwoCol({ children }) {
+function HLine({ width = 40 }) {
+  return <div style={{ width, height: 2, background: '#94a3b8', flexShrink: 0 }} />;
+}
+
+function VLine({ height = 20 }) {
+  return <div style={{ width: 2, height, background: '#94a3b8', margin: '0 auto' }} />;
+}
+
+function Arrow({ dir = 'down', label }) {
+  const isH = dir === 'right' || dir === 'left';
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+      <VLine height={14} />
+      <div style={{
+        width: 0, height: 0,
+        borderLeft: '6px solid transparent',
+        borderRight: '6px solid transparent',
+        borderTop: '8px solid #94a3b8',
+      }} />
+      {label && <div style={{ fontSize: 8.5, color: '#94a3b8', fontWeight: 600 }}>{label}</div>}
+    </div>
+  );
+}
+
+function HArrow({ label, reverse = false }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {reverse && (
+        <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: '7px solid #94a3b8' }} />
+      )}
+      <HLine width={30} />
+      {!reverse && (
+        <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '7px solid #94a3b8' }} />
+      )}
+      {label && <div style={{ fontSize: 8, color: '#94a3b8', fontWeight: 600, position: 'absolute' }}>{label}</div>}
+    </div>
+  );
+}
+
+function ConnLine({ label } = {}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0' }}>
+      <VLine height={10} />
+      <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '7px solid #94a3b8' }} />
+      {label && <div style={{ fontSize: 8, color: '#64748b', fontWeight: 600, marginTop: 2 }}>{label}</div>}
+    </div>
+  );
+}
+
+function Row({ children, gap = 8, center = true }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'row', alignItems: center ? 'center' : 'flex-start', gap, justifyContent: 'center' }}>
       {children}
+    </div>
+  );
+}
+
+function Col({ children, gap = 6, center = true }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: center ? 'center' : 'flex-start', gap }}>
+      {children}
+    </div>
+  );
+}
+
+function Note({ text, color = '#f1f5f9', textColor = '#475569' }) {
+  return (
+    <div style={{ background: color, borderRadius: 6, padding: '4px 8px', fontSize: 9, color: textColor, fontStyle: 'italic', textAlign: 'center' }}>
+      {text}
     </div>
   );
 }
@@ -134,7 +116,7 @@ const ProcessFlowDiagram = forwardRef(function ProcessFlowDiagram(_, ref) {
     <div
       ref={ref}
       style={{
-        width: 720,
+        width: 860,
         background: '#f8fafc',
         fontFamily: "'Inter', 'Segoe UI', sans-serif",
         padding: '28px 32px 40px',
@@ -143,115 +125,257 @@ const ProcessFlowDiagram = forwardRef(function ProcessFlowDiagram(_, ref) {
     >
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', letterSpacing: -0.5 }}>🌿 KerbPro — System Process Flow</div>
-        <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>End-to-end functionality overview · Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', letterSpacing: -0.5 }}>🌿 KerbPro — System Architecture Diagram</div>
+        <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 4 }}>Current technical architecture · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
       </div>
 
-      {/* Legend */}
-      <div style={{
-        background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10,
-        padding: '8px 16px', marginBottom: 20, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap',
-      }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>Role Legend</div>
-        {['admin', 'manager', 'user'].map(r => <RolePill key={r} role={r} />)}
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Flow */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* ── CLIENTS ── */}
+        <Layer title="CLIENT LAYER — Browser / PWA (React + Vite)" color="#6366f1">
+          <Row gap={10}>
+            <Col center gap={5}>
+              <Box label="MapPage" sub="Leaflet map, cells, sightings" color="#4338ca" width={140} />
+            </Col>
+            <Col center gap={5}>
+              <Box label="SightingsPage" sub="List, filter, search" color="#4338ca" width={140} />
+            </Col>
+            <Col center gap={5}>
+              <Box label="CellsPage" sub="Status, mileage, edit" color="#4338ca" width={140} />
+            </Col>
+            <Col center gap={5}>
+              <Box label="DashboardPage" sub="Analytics & admin" color="#4338ca" width={140} />
+            </Col>
+            <Col center gap={5}>
+              <Box label="ChemicalLogPage" sub="Weekly usage logs" color="#4338ca" width={140} />
+            </Col>
+          </Row>
+          <div style={{ marginTop: 10, marginBottom: 6 }}>
+            <Row gap={8}>
+              <Box label="IOSNavSheet" sub="Menu / nav" color="#818cf8" textColor="#fff" width={115} height={38} />
+              <Box label="CellCheckInModal" sub="Daily check-in" color="#818cf8" textColor="#fff" width={130} height={38} />
+              <Box label="SpeciesModal" sub="Log sighting + photo" color="#818cf8" textColor="#fff" width={130} height={38} />
+              <Box label="SavedCellsLayer" sub="Polygon overlay" color="#818cf8" textColor="#fff" width={125} height={38} />
+              <Box label="SpeciesMarkers" sub="Map pins" color="#818cf8" textColor="#fff" width={115} height={38} />
+              <Box label="SearchBox" sub="Geocoding UI" color="#818cf8" textColor="#fff" width={110} height={38} />
+            </Row>
+          </div>
+          <Row gap={20}>
+            <Note text="React Router v6 — client-side routing" />
+            <Note text="@tanstack/react-query — data fetching + caching" />
+            <Note text="react-leaflet — interactive maps" />
+            <Note text="framer-motion — page transitions" />
+            <Note text="IndexedDB — offline cell cache" />
+            <Note text="Offline queue — sighting sync" />
+          </Row>
+        </Layer>
 
-        {/* 1. Onboarding */}
-        <Section num="1" title="Onboarding & Setup" subtitle="Admin configures the system before field work begins" color={C.purple}>
-          <Step icon="🏢" title="Create Offices" description="Admin creates office locations. Each office groups cells and users into an operational area." roles={['admin']} color={C.purple} />
-          <Arrow label="then" />
-          <Step icon="👥" title="Invite Users & Assign Roles" description="Admin invites field workers (role: user) and managers. Users are assigned to an office and a manager contact." roles={['admin']} color={C.purple} />
-          <Arrow label="then" />
-          <Step icon="📱" title="Field User Saves Phone Number" description="On first login, field users are prompted to save their mobile number — used for SMS/WhatsApp manager notifications." roles={['user']} color={C.emerald} />
-        </Section>
+        <ConnLine label="Base44 SDK / HTTP" />
 
-        <Arrow />
+        {/* ── BASE44 PLATFORM ── */}
+        <Layer title="BASE44 PLATFORM — Backend as a Service" color="#0ea5e9">
+          <Row gap={16}>
 
-        {/* 2. Cell Creation */}
-        <Section num="2" title="Cell Creation" subtitle="Admin draws geographic work cells on the map" color={C.indigo}>
-          <Step icon="🔷" title="Draw a Cell" description="Open Map → Draw Cell mode. Tap to place polygon points, close the shape, then name and save it. Cells are assigned to an office and area." roles={['admin', 'manager']} color={C.indigo} />
-          <Arrow label="optional" />
-          <TwoCol>
-            <Step icon="📐" title="Recalculate Road Mileage" description="Queries OpenStreetMap to calculate adopted/unadopted road metres. Road types can be toggled." roles={['admin', 'manager']} color={C.indigo} />
-            <Step icon="👁" title="Show / Hide Cells" description="Individual cells can be toggled visible or hidden on the map without deleting them." roles={['admin', 'manager']} color={C.indigo} />
-          </TwoCol>
-          <Arrow label="admin can also" />
-          <TwoCol>
-            <Step icon="✏️" title="Edit Cell Geometry" description="Drag polygon vertices to reshape any existing cell boundary." roles={['admin', 'manager']} color={C.indigo} />
-            <Step icon="🖨" title="Print / Export Map" description="Generate a PDF snapshot of the map with selected cell details." roles={['admin', 'manager']} color={C.indigo} />
-          </TwoCol>
-        </Section>
+            {/* Auth */}
+            <Col center gap={5}>
+              <Box label="Authentication" sub="Session / JWT" color="#0284c7" width={138} />
+              <Note text="Login · Invite · Roles" />
+            </Col>
 
-        <Arrow />
+            {/* Database */}
+            <Col center gap={5}>
+              <Box label="Database" sub="Entity store" color="#0284c7" width={138} />
+              <Row gap={4}>
+                <Note text="Cell" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="Sighting" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="Office" color="#e0f2fe" textColor="#0369a1" />
+              </Row>
+              <Row gap={4}>
+                <Note text="User" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="ChemicalLog" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="SprayLog" color="#e0f2fe" textColor="#0369a1" />
+              </Row>
+              <Row gap={4}>
+                <Note text="AppSettings" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="Manager" color="#e0f2fe" textColor="#0369a1" />
+                <Note text="RolePermissions" color="#e0f2fe" textColor="#0369a1" />
+              </Row>
+            </Col>
 
-        {/* 3. Daily Field Workflow */}
-        <Section num="3" title="Daily Field Workflow" subtitle="What field users do each working day" color={C.emerald}>
-          <Step icon="🌅" title="Morning Landing Screen" description="After 3am GMT, field users see a choice: 'Start Cell' (check in) or 'View Map' (browse without checking in). Shown once per day with a 1-hour dismissal grace period." roles={['user']} color={C.emerald} />
-          <Arrow label="if Start Cell" />
-          <Step icon="🔐" title="Check In to a Cell" description="User selects their office area and specific cell from dropdowns (completed cells excluded). Taps 'Start Work' — cell turns orange on the map. Users can also tap any orange/blue cell polygon directly to check in." roles={['user']} color={C.emerald} />
-          <Arrow />
-          <Step icon="🔔" title="Manager Notified via SMS / WhatsApp" description="The assigned manager automatically receives an SMS/WhatsApp notification with user name, cell name, and area — sent via Twilio." roles={['manager']} color={C.blue} />
-          <Arrow label="during the day" />
-          <Step icon="🍃" title="Log Sightings" description="Tap 'Spotted' from the map menu. GPS location is captured automatically and can be fine-tuned on a mini map. Choose a category (Species, Hydrant, Incident, Free Parking, Public Toilet, Cafe/Van), add a name, notes, and optional photo. Report is emailed to managers." roles={['user', 'admin', 'manager']} color={C.emerald} />
-          <Arrow label="end of day" />
-          <TwoCol>
-            <Step icon="✅" title="Finish Cell" description="Marks the cell as Completed (green). All users on that cell are automatically logged off. Manager is notified via SMS." roles={['user']} color={C.emerald} />
-            <Step icon="🚪" title="Log Off (Keep In Progress)" description="User logs off without completing. Cell stays orange (In Progress) so another user can continue later." roles={['user']} color={C.orange} />
-          </TwoCol>
-        </Section>
+            {/* Functions */}
+            <Col center gap={5}>
+              <Box label="Backend Functions" sub="Deno Edge" color="#0284c7" width={138} />
+              <Note text="completeCellAndLogOffUsers" />
+              <Note text="notifyCellAction" />
+              <Note text="notifyManagers" />
+              <Note text="processMileageRecalc" />
+              <Note text="queryMileage" />
+              <Note text="triggerMileageRecalc" />
+              <Note text="validateOSMileage" />
+              <Note text="searchAddress" />
+              <Note text="getUsers · updateUser" />
+              <Note text="manageOffice" />
+            </Col>
 
-        <Arrow />
+            {/* File Storage */}
+            <Col center gap={5}>
+              <Box label="File Storage" sub="CDN-hosted" color="#0284c7" width={138} />
+              <Note text="Sighting photos (JPEG)" />
+              <Note text="Compressed via UploadFile" />
+            </Col>
 
-        {/* 4. Sightings */}
-        <Section num="4" title="Sightings Management" subtitle="Viewing, filtering and managing recorded sightings" color={C.amber}>
-          <TwoCol>
-            <Step icon="🔍" title="Browse & Search" description="Filter by category, text search, and sort by date or species. Photo thumbnails and category icons shown." roles={['admin', 'manager', 'user']} color={C.amber} />
-            <Step icon="🗺" title="View on Map" description="'View on Map' button flies the map to that sighting's location and activates the correct category filter." roles={['admin', 'manager', 'user']} color={C.amber} />
-          </TwoCol>
-          <Arrow />
-          <TwoCol>
-            <Step icon="✥" title="Move Sighting Marker" description="Tap a map marker → 'Move Icon' to drag it to a corrected position. Persisted to the database." roles={['admin', 'manager', 'user']} color={C.amber} />
-            <Step icon="📷" title="Update Photo / Details" description="View full details modal, replace or add a photo, see reported-by, coordinates, and timestamp." roles={['admin', 'manager', 'user']} color={C.amber} />
-          </TwoCol>
-        </Section>
+            {/* Built-in Integrations */}
+            <Col center gap={5}>
+              <Box label="Core Integrations" sub="Built-in" color="#0284c7" width={138} />
+              <Note text="InvokeLLM" />
+              <Note text="SendEmail" />
+              <Note text="UploadFile" />
+              <Note text="GenerateImage" />
+            </Col>
 
-        <Arrow />
+          </Row>
+        </Layer>
 
-        {/* 5. Dashboard */}
-        <Section num="5" title="Admin Dashboard" subtitle="Analytics, user management and system oversight" color={C.primary}>
-          <TwoCol>
-            <Step icon="📊" title="Analytics" description="Cell completion rates, sightings by category, activity over time, and field coverage stats." roles={['admin', 'manager']} color={C.primary} />
-            <Step icon="👥" title="User Management" description="Invite users, change roles, assign offices and managers, view all accounts." roles={['admin']} color={C.primary} />
-          </TwoCol>
-          <TwoCol>
-            <Step icon="🏢" title="Office Management" description="Create, rename and delete offices that group cells and users." roles={['admin', 'manager']} color={C.primary} />
-            <Step icon="🔷" title="Cells Dashboard" description="View road mileage totals, completion status, and a log of when each cell was completed and by whom." roles={['admin', 'manager']} color={C.primary} />
-          </TwoCol>
-          <Step icon="🍃" title="Sightings Dashboard" description="Table of all sightings with admin controls to edit records, delete entries, and view full details." roles={['admin', 'manager']} color={C.primary} />
-        </Section>
+        <ConnLine label="API / SDK calls" />
 
-        <Arrow />
+        {/* ── EXTERNAL SERVICES ── */}
+        <Layer title="EXTERNAL SERVICES — Third-party APIs" color="#10b981">
+          <Row gap={12}>
 
-        {/* 6. Additional Tools */}
-        <Section num="6" title="Additional Tools" subtitle="Supporting features available across the app" color={C.gray}>
-          <TwoCol>
-            <Step icon="🧪" title="Chemical Logs" description="Weekly chemical usage records — track chemical names, units, start/end amounts, and notes for compliance." roles={['admin', 'manager', 'user']} color={C.gray} />
-            <Step icon="📍" title="Route Planning" description="Plot waypoints on the map to calculate total route distance — useful for planning spray runs." roles={['admin', 'manager', 'user']} color={C.gray} />
-          </TwoCol>
-          <TwoCol>
-            <Step icon="🔌" title="Offline Mode" description="Cells cached locally. Sightings queued offline and auto-synced when connectivity is restored." roles={['user']} color={C.gray} />
-            <Step icon="🔎" title="Address Search" description="Search any address from the top bar and fly the map to that location instantly." roles={['admin', 'manager', 'user']} color={C.gray} />
-          </TwoCol>
-        </Section>
+            <Col center gap={5}>
+              <Box label="Twilio" sub="SMS / WhatsApp" color="#047857" width={130} />
+              <Note text="Check-in alerts" />
+              <Note text="Cell finish alerts" />
+              <Note text="Manager notifications" />
+            </Col>
+
+            <Col center gap={5}>
+              <Box label="LocationIQ" sub="Geocoding API" color="#047857" width={130} />
+              <Note text="Address → lat/lng" />
+              <Note text="Search box results" />
+            </Col>
+
+            <Col center gap={5}>
+              <Box label="OS Maps API" sub="Ordnance Survey" color="#047857" width={130} />
+              <Note text="Road mileage validation" />
+              <Note text="OS Features API" />
+            </Col>
+
+            <Col center gap={5}>
+              <Box label="OpenStreetMap" sub="Overpass API" color="#047857" width={130} />
+              <Note text="Road type breakdown" />
+              <Note text="Adopted/unadopted calc" />
+            </Col>
+
+            <Col center gap={5}>
+              <Box label="OSM Tile Server" sub="Map tiles" color="#047857" width={130} />
+              <Note text="Street / Satellite" />
+              <Note text="OS Road tiles" />
+            </Col>
+
+            <Col center gap={5}>
+              <Box label="Email (SMTP)" sub="via Base44 Core" color="#047857" width={130} />
+              <Note text="Sighting reports" />
+              <Note text="HTML email to managers" />
+            </Col>
+
+          </Row>
+        </Layer>
+
+        <ConnLine />
+
+        {/* ── DATA FLOW SUMMARY ── */}
+        <Layer title="KEY DATA FLOWS" color="#f59e0b">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+
+            {/* Flow 1 */}
+            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
+              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>🔐 Check-In Flow</div>
+              <Row gap={4}>
+                <Note text="Field User" color="#d1fae5" textColor="#065f46" />
+                <HArrow />
+                <Note text="CellCheckInModal" color="#e0e7ff" textColor="#3730a3" />
+                <HArrow />
+                <Note text="Cell entity (in_progress)" color="#dbeafe" textColor="#1e40af" />
+              </Row>
+              <div style={{ marginTop: 4 }}>
+                <Row gap={4}>
+                  <Note text="updateMe (active_cell_id)" color="#e0e7ff" textColor="#3730a3" />
+                  <HArrow />
+                  <Note text="notifyCellAction" color="#e0e7ff" textColor="#3730a3" />
+                  <HArrow />
+                  <Note text="Twilio SMS" color="#d1fae5" textColor="#065f46" />
+                </Row>
+              </div>
+            </div>
+
+            {/* Flow 2 */}
+            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
+              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>🍃 Sighting Flow</div>
+              <Row gap={4}>
+                <Note text="GPS / pin adjust" color="#d1fae5" textColor="#065f46" />
+                <HArrow />
+                <Note text="SpeciesModal" color="#e0e7ff" textColor="#3730a3" />
+                <HArrow />
+                <Note text="UploadFile" color="#dbeafe" textColor="#1e40af" />
+              </Row>
+              <div style={{ marginTop: 4 }}>
+                <Row gap={4}>
+                  <Note text="Sighting entity" color="#dbeafe" textColor="#1e40af" />
+                  <HArrow />
+                  <Note text="notifyManagers fn" color="#e0e7ff" textColor="#3730a3" />
+                  <HArrow />
+                  <Note text="HTML Email" color="#d1fae5" textColor="#065f46" />
+                </Row>
+              </div>
+            </div>
+
+            {/* Flow 3 */}
+            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
+              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>📐 Mileage Recalc Flow</div>
+              <Row gap={4}>
+                <Note text="Admin triggers recalc" color="#d1fae5" textColor="#065f46" />
+                <HArrow />
+                <Note text="triggerMileageRecalc fn" color="#e0e7ff" textColor="#3730a3" />
+              </Row>
+              <div style={{ marginTop: 4 }}>
+                <Row gap={4}>
+                  <Note text="Overpass API" color="#d1fae5" textColor="#065f46" />
+                  <HArrow />
+                  <Note text="OS Features API" color="#d1fae5" textColor="#065f46" />
+                  <HArrow />
+                  <Note text="Cell entity updated" color="#dbeafe" textColor="#1e40af" />
+                </Row>
+              </div>
+            </div>
+
+            {/* Flow 4 */}
+            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
+              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>✅ Cell Finish Flow</div>
+              <Row gap={4}>
+                <Note text="User taps Finish" color="#d1fae5" textColor="#065f46" />
+                <HArrow />
+                <Note text="completeCellAndLogOffUsers fn" color="#e0e7ff" textColor="#3730a3" />
+              </Row>
+              <div style={{ marginTop: 4 }}>
+                <Row gap={4}>
+                  <Note text="Cell → completed" color="#dbeafe" textColor="#1e40af" />
+                  <HArrow />
+                  <Note text="All users logged off" color="#dbeafe" textColor="#1e40af" />
+                  <HArrow />
+                  <Note text="Twilio SMS" color="#d1fae5" textColor="#065f46" />
+                </Row>
+              </div>
+            </div>
+
+          </div>
+        </Layer>
 
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', marginTop: 28, fontSize: 10, color: '#94a3b8' }}>
-        KerbPro Field Management System · Confidential
+      <div style={{ textAlign: 'center', marginTop: 24, fontSize: 9.5, color: '#94a3b8' }}>
+        KerbPro Field Management System · Architecture Diagram · Confidential
       </div>
     </div>
   );
