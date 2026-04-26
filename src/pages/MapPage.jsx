@@ -33,7 +33,6 @@ import IOSNavSheet from '../components/map/IOSNavSheet';
 import SightingDetailModal from '../components/SightingDetailModal';
 import CellCheckInModal from '../components/map/CellCheckInModal';
 import UserLandingChoice from '../components/map/UserLandingChoice';
-import CellSightingsPanel from '../components/map/CellSightingsPanel';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -528,8 +527,6 @@ export default function MapPage() {
         />
       )}
       {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} onDismiss={preselectedCell ? () => { setShowCheckIn(false); setPreselectedCell(null); } : undefined} />}
-
-      <CellSightingsPanel cell={selectedCell} onClose={() => setSelectedCell(null)} />
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
