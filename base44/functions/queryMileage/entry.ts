@@ -47,13 +47,16 @@ Deno.serve(async (req) => {
       try {
         const res = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'KerbApp/1.0 (field-mapping-tool; contact@kerbpro.app)',
+          },
           body: `data=${encodeURIComponent(query)}`,
           signal: controller.signal,
         });
         clearTimeout(timer);
         const text = await res.text();
-        if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url}`);
+        if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url} (status ${res.status})`);
         return JSON.parse(text).elements || [];
       } catch (e) {
         clearTimeout(timer);
