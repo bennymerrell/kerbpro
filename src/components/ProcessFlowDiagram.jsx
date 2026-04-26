@@ -1,382 +1,410 @@
 import { forwardRef } from 'react';
 
-/* ── helpers ── */
-function Box({ label, sub, color, textColor = '#fff', width = 130, height = 44, fontSize = 11 }) {
+/* ─────────────────────────────────────────────
+   Draw.io / Lucidchart-style SVG architecture
+   Canvas: 1200 × 1800
+──────────────────────────────────────────────── */
+
+const W = 1200;
+const H = 1900;
+
+/* colour tokens */
+const CLR = {
+  client:   { fill: '#dbeafe', stroke: '#3b82f6', text: '#1e3a8a', header: '#3b82f6' },
+  platform: { fill: '#ede9fe', stroke: '#7c3aed', text: '#3b0764', header: '#7c3aed' },
+  external: { fill: '#d1fae5', stroke: '#059669', text: '#064e3b', header: '#059669' },
+  node:     { fill: '#ffffff', stroke: '#64748b', text: '#1e293b' },
+  fn:       { fill: '#fef9c3', stroke: '#ca8a04', text: '#713f12' },
+  entity:   { fill: '#e0e7ff', stroke: '#6366f1', text: '#312e81' },
+  ext:      { fill: '#d1fae5', stroke: '#10b981', text: '#064e3b' },
+  flow:     { fill: '#fef3c7', stroke: '#f59e0b', text: '#92400e' },
+  arrow:    '#64748b',
+  label:    '#475569',
+};
+
+function Rect({ x, y, w, h, fill, stroke, rx = 8 }) {
+  return <rect x={x} y={y} width={w} height={h} rx={rx} fill={fill} stroke={stroke} strokeWidth={1.5} />;
+}
+
+function Text({ x, y, text, size = 11, bold = false, color = '#1e293b', anchor = 'middle', dy = 0 }) {
   return (
-    <div style={{
-      width, height,
-      background: color,
-      borderRadius: 8,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      padding: '4px 8px',
-      boxSizing: 'border-box',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-    }}>
-      <div style={{ fontSize, fontWeight: 700, color: textColor, textAlign: 'center', lineHeight: 1.3 }}>{label}</div>
-      {sub && <div style={{ fontSize: 9, color: textColor, opacity: 0.75, textAlign: 'center', marginTop: 2, lineHeight: 1.2 }}>{sub}</div>}
-    </div>
+    <text
+      x={x} y={y + dy}
+      textAnchor={anchor}
+      fontSize={size}
+      fontWeight={bold ? 700 : 400}
+      fill={color}
+      fontFamily="Inter, Segoe UI, sans-serif"
+    >{text}</text>
   );
 }
 
-function Layer({ title, color, children, style = {} }) {
+/* Rounded box with optional subtitle */
+function Node({ x, y, w = 130, h = 44, label, sub, fill = '#fff', stroke = '#64748b', textColor = '#1e293b', fontSize = 11 }) {
+  const cx = x + w / 2;
   return (
-    <div style={{
-      border: `2px solid ${color}`,
-      borderRadius: 12,
-      overflow: 'hidden',
-      background: '#fff',
-      ...style,
-    }}>
-      <div style={{ background: color, padding: '6px 14px' }}>
-        <div style={{ fontWeight: 800, fontSize: 11, color: '#fff', letterSpacing: 0.3 }}>{title}</div>
-      </div>
-      <div style={{ padding: '14px 12px' }}>
-        {children}
-      </div>
-    </div>
+    <g>
+      <Rect x={x} y={y} w={w} h={h} fill={fill} stroke={stroke} rx={7} />
+      <Text x={cx} y={y + (sub ? h * 0.38 : h / 2 + 1)} text={label} size={fontSize} bold color={textColor} dy={sub ? 0 : 0} />
+      {sub && <Text x={cx} y={y + h * 0.65} text={sub} size={9} color={textColor} />}
+    </g>
   );
 }
 
-function HLine({ width = 40 }) {
-  return <div style={{ width, height: 2, background: '#94a3b8', flexShrink: 0 }} />;
-}
-
-function VLine({ height = 20 }) {
-  return <div style={{ width: 2, height, background: '#94a3b8', margin: '0 auto' }} />;
-}
-
-function Arrow({ dir = 'down', label }) {
-  const isH = dir === 'right' || dir === 'left';
+/* Swimlane section */
+function Lane({ x, y, w, h, label, fill, stroke, headerColor }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      <VLine height={14} />
-      <div style={{
-        width: 0, height: 0,
-        borderLeft: '6px solid transparent',
-        borderRight: '6px solid transparent',
-        borderTop: '8px solid #94a3b8',
-      }} />
-      {label && <div style={{ fontSize: 8.5, color: '#94a3b8', fontWeight: 600 }}>{label}</div>}
-    </div>
+    <g>
+      <Rect x={x} y={y} w={w} h={h} fill={fill} stroke={stroke} rx={10} />
+      <rect x={x} y={y} width={w} height={28} rx={10} fill={headerColor} />
+      <rect x={x} y={y + 18} width={w} height={10} fill={headerColor} />
+      <Text x={x + w / 2} y={y + 18} text={label} size={11} bold color="#fff" />
+    </g>
   );
 }
 
-function HArrow({ label, reverse = false }) {
+/* Arrow: straight line with arrowhead */
+function Arrow({ x1, y1, x2, y2, label, color = CLR.arrow, dashed = false }) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const aLen = 9;
+  const ax = x2 - aLen * Math.cos(angle);
+  const ay = y2 - aLen * Math.sin(angle);
+  const lx = (x1 + x2) / 2;
+  const ly = (y1 + y2) / 2;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      {reverse && (
-        <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: '7px solid #94a3b8' }} />
+    <g>
+      <line
+        x1={x1} y1={y1} x2={ax} y2={ay}
+        stroke={color} strokeWidth={1.5}
+        strokeDasharray={dashed ? '6,4' : undefined}
+      />
+      <polygon
+        points={`${x2},${y2} ${ax + 5 * Math.cos(angle - Math.PI / 6)},${ay + 5 * Math.sin(angle - Math.PI / 6)} ${ax + 5 * Math.cos(angle + Math.PI / 6)},${ay + 5 * Math.sin(angle + Math.PI / 6)}`}
+        fill={color}
+      />
+      {label && (
+        <text x={lx} y={ly - 5} textAnchor="middle" fontSize={9} fill={CLR.label} fontFamily="Inter, Segoe UI, sans-serif">{label}</text>
       )}
-      <HLine width={30} />
-      {!reverse && (
-        <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '7px solid #94a3b8' }} />
+    </g>
+  );
+}
+
+/* Elbow connector: go down then across then down */
+function Elbow({ x1, y1, x2, y2, label, color = CLR.arrow, dashed = false }) {
+  const mid = (y1 + y2) / 2;
+  const d = `M${x1},${y1} L${x1},${mid} L${x2},${mid} L${x2},${y2}`;
+  const angle = Math.atan2(y2 - mid, 0) >= 0 ? 1 : -1;
+  return (
+    <g>
+      <path d={d} fill="none" stroke={color} strokeWidth={1.5} strokeDasharray={dashed ? '6,4' : undefined} />
+      <polygon
+        points={`${x2},${y2} ${x2 - 5},${y2 - 8} ${x2 + 5},${y2 - 8}`}
+        fill={color}
+      />
+      {label && (
+        <text x={(x1 + x2) / 2} y={mid - 4} textAnchor="middle" fontSize={9} fill={CLR.label} fontFamily="Inter, Segoe UI, sans-serif">{label}</text>
       )}
-      {label && <div style={{ fontSize: 8, color: '#94a3b8', fontWeight: 600, position: 'absolute' }}>{label}</div>}
-    </div>
-  );
-}
-
-function ConnLine({ label } = {}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0' }}>
-      <VLine height={10} />
-      <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '7px solid #94a3b8' }} />
-      {label && <div style={{ fontSize: 8, color: '#64748b', fontWeight: 600, marginTop: 2 }}>{label}</div>}
-    </div>
-  );
-}
-
-function Row({ children, gap = 8, center = true }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: center ? 'center' : 'flex-start', gap, justifyContent: 'center' }}>
-      {children}
-    </div>
-  );
-}
-
-function Col({ children, gap = 6, center = true }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: center ? 'center' : 'flex-start', gap }}>
-      {children}
-    </div>
-  );
-}
-
-function Note({ text, color = '#f1f5f9', textColor = '#475569' }) {
-  return (
-    <div style={{ background: color, borderRadius: 6, padding: '4px 8px', fontSize: 9, color: textColor, fontStyle: 'italic', textAlign: 'center' }}>
-      {text}
-    </div>
+    </g>
   );
 }
 
 const ProcessFlowDiagram = forwardRef(function ProcessFlowDiagram(_, ref) {
   return (
-    <div
-      ref={ref}
-      style={{
-        width: 860,
-        background: '#f8fafc',
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
-        padding: '28px 32px 40px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <div ref={ref} style={{ background: '#f8fafc', padding: '24px 20px', width: W + 40, boxSizing: 'border-box', fontFamily: 'Inter, Segoe UI, sans-serif' }}>
       {/* Title */}
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', letterSpacing: -0.5 }}>🌿 KerbPro — System Architecture Diagram</div>
-        <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 4 }}>Current technical architecture · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: 20, fontWeight: 900, color: '#0f172a' }}>🌿 KerbPro — System Architecture</div>
+        <div style={{ fontSize: 10, color: '#64748b', marginTop: 3 }}>
+          Current architecture · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <svg width={W} height={H} style={{ display: 'block', margin: '0 auto' }}>
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill={CLR.arrow} />
+          </marker>
+        </defs>
 
-        {/* ── CLIENTS ── */}
-        <Layer title="CLIENT LAYER — Browser / PWA (React + Vite)" color="#6366f1">
-          <Row gap={10}>
-            <Col center gap={5}>
-              <Box label="MapPage" sub="Leaflet map, cells, sightings" color="#4338ca" width={140} />
-            </Col>
-            <Col center gap={5}>
-              <Box label="SightingsPage" sub="List, filter, search" color="#4338ca" width={140} />
-            </Col>
-            <Col center gap={5}>
-              <Box label="CellsPage" sub="Status, mileage, edit" color="#4338ca" width={140} />
-            </Col>
-            <Col center gap={5}>
-              <Box label="DashboardPage" sub="Analytics & admin" color="#4338ca" width={140} />
-            </Col>
-            <Col center gap={5}>
-              <Box label="ChemicalLogPage" sub="Weekly usage logs" color="#4338ca" width={140} />
-            </Col>
-          </Row>
-          <div style={{ marginTop: 10, marginBottom: 6 }}>
-            <Row gap={8}>
-              <Box label="IOSNavSheet" sub="Menu / nav" color="#818cf8" textColor="#fff" width={115} height={38} />
-              <Box label="CellCheckInModal" sub="Daily check-in" color="#818cf8" textColor="#fff" width={130} height={38} />
-              <Box label="SpeciesModal" sub="Log sighting + photo" color="#818cf8" textColor="#fff" width={130} height={38} />
-              <Box label="SavedCellsLayer" sub="Polygon overlay" color="#818cf8" textColor="#fff" width={125} height={38} />
-              <Box label="SpeciesMarkers" sub="Map pins" color="#818cf8" textColor="#fff" width={115} height={38} />
-              <Box label="SearchBox" sub="Geocoding UI" color="#818cf8" textColor="#fff" width={110} height={38} />
-            </Row>
-          </div>
-          <Row gap={20}>
-            <Note text="React Router v6 — client-side routing" />
-            <Note text="@tanstack/react-query — data fetching + caching" />
-            <Note text="react-leaflet — interactive maps" />
-            <Note text="framer-motion — page transitions" />
-            <Note text="IndexedDB — offline cell cache" />
-            <Note text="Offline queue — sighting sync" />
-          </Row>
-        </Layer>
+        {/* ══════════════════════════════════════════
+            LAYER 1 — CLIENT (y: 10 → 310)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={10} w={W - 40} h={290} label="CLIENT LAYER  ·  Browser / PWA  (React + Vite + react-leaflet + react-router)" fill={CLR.client.fill} stroke={CLR.client.stroke} headerColor={CLR.client.header} />
 
-        <ConnLine label="Base44 SDK / HTTP" />
+        {/* Pages row */}
+        {[
+          { label: 'MapPage', sub: 'Map + cells + sightings' },
+          { label: 'SightingsPage', sub: 'List / filter / search' },
+          { label: 'CellsPage', sub: 'Status / mileage / edit' },
+          { label: 'DashboardPage', sub: 'Admin analytics' },
+          { label: 'ChemicalLogPage', sub: 'Weekly usage logs' },
+        ].map(({ label, sub }, i) => (
+          <Node key={label} x={36 + i * 228} y={50} w={200} h={48} label={label} sub={sub}
+            fill="#dbeafe" stroke={CLR.client.stroke} textColor={CLR.client.text} fontSize={11} />
+        ))}
 
-        {/* ── BASE44 PLATFORM ── */}
-        <Layer title="BASE44 PLATFORM — Backend as a Service" color="#0ea5e9">
-          <Row gap={16}>
+        {/* Components row */}
+        {[
+          { label: 'IOSNavSheet', sub: 'Nav / menu' },
+          { label: 'CellCheckInModal', sub: 'Daily check-in' },
+          { label: 'SpeciesModal', sub: 'Log sighting + photo' },
+          { label: 'SavedCellsLayer', sub: 'Polygon overlay' },
+          { label: 'SpeciesMarkers', sub: 'Map pins' },
+          { label: 'SearchBox', sub: 'Geocoding UI' },
+          { label: 'UserLandingChoice', sub: 'Morning screen' },
+        ].map(({ label, sub }, i) => (
+          <Node key={label} x={36 + i * 165} y={130} w={148} h={42} label={label} sub={sub}
+            fill="#bfdbfe" stroke={CLR.client.stroke} textColor={CLR.client.text} fontSize={10} />
+        ))}
 
-            {/* Auth */}
-            <Col center gap={5}>
-              <Box label="Authentication" sub="Session / JWT" color="#0284c7" width={138} />
-              <Note text="Login · Invite · Roles" />
-            </Col>
+        {/* Lib row */}
+        {[
+          'IndexedDB cache', 'Offline queue', '@tanstack/react-query', 'framer-motion', 'html2canvas + jspdf',
+        ].map((label, i) => (
+          <g key={label}>
+            <rect x={36 + i * 228} y={202} width={200} height={28} rx={5} fill="#eff6ff" stroke="#93c5fd" strokeWidth={1} />
+            <text x={136 + i * 228} y={220} textAnchor="middle" fontSize={9.5} fill="#1e40af" fontFamily="Inter,sans-serif">{label}</text>
+          </g>
+        ))}
 
-            {/* Database */}
-            <Col center gap={5}>
-              <Box label="Database" sub="Entity store" color="#0284c7" width={138} />
-              <Row gap={4}>
-                <Note text="Cell" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="Sighting" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="Office" color="#e0f2fe" textColor="#0369a1" />
-              </Row>
-              <Row gap={4}>
-                <Note text="User" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="ChemicalLog" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="SprayLog" color="#e0f2fe" textColor="#0369a1" />
-              </Row>
-              <Row gap={4}>
-                <Note text="AppSettings" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="Manager" color="#e0f2fe" textColor="#0369a1" />
-                <Note text="RolePermissions" color="#e0f2fe" textColor="#0369a1" />
-              </Row>
-            </Col>
+        {/* Base44 SDK label */}
+        <g>
+          <rect x={36} y={246} width={W - 72} height={26} rx={5} fill="#1d4ed8" />
+          <text x={W / 2} y={263} textAnchor="middle" fontSize={10} fontWeight={700} fill="#fff" fontFamily="Inter,sans-serif">Base44 SDK — all API calls routed through SDK (entities · functions · integrations · auth · analytics)</text>
+        </g>
 
-            {/* Functions */}
-            <Col center gap={5}>
-              <Box label="Backend Functions" sub="Deno Edge" color="#0284c7" width={138} />
-              <Note text="completeCellAndLogOffUsers" />
-              <Note text="notifyCellAction" />
-              <Note text="notifyManagers" />
-              <Note text="processMileageRecalc" />
-              <Note text="queryMileage" />
-              <Note text="triggerMileageRecalc" />
-              <Note text="validateOSMileage" />
-              <Note text="searchAddress" />
-              <Note text="getUsers · updateUser" />
-              <Note text="manageOffice" />
-            </Col>
+        {/* Arrow: Client → Platform */}
+        <Arrow x1={W / 2} y1={302} x2={W / 2} y2={335} label="HTTPS / SDK" color="#3b82f6" />
 
-            {/* File Storage */}
-            <Col center gap={5}>
-              <Box label="File Storage" sub="CDN-hosted" color="#0284c7" width={138} />
-              <Note text="Sighting photos (JPEG)" />
-              <Note text="Compressed via UploadFile" />
-            </Col>
+        {/* ══════════════════════════════════════════
+            LAYER 2 — BASE44 PLATFORM (y: 338 → 780)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={338} w={W - 40} h={440} label="BASE44 PLATFORM  ·  Backend as a Service" fill={CLR.platform.fill} stroke={CLR.platform.stroke} headerColor={CLR.platform.header} />
 
-            {/* Built-in Integrations */}
-            <Col center gap={5}>
-              <Box label="Core Integrations" sub="Built-in" color="#0284c7" width={138} />
-              <Note text="InvokeLLM" />
-              <Note text="SendEmail" />
-              <Note text="UploadFile" />
-              <Note text="GenerateImage" />
-            </Col>
+        {/* Auth */}
+        <Node x={36} y={378} w={170} h={60} label="Authentication" sub="Session · JWT · Roles"
+          fill="#f3e8ff" stroke="#7c3aed" textColor="#3b0764" />
+        <g>
+          {['Login / logout', 'Invite users', 'Role: admin/manager/user', 'updateMe (profile)'].map((t, i) => (
+            <text key={t} x={121} y={452 + i * 14} textAnchor="middle" fontSize={9} fill="#4c1d95" fontFamily="Inter,sans-serif">• {t}</text>
+          ))}
+        </g>
 
-          </Row>
-        </Layer>
+        {/* Database */}
+        <Node x={240} y={378} w={200} h={60} label="Database" sub="Entity store · Base44"
+          fill="#f3e8ff" stroke="#7c3aed" textColor="#3b0764" />
+        {[
+          ['Cell', 'Sighting', 'Office', 'User'],
+          ['ChemicalLog', 'SprayLog', 'AppSettings', ''],
+          ['Manager', 'RolePermissions', '', ''],
+        ].map((row, ri) => (
+          row.filter(Boolean).map((label, ci) => (
+            <g key={label}>
+              <rect x={242 + ci * 50} y={452 + ri * 22} width={46} height={18} rx={4} fill="#e0e7ff" stroke="#6366f1" strokeWidth={1} />
+              <text x={265 + ci * 50} y={464 + ri * 22} textAnchor="middle" fontSize={8.5} fill="#312e81" fontFamily="Inter,sans-serif">{label}</text>
+            </g>
+          ))
+        ))}
 
-        <ConnLine label="API / SDK calls" />
+        {/* Backend Functions */}
+        <Node x={474} y={378} w={200} h={60} label="Backend Functions" sub="Deno Edge — serverless"
+          fill="#fef9c3" stroke="#ca8a04" textColor="#713f12" />
+        {[
+          'completeCellAndLogOffUsers',
+          'notifyCellAction',
+          'notifyManagers',
+          'processMileageRecalc',
+          'triggerMileageRecalc',
+          'queryMileage / validateOSMileage',
+          'searchAddress',
+          'getUsers · updateUser · manageOffice',
+        ].map((fn, i) => (
+          <text key={fn} x={574} y={453 + i * 14} textAnchor="middle" fontSize={8.5} fill="#78350f" fontFamily="Inter,sans-serif">• {fn}</text>
+        ))}
 
-        {/* ── EXTERNAL SERVICES ── */}
-        <Layer title="EXTERNAL SERVICES — Third-party APIs" color="#10b981">
-          <Row gap={12}>
+        {/* File Storage */}
+        <Node x={708} y={378} w={170} h={60} label="File Storage" sub="CDN-hosted · public URLs"
+          fill="#f3e8ff" stroke="#7c3aed" textColor="#3b0764" />
+        {['Sighting photos (JPEG)', 'Compressed via UploadFile'].map((t, i) => (
+          <text key={t} x={793} y={452 + i * 14} textAnchor="middle" fontSize={9} fill="#4c1d95" fontFamily="Inter,sans-serif">• {t}</text>
+        ))}
 
-            <Col center gap={5}>
-              <Box label="Twilio" sub="SMS / WhatsApp" color="#047857" width={130} />
-              <Note text="Check-in alerts" />
-              <Note text="Cell finish alerts" />
-              <Note text="Manager notifications" />
-            </Col>
+        {/* Core Integrations */}
+        <Node x={912} y={378} w={248} h={60} label="Core Integrations" sub="Built-in Base44 capabilities"
+          fill="#f3e8ff" stroke="#7c3aed" textColor="#3b0764" />
+        {['InvokeLLM', 'SendEmail (SMTP)', 'UploadFile', 'GenerateImage'].map((t, i) => (
+          <text key={t} x={1036} y={452 + i * 14} textAnchor="middle" fontSize={9} fill="#4c1d95" fontFamily="Inter,sans-serif">• {t}</text>
+        ))}
 
-            <Col center gap={5}>
-              <Box label="LocationIQ" sub="Geocoding API" color="#047857" width={130} />
-              <Note text="Address → lat/lng" />
-              <Note text="Search box results" />
-            </Col>
+        {/* Divider label */}
+        <line x1={36} y1={555} x2={W - 36} y2={555} stroke="#c4b5fd" strokeWidth={1} strokeDasharray="4,4" />
+        <text x={W / 2} y={568} textAnchor="middle" fontSize={9} fill="#7c3aed" fontWeight={600} fontFamily="Inter,sans-serif">KEY DATA FLOWS</text>
 
-            <Col center gap={5}>
-              <Box label="OS Maps API" sub="Ordnance Survey" color="#047857" width={130} />
-              <Note text="Road mileage validation" />
-              <Note text="OS Features API" />
-            </Col>
+        {/* Flow boxes */}
+        {[
+          {
+            x: 36, title: '🔐 Check-In Flow',
+            steps: ['Field User opens app', '→ CellCheckInModal', '→ Cell entity (in_progress)', '→ notifyCellAction fn', '→ Twilio SMS to Manager'],
+          },
+          {
+            x: 316, title: '🍃 Sighting Flow',
+            steps: ['User taps Spotted', '→ GPS / pin adjust', '→ UploadFile (photo)', '→ Sighting entity', '→ notifyManagers → Email'],
+          },
+          {
+            x: 596, title: '📐 Mileage Recalc',
+            steps: ['Admin triggers recalc', '→ triggerMileageRecalc fn', '→ Overpass API (OSM)', '→ OS Features API', '→ Cell entity updated'],
+          },
+          {
+            x: 876, title: '✅ Cell Finish Flow',
+            steps: ['User taps Finish', '→ completeCellAndLogOffUsers', '→ Cell → completed', '→ All users logged off', '→ Twilio SMS to Manager'],
+          },
+        ].map(({ x, title, steps }) => (
+          <g key={title}>
+            <rect x={x} y={578} width={260} height={130} rx={8} fill="#fef3c7" stroke="#f59e0b" strokeWidth={1.5} />
+            <text x={x + 130} y={596} textAnchor="middle" fontSize={10} fontWeight={700} fill="#92400e" fontFamily="Inter,sans-serif">{title}</text>
+            {steps.map((s, i) => (
+              <text key={s} x={x + 10} y={614 + i * 18} textAnchor="start" fontSize={9} fill="#78350f" fontFamily="Inter,sans-serif">{s}</text>
+            ))}
+          </g>
+        ))}
 
-            <Col center gap={5}>
-              <Box label="OpenStreetMap" sub="Overpass API" color="#047857" width={130} />
-              <Note text="Road type breakdown" />
-              <Note text="Adopted/unadopted calc" />
-            </Col>
+        {/* Arrow: Platform → External */}
+        <Arrow x1={W / 2} y1={780} x2={W / 2} y2={815} label="API calls" color="#7c3aed" />
 
-            <Col center gap={5}>
-              <Box label="OSM Tile Server" sub="Map tiles" color="#047857" width={130} />
-              <Note text="Street / Satellite" />
-              <Note text="OS Road tiles" />
-            </Col>
+        {/* ══════════════════════════════════════════
+            LAYER 3 — EXTERNAL SERVICES (y: 818 →1010)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={818} w={W - 40} h={200} label="EXTERNAL SERVICES  ·  Third-party APIs" fill={CLR.external.fill} stroke={CLR.external.stroke} headerColor={CLR.external.header} />
 
-            <Col center gap={5}>
-              <Box label="Email (SMTP)" sub="via Base44 Core" color="#047857" width={130} />
-              <Note text="Sighting reports" />
-              <Note text="HTML email to managers" />
-            </Col>
+        {[
+          { label: 'Twilio', sub: 'SMS / WhatsApp', detail: ['Check-in alerts', 'Cell finish alerts', 'Manager notifs'] },
+          { label: 'LocationIQ', sub: 'Geocoding API', detail: ['Address → lat/lng', 'SearchBox results'] },
+          { label: 'OS Maps API', sub: 'Ordnance Survey', detail: ['Road mileage validation', 'OS Features API'] },
+          { label: 'OpenStreetMap', sub: 'Overpass API', detail: ['Road type breakdown', 'Adopted/unadopted calc'] },
+          { label: 'OSM Tile Server', sub: 'Map tiles', detail: ['Street / Satellite', 'OS Road overlay'] },
+          { label: 'SMTP (Email)', sub: 'via Base44 Core', detail: ['Sighting HTML reports', 'Manager notifications'] },
+        ].map(({ label, sub, detail }, i) => (
+          <g key={label}>
+            <Node x={36 + i * 192} y={858} w={172} h={46} label={label} sub={sub}
+              fill="#d1fae5" stroke="#059669" textColor="#064e3b" fontSize={11} />
+            {detail.map((d, di) => (
+              <text key={d} x={122 + i * 192} y={918 + di * 13} textAnchor="middle" fontSize={8.5} fill="#065f46" fontFamily="Inter,sans-serif">• {d}</text>
+            ))}
+          </g>
+        ))}
 
-          </Row>
-        </Layer>
+        {/* ══════════════════════════════════════════
+            OFFLINE + PWA LAYER (y: 1040 → 1120)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={1055} w={W - 40} h={110} label="OFFLINE / PWA LAYER  ·  Works without internet" fill="#fff7ed" stroke="#f97316" headerColor="#ea580c" />
 
-        <ConnLine />
+        {[
+          { label: 'Service Worker', sub: 'Cache-first strategy', x: 36 },
+          { label: 'IndexedDB', sub: 'Cell polygon cache', x: 290 },
+          { label: 'Offline Queue', sub: 'Sightings queued', x: 544 },
+          { label: 'PWA Manifest', sub: 'Installable on device', x: 798 },
+          { label: 'Auto-sync', sub: 'On reconnect → flush queue', x: 1000 },
+        ].map(({ label, sub, x }) => (
+          <Node key={label} x={x} y={1092} w={178} h={44} label={label} sub={sub}
+            fill="#ffedd5" stroke="#f97316" textColor="#7c2d12" fontSize={10.5} />
+        ))}
 
-        {/* ── DATA FLOW SUMMARY ── */}
-        <Layer title="KEY DATA FLOWS" color="#f59e0b">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {/* ══════════════════════════════════════════
+            USER ROLES (y: 1185 → 1320)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={1185} w={W - 40} h={200} label="USER ROLES  ·  Access Control" fill="#fdf4ff" stroke="#a855f7" headerColor="#9333ea" />
 
-            {/* Flow 1 */}
-            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
-              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>🔐 Check-In Flow</div>
-              <Row gap={4}>
-                <Note text="Field User" color="#d1fae5" textColor="#065f46" />
-                <HArrow />
-                <Note text="CellCheckInModal" color="#e0e7ff" textColor="#3730a3" />
-                <HArrow />
-                <Note text="Cell entity (in_progress)" color="#dbeafe" textColor="#1e40af" />
-              </Row>
-              <div style={{ marginTop: 4 }}>
-                <Row gap={4}>
-                  <Note text="updateMe (active_cell_id)" color="#e0e7ff" textColor="#3730a3" />
-                  <HArrow />
-                  <Note text="notifyCellAction" color="#e0e7ff" textColor="#3730a3" />
-                  <HArrow />
-                  <Note text="Twilio SMS" color="#d1fae5" textColor="#065f46" />
-                </Row>
-              </div>
-            </div>
+        {[
+          {
+            label: 'Admin', color: '#9333ea', fill: '#f3e8ff',
+            perms: ['Full system access', 'Draw / edit / delete cells', 'User & office management', 'Dashboard & analytics', 'Recalculate road mileage', 'Print map / export'],
+          },
+          {
+            label: 'Manager', color: '#2563eb', fill: '#dbeafe',
+            perms: ['Receives SMS/WhatsApp alerts', 'Draw cells (map)', 'Dashboard & analytics', 'View sightings dashboard', 'Office management'],
+          },
+          {
+            label: 'Field User', color: '#059669', fill: '#d1fae5',
+            perms: ['Morning check-in modal', 'Log in/out of cells', 'Log sightings + photos', 'Browse map & sightings', 'Chemical / spray logs', 'Works offline (PWA)'],
+          },
+        ].map(({ label, color, fill, perms }, i) => (
+          <g key={label}>
+            <rect x={36 + i * 385} y={1222} width={360} height={140} rx={8} fill={fill} stroke={color} strokeWidth={1.5} />
+            <text x={216 + i * 385} y={1242} textAnchor="middle" fontSize={12} fontWeight={800} fill={color} fontFamily="Inter,sans-serif">{label}</text>
+            {perms.map((p, pi) => (
+              <text key={p} x={52 + i * 385} y={1262 + pi * 16} textAnchor="start" fontSize={9.5} fill={color} fontFamily="Inter,sans-serif">✓  {p}</text>
+            ))}
+          </g>
+        ))}
 
-            {/* Flow 2 */}
-            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
-              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>🍃 Sighting Flow</div>
-              <Row gap={4}>
-                <Note text="GPS / pin adjust" color="#d1fae5" textColor="#065f46" />
-                <HArrow />
-                <Note text="SpeciesModal" color="#e0e7ff" textColor="#3730a3" />
-                <HArrow />
-                <Note text="UploadFile" color="#dbeafe" textColor="#1e40af" />
-              </Row>
-              <div style={{ marginTop: 4 }}>
-                <Row gap={4}>
-                  <Note text="Sighting entity" color="#dbeafe" textColor="#1e40af" />
-                  <HArrow />
-                  <Note text="notifyManagers fn" color="#e0e7ff" textColor="#3730a3" />
-                  <HArrow />
-                  <Note text="HTML Email" color="#d1fae5" textColor="#065f46" />
-                </Row>
-              </div>
-            </div>
+        {/* ══════════════════════════════════════════
+            FUTURE / PLANNED (y: 1410 → 1520)
+        ══════════════════════════════════════════ */}
+        <Lane x={20} y={1415} w={W - 40} h={140} label="PLANNED FEATURES  ·  Future Development" fill="#f0fdf4" stroke="#22c55e" headerColor="#16a34a" />
 
-            {/* Flow 3 */}
-            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
-              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>📐 Mileage Recalc Flow</div>
-              <Row gap={4}>
-                <Note text="Admin triggers recalc" color="#d1fae5" textColor="#065f46" />
-                <HArrow />
-                <Note text="triggerMileageRecalc fn" color="#e0e7ff" textColor="#3730a3" />
-              </Row>
-              <div style={{ marginTop: 4 }}>
-                <Row gap={4}>
-                  <Note text="Overpass API" color="#d1fae5" textColor="#065f46" />
-                  <HArrow />
-                  <Note text="OS Features API" color="#d1fae5" textColor="#065f46" />
-                  <HArrow />
-                  <Note text="Cell entity updated" color="#dbeafe" textColor="#1e40af" />
-                </Row>
-              </div>
-            </div>
+        {[
+          { x: 36,  label: 'Reporting Module', sub: 'PDF spray reports per cell/area' },
+          { x: 256, label: 'Push Notifications', sub: 'Browser / native push alerts' },
+          { x: 476, label: 'Photo Gallery', sub: 'Per-sighting photo history' },
+          { x: 696, label: 'Route Optimisation', sub: 'Suggested spray run order' },
+          { x: 916, label: 'Native Mobile App', sub: 'iOS & Android (same codebase)' },
+        ].map(({ x, label, sub }) => (
+          <g key={label}>
+            <rect x={x} y={1452} width={200} height={52} rx={7} fill="#dcfce7" stroke="#22c55e" strokeWidth={1.5} strokeDasharray="6,3" />
+            <text x={x + 100} y={1473} textAnchor="middle" fontSize={10} fontWeight={700} fill="#14532d" fontFamily="Inter,sans-serif">{label}</text>
+            <text x={x + 100} y={1490} textAnchor="middle" fontSize={8.5} fill="#166534" fontFamily="Inter,sans-serif">{sub}</text>
+          </g>
+        ))}
 
-            {/* Flow 4 */}
-            <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 12px', border: '1px solid #fcd34d' }}>
-              <div style={{ fontWeight: 700, fontSize: 10.5, color: '#92400e', marginBottom: 6 }}>✅ Cell Finish Flow</div>
-              <Row gap={4}>
-                <Note text="User taps Finish" color="#d1fae5" textColor="#065f46" />
-                <HArrow />
-                <Note text="completeCellAndLogOffUsers fn" color="#e0e7ff" textColor="#3730a3" />
-              </Row>
-              <div style={{ marginTop: 4 }}>
-                <Row gap={4}>
-                  <Note text="Cell → completed" color="#dbeafe" textColor="#1e40af" />
-                  <HArrow />
-                  <Note text="All users logged off" color="#dbeafe" textColor="#1e40af" />
-                  <HArrow />
-                  <Note text="Twilio SMS" color="#d1fae5" textColor="#065f46" />
-                </Row>
-              </div>
-            </div>
+        {/* ── Connector arrows between layers ── */}
 
-          </div>
-        </Layer>
+        {/* Pages → Components (within client) */}
+        {[0,1,2,3,4].map(i => (
+          <Arrow key={i} x1={136 + i * 228} y1={98} x2={136 + i * 228} y2={130} color="#3b82f6" />
+        ))}
 
-      </div>
+        {/* Functions → Twilio */}
+        <Elbow x1={574} y1={440} x2={122} y2={858} label="SMS via Twilio" color="#ca8a04" dashed />
 
-      {/* Footer */}
-      <div style={{ textAlign: 'center', marginTop: 24, fontSize: 9.5, color: '#94a3b8' }}>
-        KerbPro Field Management System · Architecture Diagram · Confidential
-      </div>
+        {/* Functions → OSM */}
+        <Elbow x1={574} y1={440} x2={700} y2={858} label="Overpass API" color="#ca8a04" dashed />
+
+        {/* Functions → OS Maps */}
+        <Elbow x1={574} y1={440} x2={506} y2={858} label="OS Features" color="#ca8a04" dashed />
+
+        {/* Core Integrations → Email */}
+        <Elbow x1={1036} y1={440} x2={1006} y2={858} label="SMTP email" color="#7c3aed" dashed />
+
+        {/* SearchBox → LocationIQ */}
+        <Elbow x1={700} y1={172} x2={314} y2={858} label="Geocoding" color="#3b82f6" dashed />
+
+        {/* Client → OSM Tiles */}
+        <Elbow x1={136} y1={172} x2={893} y2={858} label="Map tiles" color="#3b82f6" dashed />
+
+        {/* Legend */}
+        <g transform={`translate(${W - 260}, 1600)`}>
+          <rect x={0} y={0} width={240} height={120} rx={8} fill="#fff" stroke="#e2e8f0" strokeWidth={1.5} />
+          <text x={120} y={20} textAnchor="middle" fontSize={10} fontWeight={700} fill="#334155" fontFamily="Inter,sans-serif">LEGEND</text>
+          {[
+            { color: '#3b82f6', label: 'Client / Frontend call', dashed: false },
+            { color: '#7c3aed', label: 'Platform internal call', dashed: false },
+            { color: '#ca8a04', label: 'Backend fn → External API', dashed: true },
+            { color: '#059669', label: 'External service', dashed: false },
+          ].map(({ color, label, dashed }, i) => (
+            <g key={label}>
+              <line x1={14} y1={38 + i * 20} x2={54} y2={38 + i * 20} stroke={color} strokeWidth={2} strokeDasharray={dashed ? '5,3' : undefined} />
+              <polygon points={`54,${38 + i * 20} 48,${34 + i * 20} 48,${42 + i * 20}`} fill={color} />
+              <text x={62} y={42 + i * 20} textAnchor="start" fontSize={9} fill="#334155" fontFamily="Inter,sans-serif">{label}</text>
+            </g>
+          ))}
+        </g>
+
+        {/* Footer */}
+        <text x={W / 2} y={H - 12} textAnchor="middle" fontSize={9} fill="#94a3b8" fontFamily="Inter,sans-serif">
+          KerbPro Field Management System · System Architecture · Confidential
+        </text>
+
+      </svg>
     </div>
   );
 });
