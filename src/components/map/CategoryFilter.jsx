@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Filter } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van'];
 
 const CATEGORY_COLORS = {
   'Species':      'bg-green-100 text-green-700 border-green-300',
   'Free Parking': 'bg-blue-100 text-blue-700 border-blue-300',
   'Hydrant':      'bg-red-100 text-red-700 border-red-300',
-  'Incident':     'bg-purple-100 text-purple-700 border-purple-300',
+  'WO Point':     'bg-sky-100 text-sky-600 border-sky-300',
   'Public Toilet':'bg-yellow-100 text-yellow-700 border-yellow-300',
   'Cafe / Van':   'bg-orange-100 text-orange-700 border-orange-300',
 };

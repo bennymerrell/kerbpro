@@ -7,7 +7,7 @@ const CATEGORY_BG = {
   'Species':      'bg-green-100 text-green-700',
   'Free Parking': 'bg-blue-100 text-blue-700',
   'Hydrant':      'bg-amber-100 text-amber-700',
-  'Incident':     'bg-purple-100 text-purple-700',
+  'WO Point':     'bg-sky-100 text-sky-600',
   'Public Toilet':'bg-orange-100 text-orange-700',
   'Cafe / Van':   'bg-red-100 text-red-700',
 };
@@ -25,7 +25,7 @@ function EditModal({ item, onClose, onSave }) {
     onClose();
   }
 
-  const isHydrant = (form.species || '').includes('[Hydrant]');
+  const isHydrant = (form.species || '').includes('[Hydrant]') || (form.species || '').includes('[WO Point]');
 
   return (
     <div className="fixed inset-0 z-[5000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
