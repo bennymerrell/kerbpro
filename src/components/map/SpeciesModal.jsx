@@ -35,7 +35,7 @@ function DraggableMarker({ position, onChange }) {
   );
 }
 
-const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van'];
 
 export default function SpeciesModal({ location, onClose, onSaved }) {
   const [category, setCategory] = useState('Species');
@@ -156,9 +156,9 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
           </div>
 
           {/* Category-specific fields */}
-          {category === 'Hydrant' && (
+          {(category === 'Hydrant' || category === 'WO Point') && (
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Hydrant Status <span className="text-destructive">*</span></label>
+              <label className="text-xs font-medium text-foreground block mb-2">{category} Status <span className="text-destructive">*</span></label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[{ value: 'working', label: '✅ Working' }, { value: 'not_working', label: '❌ Not Working' }].map(opt => (
                   <label key={opt.value} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-pointer text-xs font-medium transition-all ${
@@ -166,7 +166,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
                       ? opt.value === 'working' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-destructive bg-destructive/10 text-destructive'
                       : 'border-border text-foreground hover:bg-muted/50'
                   }`}>
-                    <input type="radio" name="hydrantStatus" value={opt.value} checked={statusDetails === opt.value} onChange={() => setStatusDetails(opt.value)} className="hidden" />
+                    <input type="radio" name="statusDetails" value={opt.value} checked={statusDetails === opt.value} onChange={() => setStatusDetails(opt.value)} className="hidden" />
                     {opt.label}
                   </label>
                 ))}
@@ -238,7 +238,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
           <Button
             type="submit"
-            disabled={sending || sent || (category === 'Hydrant' && !statusDetails)}
+            disabled={sending || sent || ((category === 'Hydrant' || category === 'WO Point') && !statusDetails)}
             className="w-full h-9 text-sm"
           >
             {sent ? (

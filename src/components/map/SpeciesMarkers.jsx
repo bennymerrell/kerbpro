@@ -18,29 +18,43 @@ const CATEGORY_COLORS = {
   'Free Parking':        '#2563eb',
   'Hydrant':             '#f59e0b',
   'Hydrant_not_working': '#9ca3af',
-  'Incident':            '#7c3aed',
+  'WO Point':            '#ffffff',
+  'WO Point_not_working': '#ffffff',
   'Public Toilet':       '#d97706',
   'Cafe / Van':          '#ea580c',
 };
 
 function createSightingIcon(sighting, isMoving = false) {
   const category = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
-  const isNotWorking = category === 'Hydrant' && sighting.status_details === 'not_working';
-  const key = isNotWorking ? 'Hydrant_not_working' : category;
-  const color = CATEGORY_COLORS[key] || '#2563eb';
+  const isNotWorking = sighting.status_details === 'not_working';
+
+  // Hydrant
+  const isHydrantNotWorking = category === 'Hydrant' && isNotWorking;
+  const hydrantKey = isHydrantNotWorking ? 'Hydrant_not_working' : category;
+
+  // WO Point
+  const isWOPoint = category === 'WO Point';
+
+  const key = isHydrantNotWorking ? 'Hydrant_not_working' : category;
+  const color = isWOPoint ? '#ffffff' : (CATEGORY_COLORS[key] || '#2563eb');
 
   let innerHtml;
   if (category === 'Hydrant') {
-    const textColor = isNotWorking ? '#ffffff' : '#000000';
+    const textColor = isHydrantNotWorking ? '#ffffff' : '#000000';
     innerHtml = `<span style="font-size:18px;font-weight:900;color:${textColor};font-family:Arial,sans-serif;line-height:1;">H</span>`;
+  } else if (isWOPoint) {
+    innerHtml = `<span style="font-size:13px;font-weight:900;color:#60b8e0;font-family:Arial,sans-serif;line-height:1;letter-spacing:-0.5px;">WO</span>`;
   } else {
     const svg = CATEGORY_SVGS[key] || CATEGORY_SVGS['Species'];
     innerHtml = svg;
   }
 
-  const badge = category === 'Hydrant' && sighting.status_details
+  const hasBadge = (category === 'Hydrant' || isWOPoint) && sighting.status_details;
+  const badge = hasBadge
     ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '\u2715' : '\u2713'}</div>`
     : '';
+
+  const borderColor = isMoving ? '#f59e0b' : (isWOPoint ? '#60b8e0' : (isHydrantNotWorking ? '#6b7280' : '#000'));
 
   const movingRing = isMoving
     ? `position:relative;outline:3px solid #f59e0b;outline-offset:2px;animation:pulse 1s infinite;`
@@ -51,7 +65,7 @@ function createSightingIcon(sighting, isMoving = false) {
     html: `<div style="${movingRing}width:34px;height:34px;"><div style="
       width: 34px; height: 34px; border-radius: 4px;
       background: ${color};
-      border: 3px solid ${isMoving ? '#f59e0b' : (isNotWorking ? '#6b7280' : '#000')};
+      border: 3px solid ${borderColor};
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
     ">${innerHtml}</div>${badge}</div>`,
