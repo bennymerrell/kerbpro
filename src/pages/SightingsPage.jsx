@@ -30,12 +30,12 @@ function CategoryMapIcon({ category, statusDetails }) {
   const isWOPoint = category === 'WO Point';
   const isNotWorking = (isHydrant || isWOPoint) && statusDetails === 'not_working';
   const bg = isNotWorking ? '#9ca3af' : (CATEGORY_BG[category] || '#2563eb');
-  const border = isWOPoint ? '#60b8e0' : (isNotWorking ? '#6b7280' : '#000');
+  const border = isNotWorking ? '#6b7280' : (isWOPoint ? '#60b8e0' : '#000');
 
   const inner = isHydrant
     ? `<span style="font-size:13px;font-weight:900;color:${isNotWorking ? '#fff' : '#000'};font-family:Arial,sans-serif;line-height:1;">H</span>`
     : isWOPoint
-      ? `<span style="font-size:10px;font-weight:900;color:#60b8e0;font-family:Arial,sans-serif;line-height:1;">WO</span>`
+      ? `<span style="font-size:10px;font-weight:900;color:${isNotWorking ? '#fff' : '#60b8e0'};font-family:Arial,sans-serif;line-height:1;">WO</span>`
       : (CATEGORY_SVGS[category] || CATEGORY_SVGS['Species']);
 
   return (

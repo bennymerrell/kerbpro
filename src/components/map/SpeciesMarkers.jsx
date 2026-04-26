@@ -34,16 +34,17 @@ function createSightingIcon(sighting, isMoving = false) {
 
   // WO Point
   const isWOPoint = category === 'WO Point';
+  const isWONotWorking = isWOPoint && isNotWorking;
 
   const key = isHydrantNotWorking ? 'Hydrant_not_working' : category;
-  const color = isWOPoint ? '#ffffff' : (CATEGORY_COLORS[key] || '#2563eb');
+  const color = isWONotWorking ? '#9ca3af' : (isWOPoint ? '#ffffff' : (CATEGORY_COLORS[key] || '#2563eb'));
 
   let innerHtml;
   if (category === 'Hydrant') {
     const textColor = isHydrantNotWorking ? '#ffffff' : '#000000';
     innerHtml = `<span style="font-size:18px;font-weight:900;color:${textColor};font-family:Arial,sans-serif;line-height:1;">H</span>`;
   } else if (isWOPoint) {
-    innerHtml = `<span style="font-size:13px;font-weight:900;color:#60b8e0;font-family:Arial,sans-serif;line-height:1;letter-spacing:-0.5px;">WO</span>`;
+    innerHtml = `<span style="font-size:13px;font-weight:900;color:${isWONotWorking ? '#ffffff' : '#60b8e0'};font-family:Arial,sans-serif;line-height:1;letter-spacing:-0.5px;">WO</span>`;
   } else {
     const svg = CATEGORY_SVGS[key] || CATEGORY_SVGS['Species'];
     innerHtml = svg;
@@ -54,7 +55,7 @@ function createSightingIcon(sighting, isMoving = false) {
     ? `<div style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:${isNotWorking ? '#ef4444' : '#22c55e'};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:bold;">${isNotWorking ? '\u2715' : '\u2713'}</div>`
     : '';
 
-  const borderColor = isMoving ? '#f59e0b' : (isWOPoint ? '#60b8e0' : (isHydrantNotWorking ? '#6b7280' : '#000'));
+  const borderColor = isMoving ? '#f59e0b' : (isWONotWorking ? '#6b7280' : (isWOPoint ? '#60b8e0' : (isHydrantNotWorking ? '#6b7280' : '#000')));
 
   const movingRing = isMoving
     ? `position:relative;outline:3px solid #f59e0b;outline-offset:2px;animation:pulse 1s infinite;`
