@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom, Building2, Leaf } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom, Building2, Leaf, GitBranch } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement.jsx';
 import Analytics from '../components/dashboard/Analytics';
 import CellsDashboard from '../components/dashboard/CellsDashboard';
@@ -84,6 +84,10 @@ export default function DashboardPage() {
               Contact Support
             </a>
           )}
+          <button onClick={() => navigate('/process-flow')} className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-muted hover:bg-muted/70 text-xs font-medium text-foreground transition-colors">
+              <GitBranch className="h-3 w-3" />
+              Process Flow
+            </button>
           <span className="text-xs text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium capitalize">{user.role}</span>
         </div>
       </div>
