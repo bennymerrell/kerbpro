@@ -19,7 +19,7 @@ const CATEGORY_COLORS = {
   'Hydrant':             '#f59e0b',
   'Hydrant_not_working': '#9ca3af',
   'WO Point':            '#ffffff',
-  'WO Point_not_working': '#ffffff',
+  'WO Point_not_working': '#9ca3af',
   'Public Toilet':       '#d97706',
   'Cafe / Van':          '#ea580c',
 };
@@ -36,8 +36,8 @@ function createSightingIcon(sighting, isMoving = false) {
   const isWOPoint = category === 'WO Point';
   const isWONotWorking = isWOPoint && isNotWorking;
 
-  const key = isHydrantNotWorking ? 'Hydrant_not_working' : category;
-  const color = isWONotWorking ? '#9ca3af' : (isWOPoint ? '#ffffff' : (CATEGORY_COLORS[key] || '#2563eb'));
+  const key = isHydrantNotWorking ? 'Hydrant_not_working' : (isWONotWorking ? 'WO Point_not_working' : category);
+  const color = CATEGORY_COLORS[key] || '#2563eb';
 
   let innerHtml;
   if (category === 'Hydrant') {
@@ -165,7 +165,7 @@ function SightingMarker({ sighting, onViewDetails, onMoved }) {
 export default function SpeciesMarkers({ sightings, onRemove, onViewDetails, onSightingMoved }) {
   return sightings.map((s, i) => (
     <SightingMarker
-      key={`sighting-${s.id || i}-${s.lat}-${s.lng}`}
+      key={`sighting-${s.id || i}-${s.lat}-${s.lng}-${s.status_details}`}
       sighting={s}
       onViewDetails={onViewDetails}
       onMoved={onSightingMoved}
