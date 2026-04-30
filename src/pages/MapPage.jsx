@@ -283,8 +283,10 @@ export default function MapPage() {
     }
   }
 
-  async function handleCellContinue() {
-    // Nothing to do — user already has an active cell, just close the menu
+  function handleCellContinue() {
+    // Show the resume modal with photo upload
+    setShowCheckIn(true);
+    setPreselectedCell(null);
   }
 
   async function handleCellFinish() {
@@ -526,7 +528,7 @@ export default function MapPage() {
           onStartCell={() => { setPreselectedCell(null); setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
-      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} onDismiss={preselectedCell ? () => { setShowCheckIn(false); setPreselectedCell(null); } : undefined} />}
+      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />
