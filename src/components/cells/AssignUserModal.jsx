@@ -8,11 +8,15 @@ export default function AssignUserModal({ cell, onClose, onAssigned }) {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [cells, setCells] = useState([]);
+
   useEffect(() => {
-    base44.functions.invoke('getUsers', {}).then(res => {
-      const all = res?.data?.users || [];
-      // Exclude users already on this cell or on a completed cell
-      setUsers(all.filter(u => u.role === 'user'));
+    Promise.all([
+      base44.functions.invoke('getUsers', {}),
+      base44.entities.Cell.list('-created_date', 200),
+    ]).then(([usersRes, cellData]) => {
+      setUsers((usersRes?.data?.users || []).filter(u => u.role === 'user'));
+      setCells(cellData);
       setLoading(false);
     });
   }, []);
@@ -73,9 +77,11 @@ export default function AssignUserModal({ cell, onClose, onAssigned }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium text-foreground truncate">{u.full_name || u.email}</div>
-                        {u.active_cell_id && (
-                          <div className="text-[10px] text-orange-500 font-medium">Currently on another cell</div>
-                        )}
+                        {u.active_cell_id && (() => {
+                          const c = cells.find(c => c.id === u.active_cell_id);
+                          const label = c ? [c.area, c.name || 'Unnamed'].filter(Boolean).join(' — ') : 'another cell';
+                          return <div className="text-[10px] text-orange-500 font-medium truncate">On: {label}</div>;
+                        })()}
                       </div>
                       {selectedUserId === u.id && (
                         <UserCheck className="h-4 w-4 text-primary flex-shrink-0" />
