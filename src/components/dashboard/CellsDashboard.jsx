@@ -313,11 +313,14 @@ export default function CellsDashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
                     <div className="text-[10px] text-muted-foreground">
-                      {isCompleted
-                        ? `${format(new Date(cell.completed_at), 'dd MMM yyyy')}${cell.completed_by ? ` · ${cell.completed_by}` : ''}`
-                        : [officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'
-                      }
+                      {[officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'}
                     </div>
+                    {isCompleted && (
+                      <div className="text-[10px] text-green-600 font-medium mt-0.5">
+                        ✓ {format(new Date(cell.completed_at), 'dd MMM yyyy')}{cell.completed_by ? ` · ${cell.completed_by}` : ''}
+                        {cell.adopted_m != null ? ` · ${Math.round(((cell.adopted_m) / 1609.34) * 2)} mi spray` : ''}
+                      </div>
+                    )}
                   </div>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
                   {/* Reset button — available on any non-not_started cell */}
