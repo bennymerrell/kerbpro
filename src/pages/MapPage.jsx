@@ -497,8 +497,8 @@ export default function MapPage() {
                 <span className="text-[10px] text-gray-400">Total Roads</span>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-gray-900">{(((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34) * 2).toFixed(2)} mi</span>
-                <span className="text-[10px] text-gray-400">{((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34).toFixed(2)} mi</span>
+                <span className="text-sm font-semibold text-gray-900">{Math.round(((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34) * 2)} mi</span>
+                <span className="text-[10px] text-gray-400">{Math.round((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34)} mi</span>
               </div>
             </div>
           </div>

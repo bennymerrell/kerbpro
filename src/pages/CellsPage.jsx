@@ -155,7 +155,7 @@ export default function CellsPage() {
       <div className="px-4 py-3 bg-muted/20">
         <div className="flex justify-between items-center mb-2">
           <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</div>
-          <div className="text-xs font-bold text-blue-600">{((includedTotal / 1609.34) * 2).toFixed(3)} mi spray</div>
+          <div className="text-xs font-bold text-blue-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</div>
         </div>
         <div className="space-y-1.5">
           {entries.map(([type, meters]) => {
@@ -174,7 +174,7 @@ export default function CellsPage() {
                 </button>
                 <span className="text-xs flex-1 capitalize text-muted-foreground">{type.replace(/_/g, ' ')}</span>
                 <span className={`text-xs font-medium ${isExcluded ? 'text-muted-foreground/40' : 'text-foreground'}`}>
-                  {meters > 0 ? (meters / 1609.34).toFixed(3) + ' mi' : '—'}
+                  {meters > 0 ? Math.round(meters / 1609.34) + ' mi' : '—'}
                 </span>
               </div>
             );
@@ -264,7 +264,7 @@ export default function CellsPage() {
                 {cell.area && <span>{cell.area}</span>}
                 {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
                 {cell.adopted_m != null && (
-                  <span className="text-blue-600 font-medium">{((cell.adopted_m / 1609.34) * 2).toFixed(2)} mi</span>
+                  <span className="text-blue-600 font-medium">{Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>
                 )}
                 {currentUser?.role === 'admin' && <WorkStatusBadge status={cell.work_status} />}
               </div>
