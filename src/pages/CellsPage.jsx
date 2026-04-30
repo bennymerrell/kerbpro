@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil, UserPlus } from 'lucide-react';
+import AssignUserModal from '../components/cells/AssignUserModal';
 
 const WORK_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
@@ -39,6 +40,7 @@ export default function CellsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [officeFilter, setOfficeFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
+  const [assigningCell, setAssigningCell] = useState(null);
   // recalcTriggering kept for new-cell recalc (triggered from AreaResultsPanel flow)
 
 
@@ -345,6 +347,14 @@ export default function CellsPage() {
                   <Pencil className="h-3.5 w-3.5" />
                   Edit Shape
                 </button>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => setAssigningCell(cell)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Assign
+                </button>
                 {/* Only show manual recalc for cells with no mileage data yet */}
                 {cell.adopted_m == null && <>
                   <div className="w-px bg-border" />
@@ -383,6 +393,19 @@ export default function CellsPage() {
           </div>
         ))}
       </div>
+
+      {assigningCell && (
+        <AssignUserModal
+          cell={assigningCell}
+          onClose={() => setAssigningCell(null)}
+          onAssigned={(user, cell) => {
+            setCells(prev => prev.map(c => c.id === cell.id && c.work_status !== 'in_progress'
+              ? { ...c, work_status: 'in_progress' }
+              : c
+            ));
+          }}
+        />
+      )}
     </div>
   );
 }
