@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck, UserPlus } from 'lucide-react';
+import AssignUserModal from '@/components/cells/AssignUserModal';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -135,6 +136,7 @@ export default function CellsDashboard() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [reassigning, setReassigning] = useState(null); // user being reassigned
+  const [assigningCell, setAssigningCell] = useState(null); // cell to assign a new user to
   const [filterArea, setFilterArea] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
   const [search, setSearch] = useState('');
@@ -329,6 +331,9 @@ export default function CellsDashboard() {
                       {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
                     </button>
                   )}
+                  <button onClick={() => setAssigningCell(cell)} title="Assign a user to this cell" className="p-1.5 rounded-lg hover:bg-indigo-50 text-muted-foreground hover:text-indigo-600 transition-colors flex-shrink-0">
+                    <UserPlus className="h-3.5 w-3.5" />
+                  </button>
                   <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
@@ -376,6 +381,16 @@ export default function CellsDashboard() {
           cells={cells}
           onClose={() => setReassigning(null)}
           onReassigned={handleReassigned}
+        />
+      )}
+
+      {assigningCell && (
+        <AssignUserModal
+          cell={assigningCell}
+          onClose={() => setAssigningCell(null)}
+          onAssigned={(user, cell) => {
+            handleReassigned(user.id, cell.id);
+          }}
         />
       )}
     </div>
