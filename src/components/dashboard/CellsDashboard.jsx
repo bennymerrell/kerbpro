@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -81,6 +81,21 @@ export default function CellsDashboard() {
   const [editing, setEditing] = useState(null);
   const [filterArea, setFilterArea] = useState('');
   const [search, setSearch] = useState('');
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchResult, setBatchResult] = useState(null);
+
+  async function handleBatchRecalc() {
+    setBatchRunning(true);
+    setBatchResult(null);
+    try {
+      const res = await base44.functions.invoke('batchMileageRecalc', {});
+      setBatchResult(res?.data || { ok: true });
+    } catch (e) {
+      setBatchResult({ error: e.message });
+    } finally {
+      setBatchRunning(false);
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -139,7 +154,23 @@ export default function CellsDashboard() {
             <h2 className="text-sm font-semibold text-foreground">Cell Status Overview</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{filteredCells.length} of {cells.length} cells</p>
           </div>
+          <button
+            onClick={handleBatchRecalc}
+            disabled={batchRunning}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50"
+          >
+            {batchRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {batchRunning ? 'Running…' : 'Recalc All Miles'}
+          </button>
         </div>
+        {batchResult && (
+          <div className={`text-xs px-3 py-2 rounded-lg ${batchResult.error ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            {batchResult.error
+              ? `Error: ${batchResult.error}`
+              : `Done — ${batchResult.processed ?? 0} processed, ${batchResult.errors ?? 0} errors, ${batchResult.skipped ?? 0} skipped`
+            }
+          </div>
+        )}
         <div className="flex gap-2 flex-wrap">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

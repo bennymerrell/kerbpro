@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, RefreshCw, Loader2, AlertCircle, Pencil, CheckCircle2, Circle, Clock } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil } from 'lucide-react';
 
 const WORK_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
@@ -37,6 +37,7 @@ export default function CellsPage() {
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
+  // recalcTriggering kept for new-cell recalc (triggered from AreaResultsPanel flow)
 
 
 
@@ -84,6 +85,7 @@ export default function CellsPage() {
 
 
 
+  // Per-cell recalc is only used for brand-new cells (no mileage yet)
   async function handleRecalculate(cell) {
     base44.analytics.track({ eventName: 'cell_recalc_triggered' });
     setRecalcTriggering(prev => ({ ...prev, [cell.id]: true }));
@@ -306,20 +308,23 @@ export default function CellsPage() {
                   <Pencil className="h-3.5 w-3.5" />
                   Edit Shape
                 </button>
-                <div className="w-px bg-border" />
-                <button
-                  onClick={() => handleRecalculate(cell)}
-                  disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
-                >
-                  {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
-                  ) : recalcTriggering[cell.id] ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
-                  ) : (
-                    <><RefreshCw className="h-3.5 w-3.5" />Recalc Miles</>
-                  )}
-                </button>
+                {/* Only show manual recalc for cells with no mileage data yet */}
+                {cell.adopted_m == null && <>
+                  <div className="w-px bg-border" />
+                  <button
+                    onClick={() => handleRecalculate(cell)}
+                    disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
+                  >
+                    {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
+                    ) : recalcTriggering[cell.id] ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
+                    ) : (
+                      <>Calc Miles</>
+                    )}
+                  </button>
+                </>}
                 <div className="w-px bg-border" />
                 <button
                   onClick={() => handleDelete(cell)}
@@ -333,7 +338,7 @@ export default function CellsPage() {
 
 
 
-            {cell.recalc_status === 'error' && cell.recalc_error && (
+            {cell.adopted_m == null && cell.recalc_status === 'error' && cell.recalc_error && (
               <div className="w-full px-3 py-1.5 text-[10px] text-red-600 bg-red-50 text-center flex items-center justify-center gap-1">
                 <AlertCircle className="h-3 w-3 flex-shrink-0" />{cell.recalc_error}
               </div>
