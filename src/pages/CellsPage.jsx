@@ -32,10 +32,12 @@ function getBreakdown(cell) {
 export default function CellsPage() {
   const navigate = useNavigate();
   const [cells, setCells] = useState([]);
+  const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
+  const [officeFilter, setOfficeFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
   // recalcTriggering kept for new-cell recalc (triggered from AreaResultsPanel flow)
 
@@ -46,8 +48,12 @@ export default function CellsPage() {
 
   const loadCells = useCallback(async () => {
     setLoading(true);
-    const data = await base44.entities.Cell.list('-created_date', 200);
+    const [data, officeData] = await Promise.all([
+      base44.entities.Cell.list('-created_date', 200),
+      base44.entities.Office.list(),
+    ]);
     setCells(data);
+    setOffices(officeData);
     setLoading(false);
   }, []);
 
@@ -65,11 +71,13 @@ export default function CellsPage() {
   const { refreshing } = usePullToRefresh(loadCells);
 
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+  const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
 
   const filtered = cells.filter(c => {
     const matchesSearch = (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase());
     const matchesArea = !areaFilter || c.area === areaFilter;
-    return matchesSearch && matchesArea;
+    const matchesOffice = !officeFilter || c.office_id === officeFilter;
+    return matchesSearch && matchesArea && matchesOffice;
   });
 
   async function handleToggle(cell) {
@@ -216,6 +224,25 @@ export default function CellsPage() {
             className="w-full h-10 pl-10 pr-4 rounded-xl border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
+        {offices.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <button
+              onClick={() => setOfficeFilter('')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!officeFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+            >
+              All Offices
+            </button>
+            {offices.map(office => (
+              <button
+                key={office.id}
+                onClick={() => setOfficeFilter(officeFilter === office.id ? '' : office.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${officeFilter === office.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+              >
+                {office.name}
+              </button>
+            ))}
+          </div>
+        )}
         {areas.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap pt-1">
             <button
@@ -261,6 +288,7 @@ export default function CellsPage() {
                 {cell.name || 'Unnamed Cell'}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5 flex items-center flex-wrap gap-2">
+                {cell.office_id && officeMap[cell.office_id] && <span className="text-indigo-500 font-medium">{officeMap[cell.office_id]}</span>}
                 {cell.area && <span>{cell.area}</span>}
                 {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
                 {cell.adopted_m != null && (

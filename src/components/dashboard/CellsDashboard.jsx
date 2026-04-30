@@ -136,6 +136,7 @@ export default function CellsDashboard() {
   const [editing, setEditing] = useState(null);
   const [reassigning, setReassigning] = useState(null); // user being reassigned
   const [filterArea, setFilterArea] = useState('');
+  const [filterOffice, setFilterOffice] = useState('');
   const [search, setSearch] = useState('');
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchResult, setBatchResult] = useState(null);
@@ -205,10 +206,12 @@ export default function CellsDashboard() {
   }
 
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+  const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
   const filteredCells = cells.filter(c => {
     const matchesArea = !filterArea || c.area === filterArea;
+    const matchesOffice = !filterOffice || c.office_id === filterOffice;
     const matchesSearch = !search || (c.name || '').toLowerCase().includes(search.toLowerCase()) || (c.area || '').toLowerCase().includes(search.toLowerCase());
-    return matchesArea && matchesSearch;
+    return matchesArea && matchesOffice && matchesSearch;
   });
 
   const completedCells = filteredCells.filter(c => c.work_status === 'completed' && c.completed_at);
@@ -253,6 +256,16 @@ export default function CellsDashboard() {
               className="w-full text-xs border border-input rounded-lg pl-8 pr-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
+          {offices.length > 0 && (
+            <select
+              value={filterOffice}
+              onChange={e => setFilterOffice(e.target.value)}
+              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">All Offices</option>
+              {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          )}
           {areas.length > 0 && (
             <select
               value={filterArea}
@@ -300,7 +313,7 @@ export default function CellsDashboard() {
                     <div className="text-[10px] text-muted-foreground">
                       {isCompleted
                         ? `${format(new Date(cell.completed_at), 'dd MMM yyyy')}${cell.completed_by ? ` · ${cell.completed_by}` : ''}`
-                        : [cell.area].filter(Boolean).join(' · ') || '—'
+                        : [officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'
                       }
                     </div>
                   </div>
