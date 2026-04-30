@@ -66,7 +66,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
           <a href="${photoUrl}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;">View Photo →</a>
         </td></tr>
         <tr><td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:12px;color:#9ca3af;">Sent automatically from the Kerb field mapping tool.</p>
+          <p style="margin:0;font-size:12px;color:#9ca3af;">Sent automatically from the KerbPro field mapping tool.</p>
         </td></tr></table></td></tr></table></body></html>`
       );
     }
@@ -149,7 +149,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <SquareDashedBottom className="h-5 w-5 text-white" />
               </div>
-              <span className="text-white font-black text-2xl tracking-tight">Kerb</span>
+              <span className="text-white font-black text-2xl tracking-tight">KerbPro</span>
             </div>
             <h2 className="text-white font-bold text-lg">Welcome back! 👷</h2>
             <p className="text-white/80 text-sm mt-1">
@@ -223,7 +223,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Leaf className="h-5 w-5 text-green-300" />
               </div>
-              <span className="text-white font-black text-2xl tracking-tight">Kerb</span>
+              <span className="text-white font-black text-2xl tracking-tight">KerbPro</span>
             </div>
             <h2 className="text-white font-bold text-lg">One quick thing 📱</h2>
             <p className="text-white/80 text-sm mt-1">We need your mobile number to notify your manager</p>
@@ -268,9 +268,9 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <Leaf className="h-5 w-5 text-green-300" />
             </div>
-            <span className="text-white font-black text-2xl tracking-tight">Kerb</span>
-          </div>
-          <h2 className="text-white font-bold text-lg">Good morning! 👋</h2>
+            <span className="text-white font-black text-2xl tracking-tight">KerbPro</span>
+            </div>
+            <h2 className="text-white font-bold text-lg">Good morning! 👋</h2>
           <p className="text-white/80 text-sm mt-1">Please log into your cell to begin work</p>
         </div>
 

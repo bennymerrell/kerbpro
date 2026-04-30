@@ -30,12 +30,12 @@ Deno.serve(async (req) => {
     const emailBody = `
       <p>Hi ${manager.full_name || manager.email},</p>
       <p><strong>${userName}</strong> has <strong>${actionLabel}</strong> cell <strong>${cellDesc}</strong>.</p>
-      <p>This is an automated notification from Kerb.</p>
+      <p>This is an automated notification from KerbPro.</p>
     `;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: manager.email,
-      subject: `Kerb: ${userName} ${actionLabel} ${cellDesc}`,
+      subject: `KerbPro: ${userName} ${actionLabel} ${cellDesc}`,
       body: emailBody,
     });
 

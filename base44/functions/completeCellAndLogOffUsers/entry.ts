@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
           const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;
           await base44.asServiceRole.integrations.Core.SendEmail({
             to: manager.email,
-            subject: `Kerb: ${userName} completed ${cellDesc}`,
-            body: `<p>Hi ${manager.full_name || manager.email},</p><p><strong>${userName}</strong> has <strong>completed</strong> cell <strong>${cellDesc}</strong>.</p><p>${usersOnCell.length > 1 ? `${usersOnCell.length} users have been automatically logged off this cell.` : ''}</p><p>This is an automated notification from Kerb.</p>`,
+            subject: `KerbPro: ${userName} completed ${cellDesc}`,
+            body: `<p>Hi ${manager.full_name || manager.email},</p><p><strong>${userName}</strong> has <strong>completed</strong> cell <strong>${cellDesc}</strong>.</p><p>${usersOnCell.length > 1 ? `${usersOnCell.length} users have been automatically logged off this cell.` : ''}</p><p>This is an automated notification from KerbPro.</p>`,
           });
         }
       } catch {}

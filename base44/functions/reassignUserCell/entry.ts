@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // Notify the user by email
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: targetUser.email,
-      subject: `Kerb: You have been reassigned to ${cellDesc}`,
+      subject: `KerbPro: You have been reassigned to ${cellDesc}`,
       body: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
@@ -46,8 +46,8 @@ Deno.serve(async (req) => {
 <tr><td style="padding:28px 32px;">
   <p style="margin:0 0 16px;font-size:15px;color:#374151;">Hi ${targetUser.full_name || targetUser.email},</p>
   <p style="margin:0 0 16px;font-size:15px;color:#374151;">You have been reassigned to cell <strong>${cellDesc}</strong> by <strong>${managerName}</strong>.</p>
-  <p style="margin:0 0 24px;font-size:15px;color:#374151;">Please open the Kerb app to continue working in your new cell.</p>
-  <p style="margin:0;font-size:13px;color:#9ca3af;">This is an automated notification from Kerb.</p>
+  <p style="margin:0 0 24px;font-size:15px;color:#374151;">Please open the KerbPro app to continue working in your new cell.</p>
+  <p style="margin:0;font-size:13px;color:#9ca3af;">This is an automated notification from KerbPro.</p>
 </td></tr>
 </table></td></tr></table></body></html>`,
     }).catch(() => {});
