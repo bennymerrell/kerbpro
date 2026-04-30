@@ -33,6 +33,7 @@ import IOSNavSheet from '../components/map/IOSNavSheet';
 import SightingDetailModal from '../components/SightingDetailModal';
 import CellCheckInModal from '../components/map/CellCheckInModal';
 import UserLandingChoice from '../components/map/UserLandingChoice';
+import ManagerLogoutModal from '../components/map/ManagerLogoutModal';
 
 // Fix leaflet default marker icon
 import L from 'leaflet';
@@ -262,8 +263,29 @@ export default function MapPage() {
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [preselectedCell, setPreselectedCell] = useState(null);
   const [activeUserCell, setActiveUserCell] = useState(null); // the cell the user is logged into
+  const [managerLogoutMessage, setManagerLogoutMessage] = useState(null);
 
   const mapRef = useRef(null);
+
+  // Poll for manager-forced logout notifications (every 30s)
+  useEffect(() => {
+    let interval;
+    const check = async () => {
+      try {
+        const u = await base44.auth.me();
+        if (u?.manager_logout_message) {
+          setManagerLogoutMessage(u.manager_logout_message);
+          setActiveUserCell(null);
+          setCurrentUser(prev => ({ ...prev, active_cell_id: '', manager_logout_message: '' }));
+        }
+      } catch {}
+    };
+    // Only poll for non-admin/manager users
+    if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+      interval = setInterval(check, 30000);
+    }
+    return () => clearInterval(interval);
+  }, [currentUser?.role]);
 
   function handleCheckIn(cell) {
     setShowCheckIn(false);
@@ -529,6 +551,14 @@ export default function MapPage() {
         />
       )}
       {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
+
+      {managerLogoutMessage && (
+        <ManagerLogoutModal
+          message={managerLogoutMessage}
+          onStartNewCell={() => { setManagerLogoutMessage(null); setShowLanding(false); setShowCheckIn(true); }}
+          onDismiss={() => { setManagerLogoutMessage(null); setShowLanding(true); }}
+        />
+      )}
 
       {selectedSighting && (
         <SightingDetailModal sighting={selectedSighting} onClose={() => setSelectedSighting(null)} />

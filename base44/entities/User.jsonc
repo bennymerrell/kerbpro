@@ -5,9 +5,9 @@
     "role": {
       "type": "string",
       "enum": [
-        "user",
+        "admin",
         "manager",
-        "admin"
+        "user"
       ],
       "default": "user"
     },
@@ -17,11 +17,11 @@
     },
     "manager_id": {
       "type": "string",
-      "description": "ID of the User who is this user's manager"
+      "description": "ID of the manager user assigned to this user"
     },
     "phone": {
       "type": "string",
-      "description": "Mobile phone number for SMS/WhatsApp notifications (e.g. +447700900000)"
+      "description": "Mobile phone number for SMS/WhatsApp notifications"
     },
     "active_cell_id": {
       "type": "string",
@@ -29,11 +29,15 @@
     },
     "active_cell_prev_status": {
       "type": "string",
-      "description": "Previous work_status of the cell before check-in"
+      "description": "Previous work status of the cell before check-in"
     },
     "active_cell_checkin_date": {
       "type": "string",
-      "description": "Date the user checked into the active cell (YYYY-MM-DD)"
+      "description": "Date the user checked into the active cell"
+    },
+    "manager_logout_message": {
+      "type": "string",
+      "description": "Set by backend when a manager logs a user out of a cell \u2014 triggers in-app notification modal"
     }
   }
 }

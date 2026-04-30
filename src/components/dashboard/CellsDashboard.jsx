@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -73,16 +73,73 @@ function EditCellModal({ cell, offices, onClose, onSave }) {
   );
 }
 
+function ReassignUserModal({ user, cells, onClose, onReassigned }) {
+  const [selectedCellId, setSelectedCellId] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  async function handleReassign() {
+    if (!selectedCellId) return;
+    setSaving(true);
+    await base44.functions.invoke('reassignUserCell', { userId: user.id, newCellId: selectedCellId });
+    onReassigned(user.id, selectedCellId);
+    setSaving(false);
+    onClose();
+  }
+
+  const availableCells = cells.filter(c => c.work_status !== 'completed');
+
+  return (
+    <div className="fixed inset-0 z-[5000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Reassign User</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{user.full_name || user.email}</p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div>
+            <label className="block text-[11px] font-medium text-muted-foreground mb-1">New Cell</label>
+            <select
+              value={selectedCellId}
+              onChange={e => setSelectedCellId(e.target.value)}
+              className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">— Select a cell —</option>
+              {availableCells.map(c => (
+                <option key={c.id} value={c.id}>{c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[11px] text-muted-foreground">The user will receive an email notification and their active cell will be updated.</p>
+        </div>
+        <div className="flex gap-2 px-5 py-4 border-t border-border">
+          <button onClick={onClose} className="flex-1 h-9 rounded-lg bg-muted text-sm font-medium text-foreground hover:bg-muted/70 transition-colors">Cancel</button>
+          <button onClick={handleReassign} disabled={saving || !selectedCellId} className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60">
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5" />}
+            Reassign
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CellsDashboard() {
   const [cells, setCells] = useState([]);
   const [offices, setOffices] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [reassigning, setReassigning] = useState(null); // user being reassigned
   const [filterArea, setFilterArea] = useState('');
   const [search, setSearch] = useState('');
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchResult, setBatchResult] = useState(null);
+  const [resettingId, setResettingId] = useState(null);
 
   async function handleBatchRecalc() {
     setBatchRunning(true);
@@ -116,19 +173,33 @@ export default function CellsDashboard() {
   }
 
   async function handleResetCell(cell) {
-    await base44.entities.Cell.update(cell.id, {
-      work_status: 'not_started',
-      completed_at: null,
-      completed_by: null,
-    });
-    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'not_started', completed_at: null, completed_by: null } : c));
+    setResettingId(cell.id);
+    try {
+      await base44.functions.invoke('managerResetCell', { cellId: cell.id });
+      setCells(prev => prev.map(c => c.id === cell.id
+        ? { ...c, work_status: 'not_started', completed_at: null, completed_by: null }
+        : c
+      ));
+      // Remove all users from this cell in local state
+      setUsers(prev => prev.map(u => u.active_cell_id === cell.id ? { ...u, active_cell_id: '' } : u));
+    } finally {
+      setResettingId(null);
+    }
   }
 
   function handleSave(updated) {
     setCells(prev => prev.map(c => c.id === updated.id ? updated : c));
   }
 
-  // Users checked into a given cell
+  function handleReassigned(userId, newCellId) {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, active_cell_id: newCellId } : u));
+    // Mark new cell as in_progress if needed
+    setCells(prev => prev.map(c => c.id === newCellId && c.work_status !== 'in_progress'
+      ? { ...c, work_status: 'in_progress' }
+      : c
+    ));
+  }
+
   function cellUsers(cellId) {
     return users.filter(u => u.active_cell_id === cellId);
   }
@@ -219,6 +290,7 @@ export default function CellsDashboard() {
             const s = STATUS_LABELS[cell.work_status] || STATUS_LABELS.not_started;
             const isCompleted = cell.work_status === 'completed' && cell.completed_at;
             const checkedInUsers = cellUsers(cell.id);
+            const isResetting = resettingId === cell.id;
             return (
               <div key={cell.id} className="px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -233,13 +305,15 @@ export default function CellsDashboard() {
                     </div>
                   </div>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
-                  {cell.work_status === 'completed' && (
+                  {/* Reset button — available on any non-not_started cell */}
+                  {cell.work_status && cell.work_status !== 'not_started' && (
                     <button
                       onClick={() => handleResetCell(cell)}
-                      title="Reset to Not Started"
-                      className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0"
+                      disabled={isResetting}
+                      title="Reset cell (logs out all users if in progress)"
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0 disabled:opacity-50"
                     >
-                      <RotateCcw className="h-3.5 w-3.5" />
+                      {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
                     </button>
                   )}
                   <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
@@ -252,10 +326,16 @@ export default function CellsDashboard() {
                 {checkedInUsers.length > 0 && (
                   <div className="ml-5 mt-1.5 flex flex-wrap gap-1.5">
                     {checkedInUsers.map(u => (
-                      <div key={u.id} className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">
+                      <button
+                        key={u.id}
+                        onClick={() => setReassigning(u)}
+                        title="Reassign this user to a different cell"
+                        className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
+                      >
                         <User className="h-2.5 w-2.5 text-orange-500 flex-shrink-0" />
                         <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
-                      </div>
+                        <UserCheck className="h-2.5 w-2.5 text-orange-400 flex-shrink-0" />
+                      </button>
                     ))}
                   </div>
                 )}
@@ -274,6 +354,15 @@ export default function CellsDashboard() {
           offices={offices}
           onClose={() => setEditing(null)}
           onSave={handleSave}
+        />
+      )}
+
+      {reassigning && (
+        <ReassignUserModal
+          user={reassigning}
+          cells={cells}
+          onClose={() => setReassigning(null)}
+          onReassigned={handleReassigned}
         />
       )}
     </div>
