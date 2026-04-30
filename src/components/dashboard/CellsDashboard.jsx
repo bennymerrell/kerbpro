@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -80,6 +80,7 @@ export default function CellsDashboard() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [filterArea, setFilterArea] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -118,7 +119,11 @@ export default function CellsDashboard() {
   }
 
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
-  const filteredCells = filterArea ? cells.filter(c => c.area === filterArea) : cells;
+  const filteredCells = cells.filter(c => {
+    const matchesArea = !filterArea || c.area === filterArea;
+    const matchesSearch = !search || (c.name || '').toLowerCase().includes(search.toLowerCase()) || (c.area || '').toLowerCase().includes(search.toLowerCase());
+    return matchesArea && matchesSearch;
+  });
 
   const completedCells = filteredCells.filter(c => c.work_status === 'completed' && c.completed_at);
   const inProgress = filteredCells.filter(c => c.work_status === 'in_progress');
@@ -128,21 +133,35 @@ export default function CellsDashboard() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Cell Status Overview</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{filteredCells.length} of {cells.length} cells</p>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Cell Status Overview</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{filteredCells.length} of {cells.length} cells</p>
+          </div>
         </div>
-        {areas.length > 0 && (
-          <select
-            value={filterArea}
-            onChange={e => setFilterArea(e.target.value)}
-            className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            <option value="">All Areas</option>
-            {areas.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search cells…"
+              className="w-full text-xs border border-input rounded-lg pl-8 pr-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          {areas.length > 0 && (
+            <select
+              value={filterArea}
+              onChange={e => setFilterArea(e.target.value)}
+              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">All Areas</option>
+              {areas.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          )}
+        </div>
       </div>
 
       {/* Summary cards */}
