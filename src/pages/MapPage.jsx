@@ -556,7 +556,7 @@ export default function MapPage() {
         <ManagerLogoutModal
           message={managerLogoutMessage}
           onStartNewCell={() => { setManagerLogoutMessage(null); setShowLanding(false); setShowCheckIn(true); }}
-          onDismiss={() => { setManagerLogoutMessage(null); setShowLanding(true); }}
+          onDismiss={() => { setManagerLogoutMessage(null); }}
         />
       )}
 

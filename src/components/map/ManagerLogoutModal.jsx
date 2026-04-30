@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { LogIn, AlertTriangle } from 'lucide-react';
+import { LogIn, AlertTriangle, Map } from 'lucide-react';
 
 export default function ManagerLogoutModal({ message, onStartNewCell, onDismiss }) {
   async function handleAcknowledge(startNew) {
@@ -34,9 +34,10 @@ export default function ManagerLogoutModal({ message, onStartNewCell, onDismiss 
           </button>
           <button
             onClick={() => handleAcknowledge(false)}
-            className="w-full h-10 rounded-xl bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/70 transition-colors"
+            className="w-full h-10 rounded-xl bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/70 transition-colors flex items-center justify-center gap-2"
           >
-            Dismiss
+            <Map className="h-4 w-4" />
+            View Map
           </button>
         </div>
       </div>
