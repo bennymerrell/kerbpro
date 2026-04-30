@@ -225,42 +225,51 @@ export default function CellsPage() {
           />
         </div>
         {offices.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap pt-1">
-            <button
-              onClick={() => setOfficeFilter('')}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!officeFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              All Offices
-            </button>
-            {offices.map(office => (
+          <div className="pt-2">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Office</div>
+            <div className="flex items-center gap-2 flex-wrap">
               <button
-                key={office.id}
-                onClick={() => setOfficeFilter(officeFilter === office.id ? '' : office.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${officeFilter === office.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                onClick={() => setOfficeFilter('')}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!officeFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
               >
-                {office.name}
+                All
               </button>
-            ))}
+              {offices.map(office => (
+                <button
+                  key={office.id}
+                  onClick={() => setOfficeFilter(officeFilter === office.id ? '' : office.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${officeFilter === office.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  {office.name}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {areas.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap pt-1">
-            <button
-              onClick={() => setAreaFilter('')}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!areaFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              All Areas
-            </button>
-            {areas.map(area => (
-              <button
-                key={area}
-                onClick={() => setAreaFilter(areaFilter === area ? '' : area)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${areaFilter === area ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-              >
-                {area}
-              </button>
-            ))}
-          </div>
+          <>
+            {offices.length > 0 && <div className="border-t border-border mt-3" />}
+            <div className={offices.length > 0 ? 'pt-3' : 'pt-2'}>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Area</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setAreaFilter('')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!areaFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  All
+                </button>
+                {areas.map(area => (
+                  <button
+                    key={area}
+                    onClick={() => setAreaFilter(areaFilter === area ? '' : area)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${areaFilter === area ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {area}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
