@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_LABELS = {
@@ -76,6 +76,7 @@ function EditCellModal({ cell, offices, onClose, onSave }) {
 export default function CellsDashboard() {
   const [cells, setCells] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [filterArea, setFilterArea] = useState('');
@@ -84,9 +85,11 @@ export default function CellsDashboard() {
     Promise.all([
       base44.entities.Cell.list('-completed_at', 200),
       base44.entities.Office.list(),
-    ]).then(([cellData, officeData]) => {
+      base44.functions.invoke('getUsers', {}),
+    ]).then(([cellData, officeData, usersRes]) => {
       setCells(cellData);
       setOffices(officeData);
+      setUsers(usersRes?.data?.users || []);
       setLoading(false);
     });
   }, []);
@@ -107,6 +110,11 @@ export default function CellsDashboard() {
 
   function handleSave(updated) {
     setCells(prev => prev.map(c => c.id === updated.id ? updated : c));
+  }
+
+  // Users checked into a given cell
+  function cellUsers(cellId) {
+    return users.filter(u => u.active_cell_id === cellId);
   }
 
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
@@ -160,34 +168,47 @@ export default function CellsDashboard() {
           {filteredCells.map(cell => {
             const s = STATUS_LABELS[cell.work_status] || STATUS_LABELS.not_started;
             const isCompleted = cell.work_status === 'completed' && cell.completed_at;
+            const checkedInUsers = cellUsers(cell.id);
             return (
-              <div key={cell.id} className="flex items-center gap-3 px-4 py-3">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {isCompleted
-                      ? `${format(new Date(cell.completed_at), 'dd MMM yyyy')}${cell.completed_by ? ` · ${cell.completed_by}` : ''}`
-                      : [cell.area].filter(Boolean).join(' · ') || '—'
-                    }
+              <div key={cell.id} className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {isCompleted
+                        ? `${format(new Date(cell.completed_at), 'dd MMM yyyy')}${cell.completed_by ? ` · ${cell.completed_by}` : ''}`
+                        : [cell.area].filter(Boolean).join(' · ') || '—'
+                      }
+                    </div>
                   </div>
-                </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
-                {cell.work_status === 'completed' && (
-                  <button
-                    onClick={() => handleResetCell(cell)}
-                    title="Reset to Not Started"
-                    className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
+                  {cell.work_status === 'completed' && (
+                    <button
+                      onClick={() => handleResetCell(cell)}
+                      title="Reset to Not Started"
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
+                  <button onClick={() => handleDelete(cell.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {checkedInUsers.length > 0 && (
+                  <div className="ml-5 mt-1.5 flex flex-wrap gap-1.5">
+                    {checkedInUsers.map(u => (
+                      <div key={u.id} className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">
+                        <User className="h-2.5 w-2.5 text-orange-500 flex-shrink-0" />
+                        <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => handleDelete(cell.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
               </div>
             );
           })}
