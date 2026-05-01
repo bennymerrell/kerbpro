@@ -66,8 +66,8 @@ export default function MapPage() {
       setCurrentUser(u);
       if (!u) return;
 
-      // Only show landing for regular users (not admin/manager)
-      if (u.role === 'admin' || u.role === 'manager') return;
+      // Only show landing for regular users (not admin)
+      if (u.role === 'admin') return;
 
       // Restore active cell from user profile if they're already checked in
       if (u.active_cell_id) {
@@ -280,8 +280,8 @@ export default function MapPage() {
         }
       } catch {}
     };
-    // Only poll for non-admin/manager users
-    if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+    // Only poll for non-admin users
+    if (currentUser && currentUser.role !== 'admin') {
       interval = setInterval(check, 30000);
     }
     return () => clearInterval(interval);
@@ -444,7 +444,7 @@ export default function MapPage() {
           userRole={currentUser?.role}
           activeUserCell={activeUserCell}
           onCellClick={
-            currentUser?.role !== 'admin' && currentUser?.role !== 'manager'
+            currentUser?.role !== 'admin'
               ? (cell) => {
                   if (activeUserCell && cell.id === activeUserCell.id) {
                     // Open nav sheet showing active cell options
@@ -544,13 +544,13 @@ export default function MapPage() {
         onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
-      {showLanding && !showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && (
+      {showLanding && !showCheckIn && currentUser?.role !== 'admin' && (
         <UserLandingChoice
           onViewMap={() => { localStorage.setItem('landing_dismissed_at', Date.now().toString()); setShowLanding(false); }}
           onStartCell={() => { setPreselectedCell(null); setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
-      {showCheckIn && currentUser?.role !== 'admin' && currentUser?.role !== 'manager' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
+      {showCheckIn && currentUser?.role !== 'admin' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
 
       {managerLogoutMessage && (
         <ManagerLogoutModal
