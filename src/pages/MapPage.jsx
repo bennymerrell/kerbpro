@@ -66,9 +66,6 @@ export default function MapPage() {
       setCurrentUser(u);
       if (!u) return;
 
-      // Only show landing for regular users (not admin)
-      if (u.role === 'admin') return;
-
       // Restore active cell from user profile if they're already checked in
       if (u.active_cell_id) {
         try {
@@ -81,16 +78,18 @@ export default function MapPage() {
         } catch {}
       }
 
-      // Always show landing choice if it's past 3am GMT
-      const nowGMT = new Date();
-      const hourGMT = nowGMT.getUTCHours();
-      if (hourGMT >= 3) {
-        // Check if user dismissed landing within the last hour
-        const dismissedAt = localStorage.getItem('landing_dismissed_at');
-        if (dismissedAt && Date.now() - parseInt(dismissedAt) < 60 * 60 * 1000) {
-          return; // Still within 1hr grace period
+      // Show landing choice for regular users and admins if it's past 3am GMT
+      if (u.role !== 'manager') {
+        const nowGMT = new Date();
+        const hourGMT = nowGMT.getUTCHours();
+        if (hourGMT >= 3) {
+          // Check if user dismissed landing within the last hour
+          const dismissedAt = localStorage.getItem('landing_dismissed_at');
+          if (dismissedAt && Date.now() - parseInt(dismissedAt) < 60 * 60 * 1000) {
+            return; // Still within 1hr grace period
+          }
+          setShowLanding(true);
         }
-        setShowLanding(true);
       }
     }).catch(() => {});
   }, []);
@@ -443,19 +442,15 @@ export default function MapPage() {
           cells={savedCells}
           userRole={currentUser?.role}
           activeUserCell={activeUserCell}
-          onCellClick={
-            currentUser?.role !== 'admin'
-              ? (cell) => {
-                  if (activeUserCell && cell.id === activeUserCell.id) {
-                    // Open nav sheet showing active cell options
-                    setNavOpen(true);
-                  } else if (!activeUserCell) {
-                    setPreselectedCell(cell);
-                    setShowCheckIn(true);
-                  }
-                }
-              : undefined
-          }
+          onCellClick={(cell) => {
+            if (activeUserCell && cell.id === activeUserCell.id) {
+              // Open nav sheet showing active cell options
+              setNavOpen(true);
+            } else if (!activeUserCell) {
+              setPreselectedCell(cell);
+              setShowCheckIn(true);
+            }
+          }}
         />
         {editingCell && (
           <CellEditLayer
@@ -544,13 +539,13 @@ export default function MapPage() {
         onCellFinish={handleCellFinish}
         onCellLogOff={handleCellLogOff}
       />
-      {showLanding && !showCheckIn && currentUser?.role !== 'admin' && (
+      {showLanding && !showCheckIn && (
         <UserLandingChoice
           onViewMap={() => { localStorage.setItem('landing_dismissed_at', Date.now().toString()); setShowLanding(false); }}
           onStartCell={() => { setPreselectedCell(null); setShowLanding(false); setShowCheckIn(true); }}
         />
       )}
-      {showCheckIn && currentUser?.role !== 'admin' && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
+      {showCheckIn && <CellCheckInModal currentUser={currentUser} preselectedCell={preselectedCell} onCheckIn={handleCheckIn} onPhoneSaved={setCurrentUser} mode={activeUserCell && !preselectedCell ? 'resume' : 'checkin'} activeCell={activeUserCell} onDismiss={() => { setShowCheckIn(false); setPreselectedCell(null); }} />}
 
       {managerLogoutMessage && (
         <ManagerLogoutModal
