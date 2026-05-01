@@ -443,10 +443,11 @@ export default function MapPage() {
           userRole={currentUser?.role}
           activeUserCell={activeUserCell}
           onCellClick={(cell) => {
-            if (activeUserCell && cell.id === activeUserCell.id) {
-              // Open nav sheet showing active cell options
+            if (activeUserCell) {
+              // If already logged into any cell, open nav menu
               setNavOpen(true);
-            } else if (!activeUserCell) {
+            } else {
+              // Not logged in, open check-in modal for clicked cell
               setPreselectedCell(cell);
               setShowCheckIn(true);
             }
