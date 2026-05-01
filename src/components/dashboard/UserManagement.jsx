@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, X, Check, Users } from 'lucide-react';
+import { Loader2, Pencil, X, Check, Users, Bell, BellOff } from 'lucide-react';
 
 function EditUserModal({ user, offices, users, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -8,6 +8,7 @@ function EditUserModal({ user, offices, users, onClose, onSave }) {
     office_id: user.office_id || '',
     manager_id: user.manager_id || '',
     phone: user.phone || '',
+    communications_enabled: user.communications_enabled !== false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -80,6 +81,25 @@ function EditUserModal({ user, offices, users, onClose, onSave }) {
               placeholder="+447700900000"
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
+          </div>
+          <div className="border-t border-border pt-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-[11px] font-medium text-muted-foreground">Communications</label>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, communications_enabled: !f.communications_enabled }))}
+                className={`relative inline-flex h-6 w-10 rounded-full transition-colors ${
+                  form.communications_enabled ? 'bg-primary' : 'bg-muted'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform transform ${
+                    form.communications_enabled ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">{form.communications_enabled ? 'Receiving emails & SMS' : 'All notifications disabled'}</p>
           </div>
         </div>
         <div className="flex gap-2 px-5 py-4 border-t border-border">

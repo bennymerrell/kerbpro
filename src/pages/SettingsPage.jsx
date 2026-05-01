@@ -21,14 +21,8 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [communicationsEnabled, setCommunicationsEnabled] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setCurrentUser(u);
-      setCommunicationsEnabled(u?.communications_enabled !== false);
-    }).catch(() => {});
     base44.entities.User.list().then(setAllUsers).catch(() => setUsersError(true));
   }, []);
 
@@ -47,11 +41,6 @@ export default function SettingsPage() {
     // await base44.functions.invoke('deleteAccount', {});
     await new Promise(r => setTimeout(r, 800)); // simulate async
     base44.auth.logout();
-  }
-
-  async function handleToggleCommunications() {
-    setCommunicationsEnabled(!communicationsEnabled);
-    await base44.auth.updateMe({ communications_enabled: !communicationsEnabled });
   }
 
   async function handleRemoveManager(userId) {
@@ -202,28 +191,6 @@ export default function SettingsPage() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Saved!' : 'Save Settings'}
           </button>
-        </div>
-
-        {/* Communications */}
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-4 mt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold text-foreground">Communications</div>
-              <p className="text-xs text-muted-foreground mt-0.5">Receive email & SMS notifications</p>
-            </div>
-            <button
-              onClick={handleToggleCommunications}
-              className={`relative inline-flex h-7 w-12 rounded-full transition-colors ${
-                communicationsEnabled ? 'bg-primary' : 'bg-muted'
-              }`}
-            >
-              <span
-                className={`inline-block h-6 w-6 rounded-full bg-white shadow transition-transform transform ${
-                  communicationsEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
-          </div>
         </div>
 
         {/* Managers */}
