@@ -155,6 +155,11 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
             <p className="text-white/80 text-sm mt-1">
               Continuing <span className="font-semibold">{activeCell?.area ? `${activeCell.area} — ` : ''}{activeCell?.name || 'your cell'}</span>
             </p>
+            {activeCell?.adopted_m != null && activeCell?.unadopted_m != null && (
+              <div className="mt-3 text-white/90 text-xs">
+                Total Spray: <span className="font-bold">{Math.round(((activeCell.adopted_m + activeCell.unadopted_m) / 1609.34) * 2)} mi</span>
+              </div>
+            )}
           </div>
 
           <div className="p-5 space-y-4">
@@ -272,6 +277,17 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
             </div>
             <h2 className="text-white font-bold text-lg">Good morning! 👋</h2>
           <p className="text-white/80 text-sm mt-1">Please log into your cell to begin work</p>
+          {selectedCellId && (() => {
+            const selectedCell = cells.find(c => c.id === selectedCellId);
+            if (selectedCell?.adopted_m != null && selectedCell?.unadopted_m != null) {
+              return (
+                <div className="mt-3 text-white/90 text-xs">
+                  Total Spray: <span className="font-bold">{Math.round(((selectedCell.adopted_m + selectedCell.unadopted_m) / 1609.34) * 2)} mi</span>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {loading ? (

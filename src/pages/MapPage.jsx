@@ -504,25 +504,6 @@ export default function MapPage() {
         />
       )}
 
-      {/* Saved cell mileage popup */}
-      {location.state?.cellMileage && (
-        <div className="absolute bottom-32 left-4 z-[1000] w-72">
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-4 space-y-2">
-            <div className="text-sm font-semibold text-gray-900">{location.state.cellName || 'Cell'} — Road Mileage</div>
-            <div className="bg-gray-50 rounded-xl px-3 py-2.5 flex justify-between items-center">
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-500">Total Spray</span>
-                <span className="text-[10px] text-gray-400">Total Roads</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-semibold text-gray-900">{Math.round(((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34) * 2)} mi</span>
-                <span className="text-[10px] text-gray-400">{Math.round((location.state.cellMileage.adopted_m + location.state.cellMileage.unadopted_m) / 1609.34)} mi</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <IOSNavSheet
         open={navOpen}
         onClose={() => setNavOpen(false)}
