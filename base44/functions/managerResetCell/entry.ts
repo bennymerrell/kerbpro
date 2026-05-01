@@ -44,13 +44,15 @@ Deno.serve(async (req) => {
       )
     );
 
-    // Send email to each logged-off user
+    // Send email to each logged-off user (if communications enabled)
     await Promise.all(
-      usersOnCell.map(u =>
-        base44.asServiceRole.integrations.Core.SendEmail({
-          to: u.email,
-          subject: `KerbPro: You have been logged out of ${cellDesc}`,
-          body: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
+      usersOnCell
+        .filter(u => u.communications_enabled !== false)
+        .map(u =>
+          base44.asServiceRole.integrations.Core.SendEmail({
+            to: u.email,
+            subject: `KerbPro: You have been logged out of ${cellDesc}`,
+            body: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 <tr><td style="background:#f59e0b;padding:28px 32px;">
@@ -63,8 +65,8 @@ Deno.serve(async (req) => {
   <p style="margin:0;font-size:13px;color:#9ca3af;">This is an automated notification from KerbPro.</p>
 </td></tr>
 </table></td></tr></table></body></html>`,
-        }).catch(() => {})
-      )
+          }).catch(() => {})
+        )
     );
 
     return Response.json({ ok: true, loggedOffCount: usersOnCell.length });

@@ -5,39 +5,46 @@
     "role": {
       "type": "string",
       "enum": [
-        "admin",
+        "user",
         "manager",
-        "user"
+        "admin"
       ],
       "default": "user"
     },
     "office_id": {
       "type": "string",
-      "description": "ID of the Office this user belongs to"
-    },
-    "manager_id": {
-      "type": "string",
-      "description": "ID of the manager user assigned to this user"
-    },
-    "phone": {
-      "type": "string",
-      "description": "Mobile phone number for SMS/WhatsApp notifications"
+      "description": "ID of the Office this user is assigned to"
     },
     "active_cell_id": {
       "type": "string",
-      "description": "ID of the cell the user is currently checked into"
+      "description": "ID of the cell the user is currently logged into"
     },
     "active_cell_prev_status": {
       "type": "string",
-      "description": "Previous work status of the cell before check-in"
+      "description": "Previous status of the cell before user logged in"
     },
     "active_cell_checkin_date": {
       "type": "string",
-      "description": "Date the user checked into the active cell"
+      "format": "date",
+      "description": "Date the user checked into the current cell"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Mobile phone number for notifications (e.g. +447700900000)"
+    },
+    "manager_id": {
+      "type": "string",
+      "description": "ID of the user's assigned manager"
     },
     "manager_logout_message": {
       "type": "string",
-      "description": "Set by backend when a manager logs a user out of a cell \u2014 triggers in-app notification modal"
+      "description": "Message set by manager when logging out the user"
+    },
+    "communications_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the user receives email/SMS notifications"
     }
-  }
+  },
+  "required": []
 }

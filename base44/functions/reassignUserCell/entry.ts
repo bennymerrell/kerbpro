@@ -33,11 +33,12 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Cell.update(newCellId, { work_status: 'in_progress' });
     }
 
-    // Notify the user by email
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: targetUser.email,
-      subject: `KerbPro: You have been reassigned to ${cellDesc}`,
-      body: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
+    // Notify the user by email (if communications enabled)
+    if (targetUser.communications_enabled !== false) {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: targetUser.email,
+        subject: `KerbPro: You have been reassigned to ${cellDesc}`,
+        body: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 <tr><td style="background:#2563eb;padding:28px 32px;">
@@ -50,7 +51,8 @@ Deno.serve(async (req) => {
   <p style="margin:0;font-size:13px;color:#9ca3af;">This is an automated notification from KerbPro.</p>
 </td></tr>
 </table></td></tr></table></body></html>`,
-    }).catch(() => {});
+      }).catch(() => {});
+    }
 
     return Response.json({ ok: true });
   } catch (error) {

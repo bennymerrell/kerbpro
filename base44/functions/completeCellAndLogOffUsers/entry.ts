@@ -32,11 +32,11 @@ Deno.serve(async (req) => {
       )
     );
 
-    // Notify manager if provided
+    // Notify manager if provided (and communications enabled)
     if (managerId) {
       try {
         const manager = await base44.asServiceRole.entities.User.get(managerId);
-        if (manager) {
+        if (manager && manager.communications_enabled !== false) {
           const userName = user.full_name || user.email;
           const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;
           await base44.asServiceRole.integrations.Core.SendEmail({
