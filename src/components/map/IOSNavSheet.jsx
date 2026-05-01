@@ -98,6 +98,9 @@ export default function IOSNavSheet({
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-orange-800 truncate">{activeUserCell.name || 'Unnamed Cell'}</div>
                     {activeUserCell.area && <div className="text-xs text-orange-600">{activeUserCell.area}</div>}
+                    {activeUserCell.adopted_m != null && activeUserCell.unadopted_m != null && (
+                      <div className="text-xs text-orange-600 font-medium mt-1">Total Spray: <span className="font-bold">{Math.round(((activeUserCell.adopted_m + activeUserCell.unadopted_m) / 1609.34) * 2)} mi</span></div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
