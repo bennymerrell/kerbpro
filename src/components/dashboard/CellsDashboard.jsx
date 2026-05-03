@@ -295,12 +295,12 @@ export default function CellsDashboard() {
               className="w-full text-xs border border-input rounded-lg pl-8 pr-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2">
             {offices.length > 0 && (
               <select
                 value={filterOffice}
                 onChange={e => { setFilterOffice(e.target.value); setFilterArea(''); }}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
+                className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
                 <option value="">All Offices</option>
                 {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -310,7 +310,7 @@ export default function CellsDashboard() {
               <select
                 value={filterArea}
                 onChange={e => setFilterArea(e.target.value)}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
+                className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
                 <option value="">All Areas</option>
                 {(filterOffice
@@ -323,7 +323,7 @@ export default function CellsDashboard() {
               <select
                 value={filterUser}
                 onChange={e => setFilterUser(e.target.value)}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 w-full"
+                className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
                 <option value="">All Workers</option>
                 {users.filter(u => u.role === 'user').map(u => (
