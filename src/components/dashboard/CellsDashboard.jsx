@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck, UserPlus } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck, UserPlus, CalendarDays } from 'lucide-react';
 import AssignUserModal from '@/components/cells/AssignUserModal';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
+
+function getThisWeekKey() {
+  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  return format(monday, 'yyyy-MM-dd');
+}
 
 const STATUS_LABELS = {
   completed:   { label: 'Completed',   color: 'bg-green-100 text-green-700' },
@@ -143,6 +148,7 @@ export default function CellsDashboard() {
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchResult, setBatchResult] = useState(null);
   const [resettingId, setResettingId] = useState(null);
+  const [weeklyAssignments, setWeeklyAssignments] = useState([]);
 
   async function handleBatchRecalc() {
     setBatchRunning(true);
@@ -162,13 +168,27 @@ export default function CellsDashboard() {
       base44.entities.Cell.list('-completed_at', 200),
       base44.entities.Office.list(),
       base44.functions.invoke('getUsers', {}),
-    ]).then(([cellData, officeData, usersRes]) => {
+      base44.entities.WeeklyPlan.filter({ week_start: getThisWeekKey() }),
+    ]).then(([cellData, officeData, usersRes, plans]) => {
       setCells(cellData);
       setOffices(officeData);
       setUsers(usersRes?.data?.users || []);
+      try {
+        const plan = plans[0];
+        setWeeklyAssignments(plan ? JSON.parse(plan.assignments || '[]') : []);
+      } catch { setWeeklyAssignments([]); }
       setLoading(false);
     });
   }, []);
+
+  // Build a map of cell_id -> [user_names] from this week's plan
+  const weeklyByCellId = useMemo(() => {
+    return weeklyAssignments.reduce((acc, a) => {
+      if (!acc[a.cell_id]) acc[a.cell_id] = [];
+      acc[a.cell_id].push(a.user_name);
+      return acc;
+    }, {});
+  }, [weeklyAssignments]);
 
   async function handleDelete(id) {
     await base44.entities.Cell.delete(id);
@@ -351,7 +371,8 @@ export default function CellsDashboard() {
                   const assignedNotActive = users.filter(u =>
                     assignedIds.includes(u.id) && u.active_cell_id !== cell.id
                   );
-                  if (activeUsers.length === 0 && assignedNotActive.length === 0) return null;
+                  const weeklyUsers = weeklyByCellId[cell.id] || [];
+                  if (activeUsers.length === 0 && assignedNotActive.length === 0 && weeklyUsers.length === 0) return null;
                   return (
                     <div className="ml-5 mt-2 space-y-1.5">
                       {activeUsers.length > 0 && (
@@ -385,6 +406,19 @@ export default function CellsDashboard() {
                               >
                                 <User className="h-2.5 w-2.5 text-gray-400 flex-shrink-0" />
                                 <span className="text-[10px] font-medium text-gray-500">{u.full_name || u.email}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {weeklyByCellId[cell.id]?.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">This Week's Plan</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {weeklyByCellId[cell.id].map((name, i) => (
+                              <div key={i} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                                <CalendarDays className="h-2.5 w-2.5 text-indigo-400 flex-shrink-0" />
+                                <span className="text-[10px] font-medium text-indigo-700">{name}</span>
                               </div>
                             ))}
                           </div>
