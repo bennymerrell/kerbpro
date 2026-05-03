@@ -34,10 +34,19 @@ function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose 
   const [userId, setUserId] = useState('');
   const [selectedCellIds, setSelectedCellIds] = useState([]);
 
-  // Only show not_started and in_progress cells
+  // Already assigned cell IDs for this user this week
+  const alreadyAssignedCellIds = useMemo(
+    () => new Set(assignments.filter(a => a.user_id === userId).map(a => a.cell_id)),
+    [assignments, userId]
+  );
+
+  // Only show not_started and in_progress cells that aren't already assigned to this user
   const eligibleCells = useMemo(
-    () => cells.filter(c => !c.work_status || c.work_status === 'not_started' || c.work_status === 'in_progress'),
-    [cells]
+    () => cells.filter(c =>
+      (!c.work_status || c.work_status === 'not_started' || c.work_status === 'in_progress') &&
+      !alreadyAssignedCellIds.has(c.id)
+    ),
+    [cells, alreadyAssignedCellIds]
   );
 
   // Reference point = centroid of already-assigned cells for this user
