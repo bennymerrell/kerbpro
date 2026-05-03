@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Loader2, Plus, X, User, SquareDashedBottom } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Plus, X, User, SquareDashedBottom, Check } from 'lucide-react';
 import { format, startOfWeek, addWeeks, subWeeks, addDays } from 'date-fns';
 
 function getMonday(date) {
@@ -30,17 +30,23 @@ function distKm([lat1, lng1], [lat2, lng2]) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function AddAssignmentModal({ cells, users, assignments, onAdd, onClose }) {
+function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose }) {
   const [userId, setUserId] = useState('');
-  const [cellId, setCellId] = useState('');
+  const [selectedCellIds, setSelectedCellIds] = useState([]);
 
-  // Compute the reference point = centroid of all cells already assigned to this user this week
+  // Only show not_started and in_progress cells
+  const eligibleCells = useMemo(
+    () => cells.filter(c => !c.work_status || c.work_status === 'not_started' || c.work_status === 'in_progress'),
+    [cells]
+  );
+
+  // Reference point = centroid of already-assigned cells for this user
   const refPoint = useMemo(() => {
     if (!userId) return null;
     const userAssigned = assignments.filter(a => a.user_id === userId);
     if (!userAssigned.length) return null;
     const anchors = userAssigned
-      .map(a => cells.find(c => c.id === a.cell_id))
+      .map(a => eligibleCells.find(c => c.id === a.cell_id))
       .filter(Boolean)
       .map(cellCentroid)
       .filter(Boolean);
@@ -49,12 +55,12 @@ function AddAssignmentModal({ cells, users, assignments, onAdd, onClose }) {
       anchors.reduce((s, p) => s + p[0], 0) / anchors.length,
       anchors.reduce((s, p) => s + p[1], 0) / anchors.length,
     ];
-  }, [userId, assignments, cells]);
+  }, [userId, assignments, eligibleCells]);
 
-  // Sort cells by distance to refPoint when a user is selected, else keep default order
+  // Sort by proximity when ref point exists
   const sortedCells = useMemo(() => {
-    if (!refPoint) return cells;
-    return [...cells].sort((a, b) => {
+    if (!refPoint) return eligibleCells;
+    return [...eligibleCells].sort((a, b) => {
       const ca = cellCentroid(a);
       const cb = cellCentroid(b);
       if (!ca && !cb) return 0;
@@ -62,75 +68,111 @@ function AddAssignmentModal({ cells, users, assignments, onAdd, onClose }) {
       if (!cb) return -1;
       return distKm(refPoint, ca) - distKm(refPoint, cb);
     });
-  }, [cells, refPoint]);
+  }, [eligibleCells, refPoint]);
+
+  function toggleCell(cellId) {
+    setSelectedCellIds(prev =>
+      prev.includes(cellId) ? prev.filter(id => id !== cellId) : [...prev, cellId]
+    );
+  }
 
   function handleAdd() {
     const user = users.find(u => u.id === userId);
-    const cell = cells.find(c => c.id === cellId);
-    if (!user || !cell) return;
-    onAdd({
-      user_id: user.id,
-      user_name: user.full_name || user.email,
-      cell_id: cell.id,
-      cell_name: cell.name || 'Unnamed',
-      cell_area: cell.area || '',
+    if (!user || !selectedCellIds.length) return;
+    const newAssignments = selectedCellIds.map(cid => {
+      const cell = eligibleCells.find(c => c.id === cid);
+      return {
+        user_id: user.id,
+        user_name: user.full_name || user.email,
+        cell_id: cell.id,
+        cell_name: cell.name || 'Unnamed',
+        cell_area: cell.area || '',
+      };
     });
+    onAddMultiple(newAssignments);
     onClose();
   }
 
   return (
     <div className="fixed inset-0 z-[5000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <h3 className="font-semibold text-sm text-foreground">Add Assignment</h3>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted">
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
-        <div className="p-5 space-y-3">
+
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
+          {/* Worker */}
           <div>
             <label className="block text-[11px] font-medium text-muted-foreground mb-1">Worker</label>
             <select
               value={userId}
-              onChange={e => { setUserId(e.target.value); setCellId(''); }}
+              onChange={e => { setUserId(e.target.value); setSelectedCellIds([]); }}
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="">— Select a worker —</option>
               {users.map(u => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
             </select>
           </div>
-          <div>
-            <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-              Cell
-              {refPoint && <span className="ml-1 font-normal text-primary">(sorted by proximity to assigned cells)</span>}
-            </label>
-            <select
-              value={cellId}
-              onChange={e => setCellId(e.target.value)}
-              className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">— Select a cell —</option>
-              {sortedCells.map((c, i) => {
-                const dist = refPoint && cellCentroid(c) ? distKm(refPoint, cellCentroid(c)) : null;
-                const distLabel = dist != null ? ` (${dist < 1 ? (dist * 1000).toFixed(0) + 'm' : dist.toFixed(1) + 'km'})` : '';
-                return (
-                  <option key={c.id} value={c.id}>
-                    {c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}{distLabel}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+
+          {/* Cell multi-select */}
+          {userId && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Cells
+                  {refPoint && <span className="ml-1 font-normal text-primary">(sorted by proximity)</span>}
+                </label>
+                {selectedCellIds.length > 0 && (
+                  <span className="text-[11px] font-semibold text-primary">{selectedCellIds.length} selected</span>
+                )}
+              </div>
+              <div className="border border-input rounded-lg overflow-hidden divide-y divide-border/50 max-h-64 overflow-y-auto">
+                {sortedCells.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">No eligible cells.</p>
+                )}
+                {sortedCells.map(c => {
+                  const isSelected = selectedCellIds.includes(c.id);
+                  const dist = refPoint && cellCentroid(c) ? distKm(refPoint, cellCentroid(c)) : null;
+                  const distLabel = dist != null
+                    ? dist < 1 ? `${(dist * 1000).toFixed(0)}m` : `${dist.toFixed(1)}km`
+                    : null;
+                  const statusColor = c.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400';
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => toggleCell(c.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/40'}`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border bg-background'}`}>
+                        {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                      </div>
+                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusColor}`} />
+                      <span className="flex-1 text-xs text-foreground truncate">
+                        {c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}
+                      </span>
+                      {distLabel && (
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{distLabel}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex gap-2 px-5 py-4 border-t border-border">
+
+        <div className="flex gap-2 px-5 py-4 border-t border-border flex-shrink-0">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg bg-muted text-sm font-medium text-foreground">Cancel</button>
           <button
             onClick={handleAdd}
-            disabled={!userId || !cellId}
+            disabled={!userId || selectedCellIds.length === 0}
             className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add
+            Add {selectedCellIds.length > 0 ? `(${selectedCellIds.length})` : ''}
           </button>
         </div>
       </div>
@@ -188,8 +230,8 @@ export default function WeeklyPlanner() {
     setSaving(false);
   }
 
-  function handleAddAssignment(assignment) {
-    const next = [...assignments, assignment];
+  function handleAddAssignment(newAssignments) {
+    const next = [...assignments, ...newAssignments];
     setAssignments(next);
     saveAssignments(next);
   }
@@ -312,7 +354,7 @@ export default function WeeklyPlanner() {
           cells={cells}
           users={users}
           assignments={assignments}
-          onAdd={handleAddAssignment}
+          onAddMultiple={handleAddAssignment}
           onClose={() => setShowAdd(false)}
         />
       )}
