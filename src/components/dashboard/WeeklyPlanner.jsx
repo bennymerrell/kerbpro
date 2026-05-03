@@ -49,13 +49,19 @@ function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose 
     [cells, alreadyAssignedCellIds]
   );
 
-  // Reference point = centroid of already-assigned cells for this user
+  // Reference point: first selected cell takes priority, then fall back to already-assigned cells
   const refPoint = useMemo(() => {
+    // Use the first selected cell as the anchor
+    if (selectedCellIds.length > 0) {
+      const firstCell = eligibleCells.find(c => c.id === selectedCellIds[0]);
+      if (firstCell) return cellCentroid(firstCell);
+    }
+    // Fall back to centroid of already-assigned cells for this user
     if (!userId) return null;
     const userAssigned = assignments.filter(a => a.user_id === userId);
     if (!userAssigned.length) return null;
     const anchors = userAssigned
-      .map(a => eligibleCells.find(c => c.id === a.cell_id))
+      .map(a => cells.find(c => c.id === a.cell_id))
       .filter(Boolean)
       .map(cellCentroid)
       .filter(Boolean);
@@ -64,12 +70,14 @@ function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose 
       anchors.reduce((s, p) => s + p[0], 0) / anchors.length,
       anchors.reduce((s, p) => s + p[1], 0) / anchors.length,
     ];
-  }, [userId, assignments, eligibleCells]);
+  }, [selectedCellIds, userId, assignments, eligibleCells, cells]);
 
-  // Sort by proximity when ref point exists
+  // Sort by proximity: selected cells float to top, rest sorted by distance to refPoint
   const sortedCells = useMemo(() => {
-    if (!refPoint) return eligibleCells;
-    return [...eligibleCells].sort((a, b) => {
+    const selected = eligibleCells.filter(c => selectedCellIds.includes(c.id));
+    const unselected = eligibleCells.filter(c => !selectedCellIds.includes(c.id));
+    if (!refPoint) return [...selected, ...unselected];
+    const sortByDist = arr => [...arr].sort((a, b) => {
       const ca = cellCentroid(a);
       const cb = cellCentroid(b);
       if (!ca && !cb) return 0;
@@ -77,7 +85,8 @@ function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose 
       if (!cb) return -1;
       return distKm(refPoint, ca) - distKm(refPoint, cb);
     });
-  }, [eligibleCells, refPoint]);
+    return [...selected, ...sortByDist(unselected)];
+  }, [eligibleCells, selectedCellIds, refPoint]);
 
   function toggleCell(cellId) {
     setSelectedCellIds(prev =>
