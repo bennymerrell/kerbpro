@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil, UserPlus } from 'lucide-react';
-import AssignUserModal from '../components/cells/AssignUserModal';
+import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil } from 'lucide-react';
 
 const WORK_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
@@ -40,8 +39,6 @@ export default function CellsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [officeFilter, setOfficeFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
-  const [assigningCell, setAssigningCell] = useState(null);
-  // recalcTriggering kept for new-cell recalc (triggered from AreaResultsPanel flow)
 
 
 
@@ -349,31 +346,6 @@ export default function CellsPage() {
                 </button>
                 <div className="w-px bg-border" />
                 <button
-                  onClick={() => setAssigningCell(cell)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  Assign
-                </button>
-                {/* Only show manual recalc for cells with no mileage data yet */}
-                {cell.adopted_m == null && <>
-                  <div className="w-px bg-border" />
-                  <button
-                    onClick={() => handleRecalculate(cell)}
-                    disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
-                  >
-                    {(cell.recalc_status === 'pending' || cell.recalc_status === 'processing') ? (
-                      <><Loader2 className="h-3.5 w-3.5 animate-spin" />{cell.recalc_status === 'pending' ? 'Queued…' : 'Calculating…'}</>
-                    ) : recalcTriggering[cell.id] ? (
-                      <><Loader2 className="h-3.5 w-3.5 animate-spin" />Queuing…</>
-                    ) : (
-                      <>Calc Miles</>
-                    )}
-                  </button>
-                </>}
-                <div className="w-px bg-border" />
-                <button
                   onClick={() => handleDelete(cell)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
@@ -394,18 +366,6 @@ export default function CellsPage() {
         ))}
       </div>
 
-      {assigningCell && (
-        <AssignUserModal
-          cell={assigningCell}
-          onClose={() => setAssigningCell(null)}
-          onAssigned={(user, cell) => {
-            setCells(prev => prev.map(c => c.id === cell.id && c.work_status !== 'in_progress'
-              ? { ...c, work_status: 'in_progress' }
-              : c
-            ));
-          }}
-        />
-      )}
     </div>
   );
 }

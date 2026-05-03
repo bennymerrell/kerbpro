@@ -82,6 +82,10 @@
     "office_id": {
       "type": "string",
       "description": "ID of the Office this cell belongs to"
+    },
+    "assigned_user_ids": {
+      "type": "string",
+      "description": "JSON array of user IDs pre-assigned to this cell (does not auto-start them)"
     }
   },
   "required": [

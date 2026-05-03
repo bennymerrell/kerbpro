@@ -1,32 +1,36 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, UserCheck, Loader2, User } from 'lucide-react';
+import { X, UserCheck, Loader2, User, Check } from 'lucide-react';
 
 export default function AssignUserModal({ cell, onClose, onAssigned }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUserId, setSelectedUserId] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const [cells, setCells] = useState([]);
+  // Parse existing assigned user IDs from the cell
+  const [selectedIds, setSelectedIds] = useState(() => {
+    try { return JSON.parse(cell.assigned_user_ids || '[]'); } catch { return []; }
+  });
 
   useEffect(() => {
-    Promise.all([
-      base44.functions.invoke('getUsers', {}),
-      base44.entities.Cell.list('-created_date', 200),
-    ]).then(([usersRes, cellData]) => {
-      setUsers((usersRes?.data?.users || []).filter(u => u.role === 'user'));
-      setCells(cellData);
+    base44.functions.invoke('getUsers', {}).then(res => {
+      setUsers((res?.data?.users || []).filter(u => u.role === 'user'));
       setLoading(false);
     });
   }, []);
 
-  async function handleAssign() {
-    if (!selectedUserId) return;
+  function toggleUser(userId) {
+    setSelectedIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  }
+
+  async function handleSave() {
     setSaving(true);
-    await base44.functions.invoke('reassignUserCell', { userId: selectedUserId, newCellId: cell.id });
-    const user = users.find(u => u.id === selectedUserId);
-    onAssigned?.(user, cell);
+    await base44.entities.Cell.update(cell.id, {
+      assigned_user_ids: JSON.stringify(selectedIds),
+    });
+    onAssigned?.(selectedIds, cell);
     setSaving(false);
     onClose();
   }
@@ -41,7 +45,7 @@ export default function AssignUserModal({ cell, onClose, onAssigned }) {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
-            <h3 className="font-semibold text-foreground text-sm">Assign User to Cell</h3>
+            <h3 className="font-semibold text-foreground text-sm">Assign Users to Cell</h3>
             <p className="text-xs text-muted-foreground mt-0.5 truncate">{cellDesc}</p>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
@@ -57,42 +61,40 @@ export default function AssignUserModal({ cell, onClose, onAssigned }) {
           ) : (
             <>
               <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-1.5">Select User</label>
-                <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1.5">Select Users (tap to toggle)</label>
+                <div className="space-y-1.5 max-h-64 overflow-y-auto">
                   {users.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">No users found.</p>
                   )}
-                  {users.map(u => (
-                    <button
-                      key={u.id}
-                      onClick={() => setSelectedUserId(u.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all ${
-                        selectedUserId === u.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:bg-muted/50'
-                      }`}
-                    >
-                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-foreground truncate">{u.full_name || u.email}</div>
-                        {u.active_cell_id && (() => {
-                          const c = cells.find(c => c.id === u.active_cell_id);
-                          const label = c ? [c.area, c.name || 'Unnamed'].filter(Boolean).join(' — ') : 'another cell';
-                          return <div className="text-[10px] text-orange-500 font-medium truncate">On: {label}</div>;
-                        })()}
-                      </div>
-                      {selectedUserId === u.id && (
-                        <UserCheck className="h-4 w-4 text-primary flex-shrink-0" />
-                      )}
-                    </button>
-                  ))}
+                  {users.map(u => {
+                    const isSelected = selectedIds.includes(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => toggleUser(u.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                          isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-primary' : 'bg-muted'}`}>
+                          {isSelected
+                            ? <Check className="h-3.5 w-3.5 text-white" />
+                            : <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-foreground truncate">{u.full_name || u.email}</div>
+                        </div>
+                        {isSelected && (
+                          <UserCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-
               <p className="text-[11px] text-muted-foreground">
-                The user will be signed into this cell and notified by email.
+                Assigned users will appear on this cell. They are only shown as active (orange) once they log in and start the cell.
               </p>
             </>
           )}
@@ -103,12 +105,12 @@ export default function AssignUserModal({ cell, onClose, onAssigned }) {
             Cancel
           </button>
           <button
-            onClick={handleAssign}
-            disabled={!selectedUserId || saving}
+            onClick={handleSave}
+            disabled={saving}
             className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5" />}
-            Assign
+            Save
           </button>
         </div>
       </div>
