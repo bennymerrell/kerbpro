@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Loader2, Plus, X, User, SquareDashedBottom } from 'lucide-react';
 import { format, startOfWeek, addWeeks, subWeeks, addDays } from 'date-fns';
@@ -11,9 +11,58 @@ function weekKey(date) {
   return format(date, 'yyyy-MM-dd');
 }
 
-function AddAssignmentModal({ cells, users, onAdd, onClose }) {
+// Returns the centroid [lat, lng] of a cell's polygon points
+function cellCentroid(cell) {
+  try {
+    const pts = JSON.parse(cell.points || '[]');
+    if (!pts.length) return null;
+    const lat = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
+    const lng = pts.reduce((s, p) => s + p.lng, 0) / pts.length;
+    return [lat, lng];
+  } catch { return null; }
+}
+
+function distKm([lat1, lng1], [lat2, lng2]) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function AddAssignmentModal({ cells, users, assignments, onAdd, onClose }) {
   const [userId, setUserId] = useState('');
   const [cellId, setCellId] = useState('');
+
+  // Compute the reference point = centroid of all cells already assigned to this user this week
+  const refPoint = useMemo(() => {
+    if (!userId) return null;
+    const userAssigned = assignments.filter(a => a.user_id === userId);
+    if (!userAssigned.length) return null;
+    const anchors = userAssigned
+      .map(a => cells.find(c => c.id === a.cell_id))
+      .filter(Boolean)
+      .map(cellCentroid)
+      .filter(Boolean);
+    if (!anchors.length) return null;
+    return [
+      anchors.reduce((s, p) => s + p[0], 0) / anchors.length,
+      anchors.reduce((s, p) => s + p[1], 0) / anchors.length,
+    ];
+  }, [userId, assignments, cells]);
+
+  // Sort cells by distance to refPoint when a user is selected, else keep default order
+  const sortedCells = useMemo(() => {
+    if (!refPoint) return cells;
+    return [...cells].sort((a, b) => {
+      const ca = cellCentroid(a);
+      const cb = cellCentroid(b);
+      if (!ca && !cb) return 0;
+      if (!ca) return 1;
+      if (!cb) return -1;
+      return distKm(refPoint, ca) - distKm(refPoint, cb);
+    });
+  }, [cells, refPoint]);
 
   function handleAdd() {
     const user = users.find(u => u.id === userId);
@@ -43,7 +92,7 @@ function AddAssignmentModal({ cells, users, onAdd, onClose }) {
             <label className="block text-[11px] font-medium text-muted-foreground mb-1">Worker</label>
             <select
               value={userId}
-              onChange={e => setUserId(e.target.value)}
+              onChange={e => { setUserId(e.target.value); setCellId(''); }}
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="">— Select a worker —</option>
@@ -51,14 +100,25 @@ function AddAssignmentModal({ cells, users, onAdd, onClose }) {
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Cell</label>
+            <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+              Cell
+              {refPoint && <span className="ml-1 font-normal text-primary">(sorted by proximity to assigned cells)</span>}
+            </label>
             <select
               value={cellId}
               onChange={e => setCellId(e.target.value)}
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="">— Select a cell —</option>
-              {cells.map(c => <option key={c.id} value={c.id}>{c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}</option>)}
+              {sortedCells.map((c, i) => {
+                const dist = refPoint && cellCentroid(c) ? distKm(refPoint, cellCentroid(c)) : null;
+                const distLabel = dist != null ? ` (${dist < 1 ? (dist * 1000).toFixed(0) + 'm' : dist.toFixed(1) + 'km'})` : '';
+                return (
+                  <option key={c.id} value={c.id}>
+                    {c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}{distLabel}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -251,6 +311,7 @@ export default function WeeklyPlanner() {
         <AddAssignmentModal
           cells={cells}
           users={users}
+          assignments={assignments}
           onAdd={handleAddAssignment}
           onClose={() => setShowAdd(false)}
         />
