@@ -144,6 +144,7 @@ export default function CellsDashboard() {
   const [assigningCell, setAssigningCell] = useState(null); // cell to assign a new user to
   const [filterArea, setFilterArea] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
+  const [filterUser, setFilterUser] = useState('');
   const [search, setSearch] = useState('');
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchResult, setBatchResult] = useState(null);
@@ -233,7 +234,23 @@ export default function CellsDashboard() {
     const matchesArea = !filterArea || c.area === filterArea;
     const matchesOffice = !filterOffice || c.office_id === filterOffice;
     const matchesSearch = !search || (c.name || '').toLowerCase().includes(search.toLowerCase()) || (c.area || '').toLowerCase().includes(search.toLowerCase());
-    return matchesArea && matchesOffice && matchesSearch;
+    if (!matchesArea || !matchesOffice || !matchesSearch) return false;
+    if (filterUser) {
+      // Check active (checked-in) users
+      const isActive = users.some(u => u.id === filterUser && u.active_cell_id === c.id);
+      // Check weekly plan assignments
+      const isWeekly = (weeklyByCellId[c.id] || []).some(() => {
+        const wa = weeklyAssignments.find(a => a.cell_id === c.id && a.user_id === filterUser);
+        return !!wa;
+      });
+      const weeklyMatch = weeklyAssignments.some(a => a.cell_id === c.id && a.user_id === filterUser);
+      // Check pre-assigned
+      let assignedIds = [];
+      try { assignedIds = JSON.parse(c.assigned_user_ids || '[]'); } catch {}
+      const isAssigned = assignedIds.includes(filterUser);
+      return isActive || weeklyMatch || isAssigned;
+    }
+    return true;
   });
 
   const completedCells = filteredCells.filter(c => c.work_status === 'completed' && c.completed_at);
@@ -286,6 +303,18 @@ export default function CellsDashboard() {
             >
               <option value="">All Offices</option>
               {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          )}
+          {users.filter(u => u.role === 'user').length > 0 && (
+            <select
+              value={filterUser}
+              onChange={e => setFilterUser(e.target.value)}
+              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">All Workers</option>
+              {users.filter(u => u.role === 'user').map(u => (
+                <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+              ))}
             </select>
           )}
           {areas.length > 0 && (
