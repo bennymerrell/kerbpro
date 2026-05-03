@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Loader2, Plus, X, Save, User, SquareDashedBottom } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Plus, X, User, SquareDashedBottom } from 'lucide-react';
 import { format, startOfWeek, addWeeks, subWeeks, addDays } from 'date-fns';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -104,7 +104,6 @@ export default function WeeklyPlanner() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
 
   // Load cells + users once
@@ -121,7 +120,6 @@ export default function WeeklyPlanner() {
   // Load plan for selected week
   useEffect(() => {
     setLoading(true);
-    setDirty(false);
     const key = weekKey(weekStart);
     base44.entities.WeeklyPlan.filter({ week_start: key }).then(plans => {
       const existing = plans[0] || null;
@@ -133,11 +131,11 @@ export default function WeeklyPlanner() {
       }
       setLoading(false);
     });
-  }, [weekStart]);
+  }, [weekStart]); // eslint-disable-line
 
-  async function handleSave() {
+  async function saveAssignments(newAssignments) {
     setSaving(true);
-    const data = { week_start: weekKey(weekStart), assignments: JSON.stringify(assignments) };
+    const data = { week_start: weekKey(weekStart), assignments: JSON.stringify(newAssignments) };
     if (plan) {
       const updated = await base44.entities.WeeklyPlan.update(plan.id, data);
       setPlan(updated);
@@ -146,17 +144,18 @@ export default function WeeklyPlanner() {
       setPlan(created);
     }
     setSaving(false);
-    setDirty(false);
   }
 
   function handleAddAssignment(assignment) {
-    setAssignments(prev => [...prev, assignment]);
-    setDirty(true);
+    const next = [...assignments, assignment];
+    setAssignments(next);
+    saveAssignments(next);
   }
 
   function handleRemove(idx) {
-    setAssignments(prev => prev.filter((_, i) => i !== idx));
-    setDirty(true);
+    const next = assignments.filter((_, i) => i !== idx);
+    setAssignments(next);
+    saveAssignments(next);
   }
 
   const isCurrentWeek = weekKey(weekStart) === weekKey(getMonday(new Date()));
@@ -173,15 +172,10 @@ export default function WeeklyPlanner() {
           <p className="text-xs text-muted-foreground mt-0.5">Assign workers to cells for each day</p>
         </div>
         <div className="flex items-center gap-2">
-          {dirty && (
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Save Plan
-            </button>
+          {saving && (
+            <div className="flex items-center gap-1.5 h-8 px-3 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+            </div>
           )}
           <button
             onClick={() => setShowAdd(true)}
