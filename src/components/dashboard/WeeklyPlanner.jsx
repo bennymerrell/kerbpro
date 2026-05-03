@@ -3,8 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Loader2, Plus, X, User, SquareDashedBottom } from 'lucide-react';
 import { format, startOfWeek, addWeeks, subWeeks, addDays } from 'date-fns';
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
 function getMonday(date) {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
@@ -16,7 +14,6 @@ function weekKey(date) {
 function AddAssignmentModal({ cells, users, onAdd, onClose }) {
   const [userId, setUserId] = useState('');
   const [cellId, setCellId] = useState('');
-  const [day, setDay] = useState(0);
 
   function handleAdd() {
     const user = users.find(u => u.id === userId);
@@ -28,7 +25,6 @@ function AddAssignmentModal({ cells, users, onAdd, onClose }) {
       cell_id: cell.id,
       cell_name: cell.name || 'Unnamed',
       cell_area: cell.area || '',
-      day,
     });
     onClose();
   }
@@ -43,20 +39,6 @@ function AddAssignmentModal({ cells, users, onAdd, onClose }) {
           </button>
         </div>
         <div className="p-5 space-y-3">
-          <div>
-            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Day</label>
-            <div className="flex gap-1.5">
-              {DAYS.map((d, i) => (
-                <button
-                  key={d}
-                  onClick={() => setDay(i)}
-                  className={`flex-1 h-8 rounded-lg text-xs font-medium transition-colors ${day === i ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
           <div>
             <label className="block text-[11px] font-medium text-muted-foreground mb-1">Worker</label>
             <select
@@ -98,8 +80,8 @@ function AddAssignmentModal({ cells, users, onAdd, onClose }) {
 
 export default function WeeklyPlanner() {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
-  const [plan, setPlan] = useState(null); // WeeklyPlan entity record or null
-  const [assignments, setAssignments] = useState([]); // parsed array
+  const [plan, setPlan] = useState(null);
+  const [assignments, setAssignments] = useState([]);
   const [cells, setCells] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -160,16 +142,13 @@ export default function WeeklyPlanner() {
 
   const isCurrentWeek = weekKey(weekStart) === weekKey(getMonday(new Date()));
 
-  // Group assignments by day
-  const byDay = DAYS.map((_, i) => assignments.filter(a => a.day === i));
-
   return (
     <div className="space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Weekly Planner</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Assign workers to cells for each day</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Assign workers to cells for the week</p>
         </div>
         <div className="flex items-center gap-2">
           {saving && (
@@ -211,70 +190,45 @@ export default function WeeklyPlanner() {
         </button>
       </div>
 
-      {/* Plan grid */}
+      {/* Assignments list */}
       {loading ? (
         <div className="flex justify-center py-10">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
+      ) : assignments.length === 0 ? (
+        <div className="bg-card border border-border rounded-xl px-4 py-10 text-center">
+          <p className="text-xs text-muted-foreground">No assignments for this week yet.</p>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="mt-3 inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Assignment
+          </button>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {DAYS.map((day, i) => {
-            const date = addDays(weekStart, i);
-            const dayAssignments = byDay[i];
-            const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-            return (
-              <div key={day} className={`bg-card border rounded-xl overflow-hidden ${isToday ? 'border-primary/40' : 'border-border'}`}>
-                {/* Day header */}
-                <div className={`px-4 py-2.5 flex items-center justify-between ${isToday ? 'bg-primary/5' : 'bg-muted/30'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${isToday ? 'text-primary' : 'text-foreground'}`}>{day}</span>
-                    <span className="text-[11px] text-muted-foreground">{format(date, 'd MMM')}</span>
-                    {isToday && <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">Today</span>}
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">{dayAssignments.length} assignment{dayAssignments.length !== 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Assignments */}
-                <div className="divide-y divide-border/50">
-                  {dayAssignments.length === 0 ? (
-                    <div className="px-4 py-3 text-xs text-muted-foreground italic">No assignments</div>
-                  ) : (
-                    dayAssignments.map((a, idx) => {
-                      const globalIdx = assignments.indexOf(a);
-                      return (
-                        <div key={idx} className="px-4 py-2.5 flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <User className="h-3 w-3 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-foreground truncate">{a.user_name}</div>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <SquareDashedBottom className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />
-                              <span className="text-[11px] text-muted-foreground truncate">
-                                {a.cell_area ? `${a.cell_area} — ` : ''}{a.cell_name}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleRemove(globalIdx)}
-                            className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
+        <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
+          {assignments.map((a, idx) => (
+            <div key={idx} className="px-4 py-3 flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <User className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-foreground truncate">{a.user_name}</div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <SquareDashedBottom className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-[11px] text-muted-foreground truncate">
+                    {a.cell_area ? `${a.cell_area} — ` : ''}{a.cell_name}
+                  </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {!loading && !plan && assignments.length === 0 && (
-        <div className="text-center py-4 text-xs text-muted-foreground">
-          No plan saved for this week yet. Add assignments and save.
+              <button
+                onClick={() => handleRemove(idx)}
+                className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
