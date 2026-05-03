@@ -24,6 +24,9 @@ export default function BottomTabBar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
+  // Hide on dashboard
+  if (pathname === '/dashboard') return null;
+
   function handleTabClick(path) {
     if (pathname === path) {
       // Already active — scroll to top (reset)
