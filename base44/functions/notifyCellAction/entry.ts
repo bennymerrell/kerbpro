@@ -23,6 +23,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Manager not found' }, { status: 404 });
     }
 
+    if (manager.communications_enabled === false) {
+      return Response.json({ ok: true, note: 'Communications disabled for this manager' });
+    }
+
     const userName = user.full_name || user.email;
     const actionLabel = action === 'started' ? 'started work on' : 'completed';
     const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;

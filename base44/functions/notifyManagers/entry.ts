@@ -8,10 +8,10 @@ Deno.serve(async (req) => {
   const { subject, body } = await req.json();
 
   const allUsers = await base44.asServiceRole.entities.User.list();
-  const toSend = allUsers.filter(u => u.role === 'manager' || u.role === 'admin');
+  const toSend = allUsers.filter(u => (u.role === 'manager' || u.role === 'admin') && u.communications_enabled !== false);
 
   if (toSend.length === 0) {
-    return Response.json({ sent: 0, note: 'No managers or admins found' });
+    return Response.json({ sent: 0, note: 'No managers or admins with communications enabled found' });
   }
 
   await Promise.all(
