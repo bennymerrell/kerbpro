@@ -355,8 +355,8 @@ export default function CellsDashboard() {
                   return (
                     <div className="ml-5 mt-2 space-y-1.5">
                       {activeUsers.length > 0 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide w-16 flex-shrink-0">Working</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Working</span>
                           <div className="flex flex-wrap gap-1.5">
                             {activeUsers.map(u => (
                               <button
@@ -374,8 +374,8 @@ export default function CellsDashboard() {
                         </div>
                       )}
                       {assignedNotActive.length > 0 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-16 flex-shrink-0">Assigned</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Assigned</span>
                           <div className="flex flex-wrap gap-1.5">
                             {assignedNotActive.map(u => (
                               <div
