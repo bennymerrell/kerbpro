@@ -299,33 +299,36 @@ export default function CellsDashboard() {
             {offices.length > 0 && (
               <select
                 value={filterOffice}
-                onChange={e => setFilterOffice(e.target.value)}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onChange={e => { setFilterOffice(e.target.value); setFilterArea(''); }}
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
                 <option value="">All Offices</option>
                 {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-            )}
-            {users.filter(u => u.role === 'user').length > 0 && (
-              <select
-                value={filterUser}
-                onChange={e => setFilterUser(e.target.value)}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                <option value="">All Workers</option>
-                {users.filter(u => u.role === 'user').map(u => (
-                  <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
-                ))}
               </select>
             )}
             {areas.length > 0 && (
               <select
                 value={filterArea}
                 onChange={e => setFilterArea(e.target.value)}
-                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
                 <option value="">All Areas</option>
-                {areas.map(a => <option key={a} value={a}>{a}</option>)}
+                {(filterOffice
+                  ? [...new Set(cells.filter(c => c.office_id === filterOffice).map(c => c.area).filter(Boolean))].sort()
+                  : areas
+                ).map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            )}
+            {users.filter(u => u.role === 'user').length > 0 && (
+              <select
+                value={filterUser}
+                onChange={e => setFilterUser(e.target.value)}
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 w-full"
+              >
+                <option value="">All Workers</option>
+                {users.filter(u => u.role === 'user').map(u => (
+                  <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                ))}
               </select>
             )}
           </div>
