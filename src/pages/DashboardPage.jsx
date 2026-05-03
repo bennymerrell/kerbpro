@@ -91,12 +91,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-card border-b border-border px-4 flex gap-1">
+      <div className="bg-card border-b border-border px-4 flex gap-1 overflow-x-auto scrollbar-none">
         {ALL_TABS.filter(t => t.roles.includes(user.role)).map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-3 text-xs font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-3 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
               tab === key
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'

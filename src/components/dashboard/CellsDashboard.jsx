@@ -284,8 +284,8 @@ export default function CellsDashboard() {
             }
           </div>
         )}
-        <div className="flex gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-0">
+        <div className="space-y-2">
+          <div className="relative w-full">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
@@ -295,38 +295,40 @@ export default function CellsDashboard() {
               className="w-full text-xs border border-input rounded-lg pl-8 pr-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
-          {offices.length > 0 && (
-            <select
-              value={filterOffice}
-              onChange={e => setFilterOffice(e.target.value)}
-              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">All Offices</option>
-              {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-          )}
-          {users.filter(u => u.role === 'user').length > 0 && (
-            <select
-              value={filterUser}
-              onChange={e => setFilterUser(e.target.value)}
-              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">All Workers</option>
-              {users.filter(u => u.role === 'user').map(u => (
-                <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
-              ))}
-            </select>
-          )}
-          {areas.length > 0 && (
-            <select
-              value={filterArea}
-              onChange={e => setFilterArea(e.target.value)}
-              className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">All Areas</option>
-              {areas.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-          )}
+          <div className="flex gap-2 flex-wrap">
+            {offices.length > 0 && (
+              <select
+                value={filterOffice}
+                onChange={e => setFilterOffice(e.target.value)}
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">All Offices</option>
+                {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            )}
+            {users.filter(u => u.role === 'user').length > 0 && (
+              <select
+                value={filterUser}
+                onChange={e => setFilterUser(e.target.value)}
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">All Workers</option>
+                {users.filter(u => u.role === 'user').map(u => (
+                  <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                ))}
+              </select>
+            )}
+            {areas.length > 0 && (
+              <select
+                value={filterArea}
+                onChange={e => setFilterArea(e.target.value)}
+                className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">All Areas</option>
+                {areas.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            )}
+          </div>
         </div>
       </div>
 
