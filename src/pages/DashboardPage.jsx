@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, ArrowLeft, Loader2, Mail, SquareDashedBottom, Building2, Leaf, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, Map, Loader2, Mail, SquareDashedBottom, Building2, Leaf, CalendarDays } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement.jsx';
 import Analytics from '../components/dashboard/Analytics';
 import CellsDashboard from '../components/dashboard/CellsDashboard';
@@ -70,7 +70,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate('/')} className="p-1.5 rounded-lg hover:bg-muted/60 transition-colors">
-          <ArrowLeft className="h-4 w-4 text-foreground" />
+          <Map className="h-4 w-4 text-foreground" />
         </button>
         <div className="flex items-center gap-2">
           <LayoutDashboard className="h-4 w-4 text-primary" />
