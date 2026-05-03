@@ -142,6 +142,14 @@ export default function WeeklyPlanner() {
 
   const isCurrentWeek = weekKey(weekStart) === weekKey(getMonday(new Date()));
 
+  // Group assignments by user
+  const byUser = assignments.reduce((acc, a, idx) => {
+    const key = a.user_id;
+    if (!acc[key]) acc[key] = { user_name: a.user_name, items: [] };
+    acc[key].items.push({ ...a, idx });
+    return acc;
+  }, {});
+
   return (
     <div className="space-y-4">
       {/* Header row */}
@@ -206,27 +214,34 @@ export default function WeeklyPlanner() {
           </button>
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
-          {assignments.map((a, idx) => (
-            <div key={idx} className="px-4 py-3 flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <User className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-foreground truncate">{a.user_name}</div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <SquareDashedBottom className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-[11px] text-muted-foreground truncate">
-                    {a.cell_area ? `${a.cell_area} — ` : ''}{a.cell_name}
-                  </span>
+        <div className="space-y-3">
+          {Object.values(byUser).map(({ user_name, items }) => (
+            <div key={user_name} className="bg-card border border-border rounded-xl overflow-hidden">
+              {/* User header */}
+              <div className="px-4 py-2.5 bg-muted/30 flex items-center gap-2 border-b border-border">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <User className="h-3 w-3 text-primary" />
                 </div>
+                <span className="text-xs font-semibold text-foreground">{user_name}</span>
+                <span className="ml-auto text-[11px] text-muted-foreground">{items.length} cell{items.length !== 1 ? 's' : ''}</span>
               </div>
-              <button
-                onClick={() => handleRemove(idx)}
-                className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              {/* Cells for this user */}
+              <div className="divide-y divide-border/50">
+                {items.map(a => (
+                  <div key={a.idx} className="px-4 py-2.5 flex items-center gap-3">
+                    <SquareDashedBottom className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="flex-1 text-xs text-foreground truncate">
+                      {a.cell_area ? `${a.cell_area} — ` : ''}{a.cell_name}
+                    </span>
+                    <button
+                      onClick={() => handleRemove(a.idx)}
+                      className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
