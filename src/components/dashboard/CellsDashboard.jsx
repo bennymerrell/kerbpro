@@ -345,38 +345,51 @@ export default function CellsDashboard() {
                   </button>
                 </div>
                 {(() => {
-                  const activeUsers = checkedInUsers; // users with active_cell_id === cell.id
+                  const activeUsers = checkedInUsers;
                   let assignedIds = [];
                   try { assignedIds = JSON.parse(cell.assigned_user_ids || '[]'); } catch {}
-                  // Grey = assigned but not currently active on this cell
                   const assignedNotActive = users.filter(u =>
                     assignedIds.includes(u.id) && u.active_cell_id !== cell.id
                   );
                   if (activeUsers.length === 0 && assignedNotActive.length === 0) return null;
                   return (
-                    <div className="ml-5 mt-1.5 flex flex-wrap gap-1.5">
-                      {activeUsers.map(u => (
-                        <button
-                          key={u.id}
-                          onClick={() => setReassigning(u)}
-                          title="Reassign this user to a different cell"
-                          className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
-                        >
-                          <User className="h-2.5 w-2.5 text-orange-500 flex-shrink-0" />
-                          <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
-                          <UserCheck className="h-2.5 w-2.5 text-orange-400 flex-shrink-0" />
-                        </button>
-                      ))}
-                      {assignedNotActive.map(u => (
-                        <div
-                          key={u.id}
-                          title="Assigned but not yet started"
-                          className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5"
-                        >
-                          <User className="h-2.5 w-2.5 text-gray-400 flex-shrink-0" />
-                          <span className="text-[10px] font-medium text-gray-500">{u.full_name || u.email}</span>
+                    <div className="ml-5 mt-2 space-y-1.5">
+                      {activeUsers.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide w-16 flex-shrink-0">Working</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {activeUsers.map(u => (
+                              <button
+                                key={u.id}
+                                onClick={() => setReassigning(u)}
+                                title="Reassign this user to a different cell"
+                                className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
+                              >
+                                <User className="h-2.5 w-2.5 text-orange-500 flex-shrink-0" />
+                                <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
+                                <UserCheck className="h-2.5 w-2.5 text-orange-400 flex-shrink-0" />
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
+                      {assignedNotActive.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-16 flex-shrink-0">Assigned</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {assignedNotActive.map(u => (
+                              <div
+                                key={u.id}
+                                title="Assigned but not yet started"
+                                className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5"
+                              >
+                                <User className="h-2.5 w-2.5 text-gray-400 flex-shrink-0" />
+                                <span className="text-[10px] font-medium text-gray-500">{u.full_name || u.email}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
