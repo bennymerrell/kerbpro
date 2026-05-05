@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
 };
 
-export default function SavedCellsLayer({ cells, userRole, activeUserCell, onCellClick }) {
+export default function SavedCellsLayer({ cells, userRole, activeUserCell, onCellClick, locked = false }) {
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
@@ -15,7 +15,7 @@ export default function SavedCellsLayer({ cells, userRole, activeUserCell, onCel
       const positions = points.map(p => [p.lat, p.lng]);
       const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
       const isActiveCell = activeUserCell && cell.id === activeUserCell.id;
-      const clickable = onCellClick && (cell.work_status !== 'completed' || isActiveCell);
+      const clickable = !locked && onCellClick && (cell.work_status !== 'completed' || isActiveCell);
       return (
         <Polygon
           key={cell.id || i}

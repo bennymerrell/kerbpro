@@ -442,6 +442,7 @@ export default function MapPage() {
           cells={savedCells}
           userRole={currentUser?.role}
           activeUserCell={activeUserCell}
+          locked={isAreaMode || !!editingCell}
           onCellClick={(cell) => {
             if (activeUserCell) {
               // If already logged into any cell, open nav menu
