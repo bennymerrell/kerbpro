@@ -152,25 +152,25 @@ function AddAssignmentModal({ cells, users, assignments, onAddMultiple, onClose 
                   <p className="text-xs text-muted-foreground text-center py-4">No eligible cells.</p>
                 )}
                 {sortedCells.map(c => {
-                  const isSelected = selectedCellIds.includes(c.id);
-                  const dist = refPoint && cellCentroid(c) ? distKm(refPoint, cellCentroid(c)) : null;
-                  const distLabel = dist != null
-                    ? dist < 1 ? `${(dist * 1000).toFixed(0)}m` : `${dist.toFixed(1)}km`
-                    : null;
-                  const statusColor = c.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400';
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => toggleCell(c.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/40'}`}
-                    >
-                      <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border bg-background'}`}>
-                        {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
-                      </div>
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusColor}`} />
-                      <span className="flex-1 text-xs text-foreground truncate">
-                        {c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}
-                      </span>
+                const isSelected = selectedCellIds.includes(c.id);
+                const dist = refPoint && cellCentroid(c) ? distKm(refPoint, cellCentroid(c)) : null;
+                const distLabel = dist != null
+                ? dist < 1 ? `${(dist * 1000).toFixed(0)}m` : `${dist.toFixed(1)}km`
+                : null;
+                const statusColor = c.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400';
+                return (
+                <button
+                key={c.id}
+                onClick={() => toggleCell(c.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/40'}`}
+                >
+                <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border bg-background'}`}>
+                  {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                </div>
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusColor}`} />
+                <span className="flex-1 text-xs text-foreground truncate">
+                  {c.area ? `${c.area} — ` : ''}{c.name || 'Unnamed'}
+                </span>
                       {distLabel && (
                         <span className="text-[10px] text-muted-foreground flex-shrink-0">{distLabel}</span>
                       )}

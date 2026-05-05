@@ -106,9 +106,9 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
             )}
           </div>
 
-          {/* Area */}
+          {/* Contract */}
           <div>
-            <label className="text-xs font-medium text-foreground block mb-1.5">Area</label>
+            <label className="text-xs font-medium text-foreground block mb-1.5">Contract</label>
             <input
               type="text"
               value={cellArea}

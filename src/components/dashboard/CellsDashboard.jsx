@@ -47,7 +47,7 @@ function EditCellModal({ cell, offices, onClose, onSave }) {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Area</label>
+            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Contract</label>
             <input
               type="text"
               value={form.area}
@@ -372,7 +372,7 @@ export default function CellsDashboard() {
                 onChange={e => setFilterArea(e.target.value)}
                 className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0"
               >
-                <option value="">All Areas</option>
+                <option value="">All Contracts</option>
                 {(filterOffice
                   ? [...new Set(cells.filter(c => c.office_id === filterOffice).map(c => c.area).filter(Boolean))].sort()
                   : areas

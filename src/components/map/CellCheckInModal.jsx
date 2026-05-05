@@ -310,14 +310,14 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
             {areas.length > 0 && (
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                  <MapPin className="h-3.5 w-3.5" /> Cell Area
+                <MapPin className="h-3.5 w-3.5" /> Contract
                 </label>
                 <select
-                  value={selectedArea}
-                  onChange={e => { setSelectedArea(e.target.value); setSelectedCellId(''); }}
-                  className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                value={selectedArea}
+                onChange={e => { setSelectedArea(e.target.value); setSelectedCellId(''); }}
+                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
-                  <option value="">— Select an area —</option>
+                <option value="">— Select a contract —</option>
                   {areas.map(a => (
                     <option key={a} value={a}>{a}</option>
                   ))}
@@ -335,7 +335,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
                 disabled={!selectedArea}
                 className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">{selectedArea ? '— Select a cell —' : '— Select an area first —'}</option>
+                <option value="">{selectedArea ? '— Select a cell —' : '— Select a contract first —'}</option>
                 {filteredCells.map(c => (
                   <option key={c.id} value={c.id}>{c.name || 'Unnamed'}</option>
                 ))}

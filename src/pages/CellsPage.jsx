@@ -249,7 +249,7 @@ export default function CellsPage() {
           <>
             {offices.length > 0 && <div className="border-t border-border mt-3" />}
             <div className={offices.length > 0 ? 'pt-3' : 'pt-2'}>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Area</div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Contract</div>
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setAreaFilter('')}
