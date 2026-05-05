@@ -79,6 +79,65 @@ function EditCellModal({ cell, offices, onClose, onSave }) {
   );
 }
 
+function DeleteCellModal({ cell, onClose, onConfirm }) {
+  const [confirmed, setConfirmed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!confirmed) { setConfirmed(true); return; }
+    setDeleting(true);
+    await onConfirm();
+    setDeleting(false);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-[5000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="font-semibold text-destructive text-sm">Delete Cell</h3>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {confirmed ? 'Are you absolutely sure?' : `Delete "${cell.name || 'Unnamed Cell'}"?`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {confirmed
+                  ? 'This action cannot be undone. All data for this cell will be permanently removed.'
+                  : 'This will permanently delete the cell and all associated data.'}
+              </p>
+            </div>
+          </div>
+          {confirmed && (
+            <div className="bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+              <p className="text-xs text-destructive font-medium">⚠ Click "Delete Forever" to permanently remove this cell.</p>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2 px-5 py-4 border-t border-border">
+          <button onClick={onClose} className="flex-1 h-9 rounded-lg bg-muted text-sm font-medium text-foreground hover:bg-muted/70 transition-colors">Cancel</button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 h-9 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
+          >
+            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            {confirmed ? 'Delete Forever' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReassignUserModal({ user, cells, onClose, onReassigned }) {
   const [selectedCellId, setSelectedCellId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -150,6 +209,7 @@ export default function CellsDashboard() {
   const [batchResult, setBatchResult] = useState(null);
   const [resettingId, setResettingId] = useState(null);
   const [weeklyAssignments, setWeeklyAssignments] = useState([]);
+  const [deletingCell, setDeletingCell] = useState(null);
 
   async function handleBatchRecalc() {
     setBatchRunning(true);
@@ -394,7 +454,7 @@ export default function CellsDashboard() {
                   <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(cell.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
+                  <button onClick={() => setDeletingCell(cell)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -485,6 +545,14 @@ export default function CellsDashboard() {
           cells={cells}
           onClose={() => setReassigning(null)}
           onReassigned={handleReassigned}
+        />
+      )}
+
+      {deletingCell && (
+        <DeleteCellModal
+          cell={deletingCell}
+          onClose={() => setDeletingCell(null)}
+          onConfirm={() => handleDelete(deletingCell.id)}
         />
       )}
 
