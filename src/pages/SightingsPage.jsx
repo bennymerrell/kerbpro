@@ -85,7 +85,7 @@ export default function SightingsPage() {
   const filtered = sightings.filter(s => {
     const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
     const matchesSearch = s.species?.toLowerCase().includes(search.toLowerCase()) || s.notes?.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategories.length === 0 || activeCategories.length === CATEGORIES.length || activeCategories.includes(cat);
+    const matchesCategory = activeCategories.length === 0 || activeCategories.includes(cat);
     return matchesSearch && matchesCategory;
   });
 
@@ -189,9 +189,9 @@ export default function SightingsPage() {
       </div>
 
       {/* Bulk show/hide bar — mirrors CellsPage */}
-      {!loading && filtered.length > 0 && (
+      {!loading && sightings.length > 0 && (
         <div className="px-4 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
-          <span className="text-xs text-muted-foreground">{filtered.length} sighting{filtered.length !== 1 ? 's' : ''} shown</span>
+          <span className="text-xs text-muted-foreground">{filtered.length} of {sightings.length} sighting{sightings.length !== 1 ? 's' : ''} shown</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveCategories([])}
@@ -200,7 +200,7 @@ export default function SightingsPage() {
               <Eye className="h-3 w-3" /> Show All
             </button>
             <button
-              onClick={() => setActiveCategories([...CATEGORIES])}
+              onClick={() => setActiveCategories(['__none__'])}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border hover:bg-muted transition-colors text-foreground"
             >
               <EyeOff className="h-3 w-3" /> Hide All
