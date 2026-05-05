@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Eye, EyeOff, Trash2, ArrowLeft, SquareDashedBottom, Loader2, AlertCircle, Pencil } from 'lucide-react';
+import { Search, MapPin, Eye, EyeOff, Trash2, Map, SquareDashedBottom, Loader2, AlertCircle, Pencil, RefreshCw } from 'lucide-react';
 
 const WORK_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
@@ -203,7 +203,7 @@ export default function CellsPage() {
           onClick={() => navigate('/')}
           className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 text-foreground" />
+          <Map className="h-4 w-4 text-foreground" />
         </button>
         <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
           <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
@@ -272,6 +272,41 @@ export default function CellsPage() {
         )}
       </div>
 
+      {/* Bulk visibility controls for filtered selection */}
+      {filtered.length > 0 && (
+        <div className="px-4 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+          <span className="text-xs text-muted-foreground">{filtered.length} cell{filtered.length !== 1 ? 's' : ''} shown</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                filtered.forEach(cell => {
+                  if (cell.visible === false) {
+                    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: true } : c));
+                    base44.entities.Cell.update(cell.id, { visible: true });
+                  }
+                });
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border hover:bg-muted transition-colors text-foreground"
+            >
+              <Eye className="h-3 w-3" /> Show All
+            </button>
+            <button
+              onClick={() => {
+                filtered.forEach(cell => {
+                  if (cell.visible !== false) {
+                    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, visible: false } : c));
+                    base44.entities.Cell.update(cell.id, { visible: false });
+                  }
+                });
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border hover:bg-muted transition-colors text-foreground"
+            >
+              <EyeOff className="h-3 w-3" /> Hide All
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 px-4 py-3 space-y-2 overflow-y-auto">
         {loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading…</div>
@@ -305,7 +340,7 @@ export default function CellsPage() {
                 {currentUser?.role === 'admin' && <WorkStatusBadge status={cell.work_status} />}
               </div>
               </div>
-              <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 flex-shrink-0" />
+              <Map className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </button>
 
             {currentUser?.role === 'admin' && renderRoadTypes(cell)}
@@ -335,6 +370,19 @@ export default function CellsPage() {
                 {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 {cell.visible !== false ? 'Visible' : 'Hidden'}
               </button>
+              {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && <>
+                <div className="w-px bg-border" />
+                <button
+                  onClick={() => handleRecalculate(cell)}
+                  disabled={recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50"
+                >
+                  {recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing'
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <RefreshCw className="h-3.5 w-3.5" />}
+                  {cell.recalc_status === 'pending' || cell.recalc_status === 'processing' ? 'Recalcing…' : 'Recalc Miles'}
+                </button>
+              </>}
               {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && <>
                 <div className="w-px bg-border" />
                 <button
