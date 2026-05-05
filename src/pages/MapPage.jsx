@@ -155,9 +155,10 @@ export default function MapPage() {
         ]);
 
         const isRegularUser = user && user.role !== 'admin' && user.role !== 'manager';
+        const showAllCells = localStorage.getItem('cells_show_all') === '1';
 
-        if (!isRegularUser) {
-          // Admins/managers see everything
+        if (!isRegularUser || showAllCells) {
+          // Admins/managers see everything; regular users who chose "All" also see everything
           setSavedCells(cellData);
           setSpeciesSightings(sightingData);
           await indexedDBCache.cacheCells(cellData);

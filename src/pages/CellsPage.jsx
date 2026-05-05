@@ -40,7 +40,7 @@ export default function CellsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [officeFilter, setOfficeFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
-  const [showAllCells, setShowAllCells] = useState(false);
+  const [showAllCells, setShowAllCells] = useState(() => localStorage.getItem('cells_show_all') === '1');
   const [userCellIds, setUserCellIds] = useState(null); // null = not loaded yet
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
@@ -253,16 +253,16 @@ export default function CellsPage() {
         {isRegularUser && userCellIds !== null && (
           <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-medium">
             <button
-              onClick={() => setShowAllCells(false)}
-              className={`px-2.5 py-1 transition-colors ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            onClick={() => { setShowAllCells(false); localStorage.setItem('cells_show_all', '0'); }}
+            className={`px-2.5 py-1 transition-colors ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
             >
-              My Cells
+            My Cells
             </button>
             <button
-              onClick={() => setShowAllCells(true)}
-              className={`px-2.5 py-1 transition-colors ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            onClick={() => { setShowAllCells(true); localStorage.setItem('cells_show_all', '1'); }}
+            className={`px-2.5 py-1 transition-colors ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
             >
-              All
+            All
             </button>
           </div>
         )}
