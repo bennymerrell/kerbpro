@@ -145,8 +145,7 @@ export default function MapPage() {
   const [areaClosed, setAreaClosed] = useState(false);
   const [savedCells, setSavedCells] = useState([]);
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = useCallback(async () => {
       try {
         const [cellData, sightingData, user] = await Promise.all([
           base44.entities.Cell.list('-created_date', 100),
@@ -218,9 +217,17 @@ export default function MapPage() {
         const cached = await indexedDBCache.getCells();
         setSavedCells(cached);
       }
-    };
-    loadData();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    function handleFilterChange() { loadData(); }
+    window.addEventListener('cells_filter_changed', handleFilterChange);
+    return () => window.removeEventListener('cells_filter_changed', handleFilterChange);
+  }, [loadData]);
 
   useEffect(() => {
     if (location.state?.selectedCell) {

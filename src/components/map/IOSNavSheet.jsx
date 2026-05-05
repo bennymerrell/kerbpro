@@ -51,6 +51,7 @@ export default function IOSNavSheet({
   function handleCellViewToggle(all) {
     setShowAllCells(all);
     localStorage.setItem('cells_show_all', all ? '1' : '0');
+    window.dispatchEvent(new Event('cells_filter_changed'));
   }
 
   const toolItems = [
