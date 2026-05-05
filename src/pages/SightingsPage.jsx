@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
-import { ArrowLeft, Search, ArrowUpDown, Leaf, Eye, Map, Check } from 'lucide-react';
+import { ArrowLeft, Search, ArrowUpDown, Leaf, Eye, Map, Check, EyeOff } from 'lucide-react';
 import SightingDetailModal from '../components/SightingDetailModal';
 import { format } from 'date-fns';
 
@@ -85,7 +85,7 @@ export default function SightingsPage() {
   const filtered = sightings.filter(s => {
     const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
     const matchesSearch = s.species?.toLowerCase().includes(search.toLowerCase()) || s.notes?.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategories.length === 0 || activeCategories.includes(cat);
+    const matchesCategory = activeCategories.length === 0 || activeCategories.length === CATEGORIES.length || activeCategories.includes(cat);
     return matchesSearch && matchesCategory;
   });
 
@@ -163,27 +163,51 @@ export default function SightingsPage() {
           </div>
         )}
         {/* Category filter chips */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setActiveCategories(activeCategories.length === CATEGORIES.length ? [] : [...CATEGORIES])}
-            className="text-xs text-primary font-medium whitespace-nowrap"
-          >
-            {activeCategories.length === CATEGORIES.length ? 'Hide all' : 'Show all'}
-          </button>
-          {CATEGORIES.map(cat => {
-            const on = activeCategories.includes(cat);
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategories(on ? activeCategories.filter(c => c !== cat) : [...activeCategories, cat])}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${on ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+        <div>
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Category</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setActiveCategories([])}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${activeCategories.length === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+            >
+              All
+            </button>
+            {CATEGORIES.map(cat => {
+              const on = activeCategories.includes(cat);
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategories(on ? activeCategories.filter(c => c !== cat) : [...activeCategories, cat])}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${on ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      {/* Bulk show/hide bar — mirrors CellsPage */}
+      {!loading && filtered.length > 0 && (
+        <div className="px-4 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+          <span className="text-xs text-muted-foreground">{filtered.length} sighting{filtered.length !== 1 ? 's' : ''} shown</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveCategories([])}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border hover:bg-muted transition-colors text-foreground"
+            >
+              <Eye className="h-3 w-3" /> Show All
+            </button>
+            <button
+              onClick={() => setActiveCategories([...CATEGORIES])}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border hover:bg-muted transition-colors text-foreground"
+            >
+              <EyeOff className="h-3 w-3" /> Hide All
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4">
