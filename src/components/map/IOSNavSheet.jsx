@@ -21,6 +21,7 @@ export default function IOSNavSheet({
   const navigate = useNavigate();
   const sheetRef = useRef(null);
   const [user, setUser] = useState(null);
+  const [showAllCells, setShowAllCells] = useState(() => localStorage.getItem('cells_show_all') === '1');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -45,6 +46,12 @@ export default function IOSNavSheet({
   }
 
   const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
+  const isRegularUser = user && !isAdminOrManager;
+
+  function handleCellViewToggle(all) {
+    setShowAllCells(all);
+    localStorage.setItem('cells_show_all', all ? '1' : '0');
+  }
 
   const toolItems = [
     { label: 'Spotted', icon: Info, active: false, color: 'text-blue-500', activeBg: 'bg-blue-500', inactiveBg: 'bg-blue-100', action: () => { base44.analytics.track({ eventName: 'nav_spotted_clicked' }); onSpotted(); onClose(); } },
@@ -190,6 +197,27 @@ export default function IOSNavSheet({
               ))}
             </div>
           </div>
+
+          {/* Cell View Toggle — regular users only */}
+          {isRegularUser && (
+            <div className="px-4 mb-4">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Cell View</div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCellViewToggle(false)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  My Cells
+                </button>
+                <button
+                  onClick={() => handleCellViewToggle(true)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  All Cells
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Sightings Filter */}
           <div className="px-4 mb-4">
