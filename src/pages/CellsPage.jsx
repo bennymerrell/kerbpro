@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Trash2, Map, SquareDashedBottom, Loader2, AlertCircle, Pencil, RefreshCw } from 'lucide-react';
+import { format, startOfWeek } from 'date-fns';
 
 const WORK_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started', color: 'text-blue-600', bg: 'bg-blue-100', dot: 'bg-blue-500' },
@@ -39,8 +40,8 @@ export default function CellsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [officeFilter, setOfficeFilter] = useState('');
   const [recalcTriggering, setRecalcTriggering] = useState({});
-
-
+  const [showAllCells, setShowAllCells] = useState(false);
+  const [userCellIds, setUserCellIds] = useState(null); // null = not loaded yet
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
@@ -58,6 +59,41 @@ export default function CellsPage() {
 
   useEffect(() => { loadCells(); }, [loadCells]);
 
+  // For regular users, build the set of their assigned/planned cell IDs
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
+      setUserCellIds(null); // no filtering for admins/managers
+      return;
+    }
+    const userId = currentUser.id;
+    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekKey = format(monday, 'yyyy-MM-dd');
+
+    Promise.all([
+      base44.entities.Cell.list('-created_date', 200),
+      base44.entities.WeeklyPlan.filter({ week_start: weekKey }),
+    ]).then(([allCells, plans]) => {
+      const ids = new Set();
+      for (const cell of allCells) {
+        try {
+          const assigned = JSON.parse(cell.assigned_user_ids || '[]');
+          if (assigned.includes(userId)) ids.add(cell.id);
+        } catch {}
+      }
+      if (plans[0]) {
+        try {
+          const assignments = JSON.parse(plans[0].assignments || '[]');
+          for (const a of assignments) {
+            if (a.user_id === userId) ids.add(a.cell_id);
+          }
+        } catch {}
+      }
+      if (currentUser.active_cell_id) ids.add(currentUser.active_cell_id);
+      setUserCellIds(ids);
+    }).catch(() => setUserCellIds(new Set()));
+  }, [currentUser]);
+
   useEffect(() => {
     const unsub = base44.entities.Cell.subscribe((event) => {
       if (event.type === 'update') {
@@ -72,7 +108,12 @@ export default function CellsPage() {
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
   const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
 
-  const filtered = cells.filter(c => {
+  const isRegularUser = currentUser && currentUser.role !== 'admin' && currentUser.role !== 'manager';
+  const baseCells = (isRegularUser && !showAllCells && userCellIds !== null)
+    ? cells.filter(c => userCellIds.has(c.id))
+    : cells;
+
+  const filtered = baseCells.filter(c => {
     const matchesSearch = (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase());
     const matchesArea = !areaFilter || c.area === areaFilter;
     const matchesOffice = !officeFilter || c.office_id === officeFilter;
@@ -209,7 +250,23 @@ export default function CellsPage() {
           <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
         </div>
         <h1 className="font-semibold text-foreground flex-1">Cells</h1>
-        <span className="text-xs text-muted-foreground">{cells.length} saved</span>
+        {isRegularUser && userCellIds !== null && (
+          <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-medium">
+            <button
+              onClick={() => setShowAllCells(false)}
+              className={`px-2.5 py-1 transition-colors ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              My Cells
+            </button>
+            <button
+              onClick={() => setShowAllCells(true)}
+              className={`px-2.5 py-1 transition-colors ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              All
+            </button>
+          </div>
+        )}
+        {(!isRegularUser || userCellIds === null) && <span className="text-xs text-muted-foreground">{cells.length} saved</span>}
       </div>
 
       <div className="px-4 py-3 border-b border-border">
