@@ -103,18 +103,6 @@ export default function SightingDetailModal({ sighting, onClose, onUpdate }) {
           </div>
           <div className="flex gap-2 pt-1">
             <button
-              onClick={() => {
-                const cat = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
-                base44.analytics.track({ eventName: 'sighting_detail_view_on_map_clicked', properties: { category: cat } });
-                onClose();
-                navigate('/', { state: { flyTo: [sighting.lat, sighting.lng], activateCategory: cat } });
-              }}
-              className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Map className="h-3.5 w-3.5" />
-              View on Map
-            </button>
-            <button
               onClick={onClose}
               className="flex-1 h-9 rounded-lg bg-muted hover:bg-muted/70 text-sm font-medium text-foreground transition-colors"
             >
