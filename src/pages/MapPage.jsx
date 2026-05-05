@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { indexedDBCache } from '@/lib/indexedDBCache';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { TILE_LAYERS } from '../lib/mapUtils';
+import { TILE_LAYERS, pointInPolygon } from '../lib/mapUtils';
 import MapClickHandler from '../components/map/MapClickHandler';
 import WaypointMarkers from '../components/map/WaypointMarkers';
 import RouteLine from '../components/map/RouteLine';
@@ -148,13 +148,71 @@ export default function MapPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [cellData, sightingData] = await Promise.all([
+        const [cellData, sightingData, user] = await Promise.all([
           base44.entities.Cell.list('-created_date', 100),
           base44.entities.Sighting.list('-created_date', 500),
+          base44.auth.me().catch(() => null),
         ]);
-        setSavedCells(cellData);
-        setSpeciesSightings(sightingData);
-        await indexedDBCache.cacheCells(cellData);
+
+        const isRegularUser = user && user.role !== 'admin' && user.role !== 'manager';
+
+        if (!isRegularUser) {
+          // Admins/managers see everything
+          setSavedCells(cellData);
+          setSpeciesSightings(sightingData);
+          await indexedDBCache.cacheCells(cellData);
+          return;
+        }
+
+        // Build the set of cell IDs relevant to this user
+        const userId = user.id;
+        const relevantCellIds = new Set();
+
+        // 1. Cells directly assigned to the user
+        for (const cell of cellData) {
+          try {
+            const ids = JSON.parse(cell.assigned_user_ids || '[]');
+            if (ids.includes(userId)) relevantCellIds.add(cell.id);
+          } catch {}
+        }
+
+        // 2. Cells from this week's plan
+        try {
+          const monday = new Date();
+          const day = monday.getDay();
+          const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
+          monday.setDate(diff);
+          const weekKey = monday.toISOString().split('T')[0];
+          const plans = await base44.entities.WeeklyPlan.filter({ week_start: weekKey });
+          if (plans[0]) {
+            const assignments = JSON.parse(plans[0].assignments || '[]');
+            for (const a of assignments) {
+              if (a.user_id === userId) relevantCellIds.add(a.cell_id);
+            }
+          }
+        } catch {}
+
+        // 3. Also include the user's active cell if any
+        if (user.active_cell_id) relevantCellIds.add(user.active_cell_id);
+
+        const filteredCells = relevantCellIds.size > 0
+          ? cellData.filter(c => relevantCellIds.has(c.id))
+          : cellData; // fallback: show all if nothing assigned
+
+        setSavedCells(filteredCells);
+        await indexedDBCache.cacheCells(filteredCells);
+
+        // Filter sightings to only those within the relevant cell polygons
+        const cellPolygons = filteredCells.map(c => {
+          try { return JSON.parse(c.points || '[]'); } catch { return []; }
+        }).filter(pts => pts.length >= 3);
+
+        const filteredSightings = sightingData.filter(s => {
+          if (!s.lat || !s.lng) return false;
+          return cellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
+        });
+
+        setSpeciesSightings(filteredSightings);
       } catch (e) {
         const cached = await indexedDBCache.getCells();
         setSavedCells(cached);
