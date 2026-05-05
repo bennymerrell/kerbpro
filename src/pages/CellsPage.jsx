@@ -250,23 +250,7 @@ export default function CellsPage() {
           <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
         </div>
         <h1 className="font-semibold text-foreground flex-1">Cells</h1>
-        {isRegularUser && userCellIds !== null && (
-          <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-medium">
-            <button
-            onClick={() => { setShowAllCells(false); localStorage.setItem('cells_show_all', '0'); }}
-            className={`px-2.5 py-1 transition-colors ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-            >
-            My Cells
-            </button>
-            <button
-            onClick={() => { setShowAllCells(true); localStorage.setItem('cells_show_all', '1'); }}
-            className={`px-2.5 py-1 transition-colors ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-            >
-            All
-            </button>
-          </div>
-        )}
-        {(!isRegularUser || userCellIds === null) && <span className="text-xs text-muted-foreground">{cells.length} saved</span>}
+        <span className="text-xs text-muted-foreground">{cells.length} saved</span>
       </div>
 
       <div className="px-4 py-3 border-b border-border">
@@ -328,6 +312,27 @@ export default function CellsPage() {
           </>
         )}
       </div>
+
+      {/* My Cells / All toggle for regular users */}
+      {isRegularUser && userCellIds !== null && (
+        <div className="px-4 py-3 border-b border-border">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">View</div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setShowAllCells(false); localStorage.setItem('cells_show_all', '0'); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+            >
+              My Cells
+            </button>
+            <button
+              onClick={() => { setShowAllCells(true); localStorage.setItem('cells_show_all', '1'); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+            >
+              All Cells
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bulk visibility controls for filtered selection */}
       {filtered.length > 0 && (
