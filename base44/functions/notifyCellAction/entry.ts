@@ -28,19 +28,15 @@ Deno.serve(async (req) => {
     }
 
     const userName = user.full_name || user.email;
-    const actionLabel = action === 'started' ? 'started work on' : 'completed';
-    const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;
+    const cellDesc = cellArea ? `${cellArea} — ${cellName}` : cellName;
+    const recordedAt = new Date().toLocaleString();
+    const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:#1d4ed8;padding:28px 32px;"><p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">🚀 Cell Started</p><p style="margin:6px 0 0;color:#bfdbfe;font-size:13px;">Started on ${recordedAt}</p></td></tr><tr><td style="padding:28px 32px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #1d4ed8;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Cell</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${cellDesc}</p></td></tr><tr><td style="height:12px;"></td></tr><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #1d4ed8;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Worker</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${userName}</p></td></tr></table></td></tr><tr><td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Sent automatically from the KerbPro field mapping tool.</p></td></tr></table></td></tr></table></body></html>`;
 
-    const emailBody = `
-      <p>Hi ${manager.full_name || manager.email},</p>
-      <p><strong>${userName}</strong> has <strong>${actionLabel}</strong> cell <strong>${cellDesc}</strong>.</p>
-      <p>This is an automated notification from KerbPro.</p>
-    `;
-
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: manager.email,
-      subject: `KerbPro: ${userName} ${actionLabel} ${cellDesc}`,
-      body: emailBody,
+    await base44.asServiceRole.functions.invoke('notifyManagers', {
+      subject: `Cell Started: ${cellArea} — ${cellName}`,
+      body: htmlBody,
+      templateKey: 'cell_started',
+      templateVars: { cell_name: cellName, cell_area: cellArea || '', worker: userName },
     });
 
     return Response.json({ ok: true });

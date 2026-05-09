@@ -32,21 +32,19 @@ Deno.serve(async (req) => {
       )
     );
 
-    // Notify manager if provided (and communications enabled)
-    if (managerId) {
-      try {
-        const manager = await base44.asServiceRole.entities.User.get(managerId);
-        if (manager && manager.communications_enabled !== false) {
-          const userName = user.full_name || user.email;
-          const cellDesc = cellArea ? `${cellName} (${cellArea})` : cellName;
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: manager.email,
-            subject: `KerbPro: ${userName} completed ${cellDesc}`,
-            body: `<p>Hi ${manager.full_name || manager.email},</p><p><strong>${userName}</strong> has <strong>completed</strong> cell <strong>${cellDesc}</strong>.</p><p>${usersOnCell.length > 1 ? `${usersOnCell.length} users have been automatically logged off this cell.` : ''}</p><p>This is an automated notification from KerbPro.</p>`,
-          });
-        }
-      } catch {}
-    }
+    // Notify all managers via the notifyManagers function (supports email templates)
+    try {
+      const recordedAt = new Date().toLocaleString();
+      const cellDesc = cellArea ? `${cellArea} — ${cellName}` : cellName;
+      const userName = user.full_name || user.email;
+      const htmlBody = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:#16a34a;padding:28px 32px;"><p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">✅ Cell Completed</p><p style="margin:6px 0 0;color:#bbf7d0;font-size:13px;">Completed on ${recordedAt}</p></td></tr><tr><td style="padding:28px 32px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #16a34a;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Cell</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${cellDesc}</p></td></tr><tr><td style="height:12px;"></td></tr><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #16a34a;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Worker</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${userName}</p></td></tr></table></td></tr><tr><td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Sent automatically from the KerbPro field mapping tool.</p></td></tr></table></td></tr></table></body></html>`;
+      await base44.asServiceRole.functions.invoke('notifyManagers', {
+        subject: `Cell Completed: ${cellArea} — ${cellName}`,
+        body: htmlBody,
+        templateKey: 'cell_completed',
+        templateVars: { cell_name: cellName, cell_area: cellArea || '', worker: userName },
+      });
+    } catch {}
 
     return Response.json({ ok: true, loggedOffCount: usersOnCell.length });
   } catch (error) {
