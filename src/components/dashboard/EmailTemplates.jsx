@@ -27,6 +27,12 @@ const DEFAULT_TEMPLATES = [
     subject_template: 'Cell Continued: {{cell_area}} — {{cell_name}}',
     intro_text: 'A worker has continued work on a cell.',
   },
+  {
+    key: 'cell_logoff',
+    label: 'Cell Log Off (Keep In Progress)',
+    subject_template: 'Cell Log Off: {{cell_area}} — {{cell_name}}',
+    intro_text: 'A worker has logged off their cell (kept in progress).',
+  },
 ];
 
 function EditTemplateModal({ template, defaults, onClose, onSave }) {

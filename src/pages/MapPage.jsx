@@ -396,11 +396,23 @@ export default function MapPage() {
 
   async function handleCellLogOff() {
     if (!activeUserCell || !currentUser) return;
+    const cellName = activeUserCell.name || 'Unnamed Cell';
+    const cellArea = activeUserCell.area || '';
+    const recordedAt = new Date().toLocaleString();
     // Log off without completing — status stays in_progress
     await base44.auth.updateMe({ active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' });
     setCurrentUser(u => ({ ...u, active_cell_id: '', active_cell_prev_status: '', active_cell_checkin_date: '' }));
     setActiveUserCell(null);
     setShowLanding(true);
+    // Notify managers
+    import('@/lib/notifyManagers').then(({ notifyManagers }) => {
+      notifyManagers(
+        `Cell Log Off: ${cellArea} — ${cellName}`,
+        `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:#f59e0b;padding:28px 32px;"><p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">⏸️ Cell Log Off</p><p style="margin:6px 0 0;color:#fef3c7;font-size:13px;">Logged off on ${recordedAt}</p></td></tr><tr><td style="padding:28px 32px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #f59e0b;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Cell</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${cellArea ? cellArea + ' — ' : ''}${cellName}</p></td></tr><tr><td style="height:12px;"></td></tr><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid #f59e0b;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Worker</p><p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${currentUser?.full_name || currentUser?.email || 'Unknown'}</p></td></tr><tr><td style="height:12px;"></td></tr><tr><td style="padding:10px 14px;background:#fff7ed;border-radius:8px;border-left:4px solid #f59e0b;"><p style="margin:0;font-size:13px;color:#92400e;">Cell status remains <strong>In Progress</strong> — work not yet completed.</p></td></tr></table></td></tr><tr><td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Sent automatically from the KerbPro field mapping tool.</p></td></tr></table></td></tr></table></body></html>`,
+        'cell_logoff',
+        { cell_name: cellName, cell_area: cellArea }
+      ).catch(() => {});
+    });
   }
 
   const handleSpotted = useCallback(() => {
