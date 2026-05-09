@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
   await Promise.all(
     toSend.map(u =>
-      base44.asServiceRole.integrations.Core.SendEmail({ to: u.email, subject: finalSubject, body: finalBody })
+      base44.asServiceRole.integrations.Core.SendEmail({ to: u.email, subject: finalSubject, body: finalBody, from_name: 'KerbPro' })
     )
   );
 
