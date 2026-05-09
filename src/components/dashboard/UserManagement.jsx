@@ -155,11 +155,19 @@ export default function UserManagement() {
         <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
           {users.map(u => (
             <div key={u.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
-                {(u.full_name || u.email || '?')[0].toUpperCase()}
+              <div className="relative w-8 h-8 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                  {(u.full_name || u.email || '?')[0].toUpperCase()}
+                </div>
+                {u.active_cell_id && (
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-card" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-foreground truncate">{u.full_name || u.email}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-foreground truncate">{u.full_name || u.email}</span>
+                  {u.active_cell_id && <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full flex-shrink-0">Active</span>}
+                </div>
                 <div className="text-[11px] text-muted-foreground truncate">
                   <span className="capitalize">{u.role}</span>
                   {u.office_id && officeMap[u.office_id] ? ` · ${officeMap[u.office_id]}` : ''}
