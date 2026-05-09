@@ -1,0 +1,26 @@
+{
+  "name": "EmailTemplate",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Unique identifier for this template, e.g. 'sighting', 'cell_started', 'cell_completed', 'paper_map'"
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable name for the template"
+    },
+    "subject_template": {
+      "type": "string",
+      "description": "Subject line with optional placeholders like {{category}}, {{cell_name}}, etc."
+    },
+    "intro_text": {
+      "type": "string",
+      "description": "Optional custom intro text shown at the top of the email body (replaces default heading text)"
+    }
+  },
+  "required": [
+    "key",
+    "label"
+  ]
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, Map, Loader2, Mail, SquareDashedBottom, Building2, Leaf, CalendarDays, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, Map, Loader2, Mail, SquareDashedBottom, Building2, Leaf, CalendarDays, FileText, Settings } from 'lucide-react';
 import UserManagement from '../components/dashboard/UserManagement.jsx';
 import Analytics from '../components/dashboard/Analytics';
 import CellsDashboard from '../components/dashboard/CellsDashboard';
@@ -9,6 +9,7 @@ import OfficeManagement from '../components/dashboard/OfficeManagement';
 import SightingsDashboard from '../components/dashboard/SightingsDashboard';
 import WeeklyPlanner from '../components/dashboard/WeeklyPlanner';
 import ContractManagement from '../components/dashboard/ContractManagement';
+import EmailTemplates from '../components/dashboard/EmailTemplates';
 
 const ALL_TABS = [
   { key: 'analytics', label: 'Analytics', icon: BarChart2, roles: ['admin', 'manager'] },
@@ -18,6 +19,7 @@ const ALL_TABS = [
   { key: 'sightings', label: 'Sightings', icon: Leaf, roles: ['admin', 'manager'] },
   { key: 'planner', label: 'Planner', icon: CalendarDays, roles: ['admin', 'manager'] },
   { key: 'users', label: 'Users', icon: Users, roles: ['admin', 'manager'] },
+  { key: 'email_templates', label: 'Email Templates', icon: Mail, roles: ['admin', 'manager'] },
 ];
 
 export default function DashboardPage() {
@@ -119,6 +121,7 @@ export default function DashboardPage() {
         {tab === 'cells' && <CellsDashboard />}
         {tab === 'sightings' && <SightingsDashboard />}
         {tab === 'planner' && <WeeklyPlanner />}
+        {tab === 'email_templates' && <EmailTemplates />}
       </div>
     </div>
   );

@@ -1,11 +1,43 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+function applyPlaceholders(str, vars) {
+  if (!str) return str;
+  return str.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '');
+}
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { subject, body } = await req.json();
+  const { subject, body, templateKey, templateVars } = await req.json();
+
+  // If a templateKey is provided, try to load a custom template
+  let finalSubject = subject;
+  let introOverride = null;
+
+  if (templateKey) {
+    const templates = await base44.asServiceRole.entities.EmailTemplate.filter({ key: templateKey });
+    if (templates[0]) {
+      const t = templates[0];
+      if (t.subject_template) {
+        finalSubject = applyPlaceholders(t.subject_template, templateVars || {});
+      }
+      if (t.intro_text) {
+        introOverride = applyPlaceholders(t.intro_text, templateVars || {});
+      }
+    }
+  }
+
+  // If introOverride, inject it into the body (replace the default heading paragraph)
+  let finalBody = body;
+  if (introOverride) {
+    // Replace the text node inside the blue header <p> tag with the custom intro
+    finalBody = body.replace(
+      /(<td style="background:#1d4ed8[^>]*>)\s*(<p style="margin:0;color:#ffffff[^>]*>)[^<]*(<\/p>)/,
+      `$1$2${introOverride}$3`
+    );
+  }
 
   const allUsers = await base44.asServiceRole.entities.User.list();
   const toSend = allUsers.filter(u => (u.role === 'manager' || u.role === 'admin') && u.communications_enabled !== false);
@@ -16,7 +48,7 @@ Deno.serve(async (req) => {
 
   await Promise.all(
     toSend.map(u =>
-      base44.asServiceRole.integrations.Core.SendEmail({ to: u.email, subject, body })
+      base44.asServiceRole.integrations.Core.SendEmail({ to: u.email, subject: finalSubject, body: finalBody })
     )
   );
 
