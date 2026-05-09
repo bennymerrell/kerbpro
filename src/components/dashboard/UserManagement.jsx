@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, X, Check, Users, Bell, BellOff } from 'lucide-react';
+import { Loader2, Pencil, X, Check, Users, Bell, BellOff, RefreshCw } from 'lucide-react';
 
 function EditUserModal({ user, offices, users, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -118,18 +118,23 @@ export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  useEffect(() => {
-    Promise.all([
+  async function loadData(isRefresh = false) {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    const [u, o] = await Promise.all([
       base44.functions.invoke('getUsers', {}).then(r => r.data.users || []),
       base44.functions.invoke('manageOffice', { action: 'list' }).then(r => r.data.offices || []),
-    ]).then(([u, o]) => {
-      setUsers(u);
-      setOffices(o);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    ]);
+    setUsers(u);
+    setOffices(o);
+    setLoading(false);
+    setRefreshing(false);
+  }
+
+  useEffect(() => { loadData(); }, []);
 
   function handleSaved(updated) {
     setUsers(prev => prev.map(u => u.id === updated.id ? { ...u, ...updated } : u));
@@ -141,9 +146,19 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-foreground">User Management</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">{users.length} user{users.length !== 1 ? 's' : ''}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">User Management</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{users.length} user{users.length !== 1 ? 's' : ''}</p>
+        </div>
+        <button
+          onClick={() => loadData(true)}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-muted hover:bg-muted/70 text-xs font-medium text-foreground transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {users.length === 0 ? (
