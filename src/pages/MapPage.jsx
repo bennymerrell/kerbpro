@@ -209,6 +209,8 @@ export default function MapPage() {
 
         const filteredSightings = sightingData.filter(s => {
           if (!s.lat || !s.lng) return false;
+          // Always show sightings created by this user
+          if (s.created_by === user.email) return true;
           return cellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
         });
 
