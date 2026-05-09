@@ -81,7 +81,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
     const googleMapsLink = `${window.location.origin}/?lat=${pinLocation.lat}&lng=${pinLocation.lng}`;
     const recordedAt = new Date().toLocaleString();
 
-    const statusRow = category === 'Hydrant' && statusDetails
+    const statusRow = (category === 'Hydrant' || category === 'WO Point') && statusDetails
       ? `<tr><td style="height:12px;"></td></tr><tr><td style="padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:4px solid ${statusDetails === 'working' ? '#16a34a' : '#dc2626'};"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;">Hydrant Status</p><p style="margin:0;font-size:15px;font-weight:600;color:${statusDetails === 'working' ? '#16a34a' : '#dc2626'};"> ${statusDetails === 'working' ? '✅ Working' : '❌ Not Working'}</p></td></tr>`
       : '';
 
