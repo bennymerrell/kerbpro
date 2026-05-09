@@ -23,9 +23,9 @@ const DEFAULT_TEMPLATES = [
   },
   {
     key: 'paper_map',
-    label: 'Paper Map Uploaded',
-    subject_template: 'Paper Map Uploaded: {{cell_area}} — {{cell_name}}',
-    intro_text: 'A worker has uploaded a photo of their paper map.',
+    label: 'Cell Continued',
+    subject_template: 'Cell Continued: {{cell_area}} — {{cell_name}}',
+    intro_text: 'A worker has continued work on a cell.',
   },
 ];
 
