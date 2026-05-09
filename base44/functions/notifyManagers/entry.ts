@@ -12,6 +12,12 @@ Deno.serve(async (req) => {
 
   const { subject, body, templateKey, templateVars } = await req.json();
 
+  // Auto-inject worker name from the authenticated user
+  const enrichedVars = {
+    worker: user.full_name || user.email || '',
+    ...(templateVars || {}),
+  };
+
   // If a templateKey is provided, try to load a custom template
   let finalSubject = subject;
   let introOverride = null;
@@ -21,10 +27,10 @@ Deno.serve(async (req) => {
     if (templates[0]) {
       const t = templates[0];
       if (t.subject_template) {
-        finalSubject = applyPlaceholders(t.subject_template, templateVars || {});
+        finalSubject = applyPlaceholders(t.subject_template, enrichedVars);
       }
       if (t.intro_text) {
-        introOverride = applyPlaceholders(t.intro_text, templateVars || {});
+        introOverride = applyPlaceholders(t.intro_text, enrichedVars);
       }
     }
   }
