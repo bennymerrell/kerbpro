@@ -221,7 +221,7 @@ export default function CellsDashboard() {
   const [weeklyAssignments, setWeeklyAssignments] = useState([]);
   const [deletingCell, setDeletingCell] = useState(null);
   const [expandedCells, setExpandedCells] = useState({});
-  const [recalcTriggering, setRecalcTriggering] = useState({});
+
 
   async function handleBatchRecalc() {
     setBatchRunning(true);
@@ -280,16 +280,6 @@ export default function CellsDashboard() {
       setUsers(prev => prev.map(u => u.active_cell_id === cell.id ? { ...u, active_cell_id: '' } : u));
     } finally {
       setResettingId(null);
-    }
-  }
-
-  async function handleRecalculate(cell) {
-    setRecalcTriggering(prev => ({ ...prev, [cell.id]: true }));
-    try {
-      await base44.functions.invoke('triggerMileageRecalc', { cellId: cell.id });
-      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, recalc_status: 'pending' } : c));
-    } finally {
-      setRecalcTriggering(prev => ({ ...prev, [cell.id]: false }));
     }
   }
 
@@ -455,8 +445,6 @@ export default function CellsDashboard() {
             const excluded = getExcluded(cell);
             const bdEntries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
             const includedTotal = bdEntries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
-            const isRecalcing = recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing';
-
             return (
               <div key={cell.id} className="border-b border-border/60 last:border-0">
                 {/* Main row */}
@@ -580,14 +568,6 @@ export default function CellsDashboard() {
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/40">
-                      <button
-                        onClick={() => handleRecalculate(cell)}
-                        disabled={isRecalcing}
-                        className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50"
-                      >
-                        {isRecalcing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                        {isRecalcing ? 'Recalcing…' : 'Recalc Miles'}
-                      </button>
                       <button
                         onClick={() => navigate('/', { state: { editCell: cell } })}
                         className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-colors"
