@@ -64,17 +64,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Use Promise.any — resolves as soon as the FIRST endpoint succeeds
+    // Try each endpoint sequentially — move to next on failure
     let ways = null;
-    let lastError = null;
-    try {
-      ways = await Promise.any(endpoints.map(tryEndpoint));
-    } catch (aggErr) {
-      lastError = aggErr.errors?.map(e => e.message).join(' | ');
+    const errors = [];
+    for (const endpoint of endpoints) {
+      try {
+        ways = await tryEndpoint(endpoint);
+        break; // success — stop trying
+      } catch (e) {
+        errors.push(e.message);
+      }
     }
 
     if (ways === null) {
-      return Response.json({ error: `All Overpass servers failed. Last error: ${lastError}` }, { status: 502 });
+      return Response.json({ error: `All Overpass servers failed. ${errors.join(' | ')}` }, { status: 502 });
     }
 
     let adoptedM = 0;
