@@ -30,41 +30,59 @@ async function runRecalc(cellId, base44) {
   const simplified = rawPoints.length > 60 ? rawPoints.filter((_, i) => i % Math.ceil(rawPoints.length / 60) === 0) : rawPoints;
   const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
   const roadFilter = ALL_TAGS.join('|');
-  const query = `[out:json][timeout:55][maxsize:268435456];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
+  const query = `[out:json][timeout:60][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
 
   const endpoints = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
     'https://overpass.openstreetmap.ru/api/interpreter',
   ];
 
   async function tryEndpoint(url) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 58000);
+    const timer = setTimeout(() => controller.abort(), 70000);
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'KerbApp/1.0 (field-mapping-tool; contact@kerbpro.app)',
+        },
         body: `data=${encodeURIComponent(query)}`,
         signal: controller.signal,
       });
       clearTimeout(timer);
       const text = await res.text();
-      if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url}`);
-      return JSON.parse(text).elements || [];
+      const trimmed = text.trim();
+      if (!trimmed.startsWith('{')) {
+        const statusMsg = res.status !== 200 ? ` (HTTP ${res.status})` : '';
+        throw new Error(`Non-JSON response${statusMsg}`);
+      }
+      const parsed = JSON.parse(trimmed);
+      if (parsed.remark && parsed.remark.toLowerCase().includes('error')) {
+        throw new Error(`Overpass error: ${parsed.remark}`);
+      }
+      return parsed.elements || [];
     } catch (e) {
       clearTimeout(timer);
       throw new Error(`${url}: ${e.message}`);
     }
   }
 
+  // Try endpoints sequentially — move to next on failure
   let ways = null;
-  let lastError = null;
-  try {
-    ways = await Promise.any(endpoints.map(tryEndpoint));
-  } catch (aggErr) {
-    lastError = aggErr.errors?.map(e => e.message).join(' | ');
+  const errors = [];
+  for (const endpoint of endpoints) {
+    try {
+      ways = await tryEndpoint(endpoint);
+      break;
+    } catch (e) {
+      errors.push(e.message);
+      console.warn('Overpass endpoint failed:', e.message);
+    }
   }
+  const lastError = errors.join(' | ');
 
   if (ways === null) {
     await base44.asServiceRole.entities.Cell.update(cellId, {
