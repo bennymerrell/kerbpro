@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
     // Increased timeout to 60s and maxsize to 64MB for larger cells
-    const query = `[out:json][timeout:60][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom qt;`;
+    const query = `[out:json][timeout:60][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
 
     const endpoints = [
       'https://overpass-api.de/api/interpreter',
