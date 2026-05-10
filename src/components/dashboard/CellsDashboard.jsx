@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck, UserPlus, CalendarDays } from 'lucide-react';
+import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, UserCheck, UserPlus, CalendarDays, ChevronDown, ChevronRight, MapPin, Shapes } from 'lucide-react';
 import AssignUserModal from '@/components/cells/AssignUserModal';
 import { format, startOfWeek } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 function getThisWeekKey() {
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -193,14 +194,23 @@ function ReassignUserModal({ user, cells, onClose, onReassigned }) {
   );
 }
 
+function getExcluded(cell) {
+  try { return JSON.parse(cell.excluded_road_types || '[]'); } catch { return []; }
+}
+
+function getBreakdown(cell) {
+  try { return JSON.parse(cell.road_breakdown || '{}'); } catch { return {}; }
+}
+
 export default function CellsDashboard() {
+  const navigate = useNavigate();
   const [cells, setCells] = useState([]);
   const [offices, setOffices] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [reassigning, setReassigning] = useState(null); // user being reassigned
-  const [assigningCell, setAssigningCell] = useState(null); // cell to assign a new user to
+  const [reassigning, setReassigning] = useState(null);
+  const [assigningCell, setAssigningCell] = useState(null);
   const [filterArea, setFilterArea] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
   const [filterUser, setFilterUser] = useState('');
@@ -210,6 +220,8 @@ export default function CellsDashboard() {
   const [resettingId, setResettingId] = useState(null);
   const [weeklyAssignments, setWeeklyAssignments] = useState([]);
   const [deletingCell, setDeletingCell] = useState(null);
+  const [expandedCells, setExpandedCells] = useState({});
+  const [recalcTriggering, setRecalcTriggering] = useState({});
 
   async function handleBatchRecalc() {
     setBatchRunning(true);
@@ -269,6 +281,24 @@ export default function CellsDashboard() {
     } finally {
       setResettingId(null);
     }
+  }
+
+  async function handleRecalculate(cell) {
+    setRecalcTriggering(prev => ({ ...prev, [cell.id]: true }));
+    try {
+      await base44.functions.invoke('triggerMileageRecalc', { cellId: cell.id });
+      setCells(prev => prev.map(c => c.id === cell.id ? { ...c, recalc_status: 'pending' } : c));
+    } finally {
+      setRecalcTriggering(prev => ({ ...prev, [cell.id]: false }));
+    }
+  }
+
+  async function handleToggleRoadType(cell, type, isExcluded) {
+    const excluded = getExcluded(cell);
+    const newExcluded = isExcluded ? excluded.filter(t => t !== type) : [...excluded, type];
+    const newExcludedStr = JSON.stringify(newExcluded);
+    await base44.entities.Cell.update(cell.id, { excluded_road_types: newExcludedStr });
+    setCells(prev => prev.map(c => c.id === cell.id ? { ...c, excluded_road_types: newExcludedStr } : c));
   }
 
   function handleSave(updated) {
@@ -414,113 +444,174 @@ export default function CellsDashboard() {
       {/* All cells — single unified list */}
       <div>
         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">All Cells</div>
-        <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           {filteredCells.map(cell => {
             const s = STATUS_LABELS[cell.work_status] || STATUS_LABELS.not_started;
             const isCompleted = cell.work_status === 'completed' && cell.completed_at;
             const checkedInUsers = cellUsers(cell.id);
             const isResetting = resettingId === cell.id;
+            const isExpanded = !!expandedCells[cell.id];
+            const bd = getBreakdown(cell);
+            const excluded = getExcluded(cell);
+            const bdEntries = Object.entries(bd).sort((a, b) => b[1] - a[1]);
+            const includedTotal = bdEntries.filter(([t]) => !excluded.includes(t)).reduce((s, [, m]) => s + m, 0);
+            const isRecalcing = recalcTriggering[cell.id] || cell.recalc_status === 'pending' || cell.recalc_status === 'processing';
+
             return (
-              <div key={cell.id} className="px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {[officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'}
-                    </div>
-                    {isCompleted && (
-                      <div className="text-[10px] text-green-600 font-medium mt-0.5">
-                        ✓ {format(new Date(cell.completed_at), 'dd MMM yyyy')}{cell.completed_by ? ` · ${cell.completed_by}` : ''}
-                        {cell.adopted_m != null ? ` · ${Math.round(((cell.adopted_m) / 1609.34) * 2)} mi spray` : ''}
-                      </div>
-                    )}
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
-                  {/* Reset button — available on any non-not_started cell */}
-                  {cell.work_status && cell.work_status !== 'not_started' && (
+              <div key={cell.id} className="border-b border-border/60 last:border-0">
+                {/* Main row */}
+                <div className="px-4 py-3">
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => handleResetCell(cell)}
-                      disabled={isResetting}
-                      title="Reset cell (logs out all users if in progress)"
-                      className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0 disabled:opacity-50"
+                      onClick={() => setExpandedCells(prev => ({ ...prev, [cell.id]: !prev[cell.id] }))}
+                      className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                      {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
-                  )}
-                  <button onClick={() => setAssigningCell(cell)} title="Assign a user to this cell" className="p-1.5 rounded-lg hover:bg-indigo-50 text-muted-foreground hover:text-indigo-600 transition-colors flex-shrink-0">
-                    <UserPlus className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setEditing(cell)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setDeletingCell(cell)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                {(() => {
-                  const activeUsers = checkedInUsers;
-                  let assignedIds = [];
-                  try { assignedIds = JSON.parse(cell.assigned_user_ids || '[]'); } catch {}
-                  const assignedNotActive = users.filter(u =>
-                    assignedIds.includes(u.id) && u.active_cell_id !== cell.id
-                  );
-                  const weeklyUsers = weeklyByCellId[cell.id] || [];
-                  if (activeUsers.length === 0 && assignedNotActive.length === 0 && weeklyUsers.length === 0) return null;
-                  return (
-                    <div className="ml-5 mt-2 space-y-1.5">
-                      {activeUsers.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Working</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {activeUsers.map(u => (
-                              <button
-                                key={u.id}
-                                onClick={() => setReassigning(u)}
-                                title="Reassign this user to a different cell"
-                                className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5 hover:bg-orange-100 hover:border-orange-300 transition-colors"
-                              >
-                                <User className="h-2.5 w-2.5 text-orange-500 flex-shrink-0" />
-                                <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
-                                <UserCheck className="h-2.5 w-2.5 text-orange-400 flex-shrink-0" />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {assignedNotActive.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Assigned</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {assignedNotActive.map(u => (
-                              <div
-                                key={u.id}
-                                title="Assigned but not yet started"
-                                className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5"
-                              >
-                                <User className="h-2.5 w-2.5 text-gray-400 flex-shrink-0" />
-                                <span className="text-[10px] font-medium text-gray-500">{u.full_name || u.email}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {weeklyByCellId[cell.id]?.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">This Week's Plan</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {weeklyByCellId[cell.id].map((name, i) => (
-                              <div key={i} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
-                                <CalendarDays className="h-2.5 w-2.5 text-indigo-400 flex-shrink-0" />
-                                <span className="text-[10px] font-medium text-indigo-700">{name}</span>
-                              </div>
-                            ))}
-                          </div>
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {[officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'}
+                        {cell.adopted_m != null && <span className="text-blue-600 font-medium ml-1">· {Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>}
+                      </div>
+                      {isCompleted && (
+                        <div className="text-[10px] text-green-600 font-medium mt-0.5">
+                          ✓ {format(new Date(cell.completed_at), 'dd MMM yyyy')}{cell.completed_by ? ` · ${cell.completed_by}` : ''}
                         </div>
                       )}
                     </div>
-                  );
-                })()}
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.color}`}>{s.label}</span>
+                    {cell.work_status && cell.work_status !== 'not_started' && (
+                      <button onClick={() => handleResetCell(cell)} disabled={isResetting} title="Reset cell" className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors flex-shrink-0 disabled:opacity-50">
+                        {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                    <button onClick={() => setAssigningCell(cell)} title="Assign user" className="p-1.5 rounded-lg hover:bg-indigo-50 text-muted-foreground hover:text-indigo-600 transition-colors flex-shrink-0">
+                      <UserPlus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Users section */}
+                  {(() => {
+                    const activeUsers = checkedInUsers;
+                    let assignedIds = [];
+                    try { assignedIds = JSON.parse(cell.assigned_user_ids || '[]'); } catch {}
+                    const assignedNotActive = users.filter(u => assignedIds.includes(u.id) && u.active_cell_id !== cell.id);
+                    if (activeUsers.length === 0 && assignedNotActive.length === 0 && !weeklyByCellId[cell.id]?.length) return null;
+                    return (
+                      <div className="ml-8 mt-2 space-y-1.5">
+                        {activeUsers.length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Working</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {activeUsers.map(u => (
+                                <button key={u.id} onClick={() => setReassigning(u)} className="flex items-center gap-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors">
+                                  <User className="h-2.5 w-2.5 text-orange-500" />
+                                  <span className="text-[10px] font-medium text-orange-700">{u.full_name || u.email}</span>
+                                  <UserCheck className="h-2.5 w-2.5 text-orange-400" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {assignedNotActive.length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Assigned</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {assignedNotActive.map(u => (
+                                <div key={u.id} className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5">
+                                  <User className="h-2.5 w-2.5 text-gray-400" />
+                                  <span className="text-[10px] font-medium text-gray-500">{u.full_name || u.email}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {weeklyByCellId[cell.id]?.length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wide">This Week's Plan</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {weeklyByCellId[cell.id].map((name, i) => (
+                                <div key={i} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                                  <CalendarDays className="h-2.5 w-2.5 text-indigo-400" />
+                                  <span className="text-[10px] font-medium text-indigo-700">{name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Accordion — road breakdown + actions */}
+                {isExpanded && (
+                  <div className="bg-muted/20 border-t border-border/40 px-4 py-3 space-y-3">
+                    {/* Road breakdown */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</span>
+                        {bdEntries.length > 0 && <span className="text-xs font-bold text-blue-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</span>}
+                      </div>
+                      {bdEntries.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground">No road data yet — run Recalc Miles.</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {bdEntries.map(([type, meters]) => {
+                            const isExcl = excluded.includes(type);
+                            return (
+                              <div key={type} className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleRoadType(cell, type, isExcl)}
+                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcl ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'}`}
+                                >
+                                  {!isExcl && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                </button>
+                                <span className="text-xs flex-1 capitalize text-muted-foreground">{type.replace(/_/g, ' ')}</span>
+                                <span className={`text-xs font-medium ${isExcl ? 'text-muted-foreground/40' : 'text-foreground'}`}>{meters > 0 ? Math.round(meters / 1609.34) + ' mi' : '—'}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/40">
+                      <button
+                        onClick={() => handleRecalculate(cell)}
+                        disabled={isRecalcing}
+                        className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50"
+                      >
+                        {isRecalcing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                        {isRecalcing ? 'Recalcing…' : 'Recalc Miles'}
+                      </button>
+                      <button
+                        onClick={() => navigate('/', { state: { editCell: cell } })}
+                        className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-colors"
+                      >
+                        <Shapes className="h-3 w-3" />
+                        Edit Shape
+                      </button>
+                      <button
+                        onClick={() => setEditing(cell)}
+                        className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-muted border border-border text-foreground text-[11px] font-semibold hover:bg-muted/70 transition-colors"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Edit Details
+                      </button>
+                      <button
+                        onClick={() => setDeletingCell(cell)}
+                        className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[11px] font-semibold hover:bg-red-100 transition-colors ml-auto"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
