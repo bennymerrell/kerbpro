@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ALL_TAGS = ['motorway','trunk','primary','secondary','tertiary','unclassified','residential','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link','living_street','service','track','road'];
 
@@ -33,17 +33,20 @@ Deno.serve(async (req) => {
     const simplified = points.length > 60 ? points.filter((_, i) => i % Math.ceil(points.length / 60) === 0) : points;
     const polyStr = simplified.map(p => `${p.lat} ${p.lng}`).join(' ');
     const roadFilter = ALL_TAGS.join('|');
-    const query = `[out:json][timeout:20][maxsize:33554432];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}");way["highway"]["access"="private"](poly:"${polyStr}"););out geom qt;`;
+    // Increased timeout to 60s and maxsize to 64MB for larger cells
+    const query = `[out:json][timeout:60][maxsize:67108864];(way["highway"~"^(${roadFilter})$"](poly:"${polyStr}"););out geom qt;`;
 
     const endpoints = [
       'https://overpass-api.de/api/interpreter',
       'https://overpass.kumi.systems/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
       'https://overpass.openstreetmap.ru/api/interpreter',
     ];
 
     async function tryEndpoint(url) {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 22000);
+      // 70s fetch timeout — longer than the query timeout so the server has time to respond
+      const timer = setTimeout(() => controller.abort(), 70000);
       try {
         const res = await fetch(url, {
           method: 'POST',
@@ -56,8 +59,18 @@ Deno.serve(async (req) => {
         });
         clearTimeout(timer);
         const text = await res.text();
-        if (!text.trim().startsWith('{')) throw new Error(`Non-JSON from ${url} (status ${res.status})`);
-        return JSON.parse(text).elements || [];
+        const trimmed = text.trim();
+        // Detect Overpass error responses (HTML or plain error text)
+        if (!trimmed.startsWith('{')) {
+          const statusMsg = res.status !== 200 ? ` (HTTP ${res.status})` : '';
+          throw new Error(`Non-JSON response${statusMsg}`);
+        }
+        const parsed = JSON.parse(trimmed);
+        // Overpass can return JSON with a remark indicating an error
+        if (parsed.remark && parsed.remark.toLowerCase().includes('error')) {
+          throw new Error(`Overpass error: ${parsed.remark}`);
+        }
+        return parsed.elements || [];
       } catch (e) {
         clearTimeout(timer);
         throw new Error(`${url}: ${e.message}`);
@@ -70,9 +83,10 @@ Deno.serve(async (req) => {
     for (const endpoint of endpoints) {
       try {
         ways = await tryEndpoint(endpoint);
-        break; // success — stop trying
+        break;
       } catch (e) {
         errors.push(e.message);
+        console.warn('Overpass endpoint failed:', e.message);
       }
     }
 
