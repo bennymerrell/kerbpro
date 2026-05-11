@@ -461,7 +461,7 @@ export default function CellsDashboard() {
                       <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {[officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'}
-                        {cell.adopted_m != null && <span className="text-blue-600 font-medium ml-1">· {Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>}
+                        {cell.adopted_m != null && <span className="text-emerald-600 font-medium ml-1">· {Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>}
                       </div>
                       {isCompleted && (
                         <div className="text-[10px] text-green-600 font-medium mt-0.5">
@@ -541,7 +541,7 @@ export default function CellsDashboard() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</span>
-                        {bdEntries.length > 0 && <span className="text-xs font-bold text-blue-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</span>}
+                        {bdEntries.length > 0 && <span className="text-xs font-bold text-emerald-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</span>}
                       </div>
                       {bdEntries.length === 0 ? (
                         <p className="text-[11px] text-muted-foreground">No road data yet — run Recalc Miles.</p>
@@ -553,7 +553,7 @@ export default function CellsDashboard() {
                               <div key={type} className="flex items-center gap-2">
                                 <button
                                   onClick={() => handleToggleRoadType(cell, type, isExcl)}
-                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcl ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'}`}
+                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcl ? 'border-border bg-background' : 'border-emerald-600 bg-emerald-600'}`}
                                 >
                                   {!isExcl && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                 </button>
