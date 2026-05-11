@@ -142,8 +142,8 @@ export default function CellsPage() {
         >
           <Map className="h-4 w-4 text-foreground" />
         </button>
-        <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-          <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
+        <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+          <SquareDashedBottom className="h-4 w-4 text-emerald-600" />
         </div>
         <h1 className="font-semibold text-foreground flex-1">Cells</h1>
         <span className="text-xs text-muted-foreground">{cells.length} saved</span>
@@ -281,19 +281,19 @@ export default function CellsPage() {
               onClick={() => handleSelect(cell)}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
             >
-              <div className="h-9 w-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <MapPin className="h-4 w-4 text-indigo-600" />
+              <div className="h-9 w-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <MapPin className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
               <div className={cn("font-medium text-sm text-foreground truncate", !cell.visible && "line-through text-muted-foreground")}>
                 {cell.name || 'Unnamed Cell'}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5 flex items-center flex-wrap gap-2">
-                {cell.office_id && officeMap[cell.office_id] && <span className="text-indigo-500 font-medium">{officeMap[cell.office_id]}</span>}
+                {cell.office_id && officeMap[cell.office_id] && <span className="text-emerald-600 font-medium">{officeMap[cell.office_id]}</span>}
                 {cell.area && <span>{cell.area}</span>}
                 {(() => { try { return JSON.parse(cell.points).length + ' pts'; } catch { return ''; } })()}
                 {cell.adopted_m != null && (
-                  <span className="text-blue-600 font-medium">{Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>
+                  <span className="text-emerald-600 font-medium">{Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>
                 )}
 
               </div>
