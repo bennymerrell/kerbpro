@@ -5,7 +5,8 @@ import { compressImage } from '../../lib/compressImage';
 import { notifyManagers } from '../../lib/notifyManagers';
 
 export default function CellCheckInModal({ currentUser, preselectedCell, onCheckIn, onPhoneSaved, onDismiss, activeCell, mode }) {
-  const [office, setOffice] = useState(null);
+  const [offices, setOffices] = useState([]);
+  const [selectedOfficeId, setSelectedOfficeId] = useState(currentUser?.office_id || '');
   const [cells, setCells] = useState([]);
   const [selectedArea, setSelectedArea] = useState(preselectedCell?.area || '');
   const [selectedCellId, setSelectedCellId] = useState(preselectedCell?.id || '');
@@ -53,24 +54,20 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
   }
 
   useEffect(() => {
-    const officeId = currentUser?.office_id;
-
     Promise.all([
-      officeId ? base44.entities.Office.list() : Promise.resolve([]),
+      base44.entities.Office.list(),
       base44.entities.Cell.list('-created_date', 200),
-    ]).then(([offices, allCells]) => {
-      const userOffice = offices.find(o => o.id === officeId) || null;
-      setOffice(userOffice);
-
-      // Exclude completed cells — they are locked and cannot be booked onto
-      const relevantCells = (officeId
-        ? allCells.filter(c => c.office_id === officeId)
+    ]).then(([allOffices, allCells]) => {
+      setOffices(allOffices);
+      // Exclude completed cells
+      const relevantCells = (selectedOfficeId
+        ? allCells.filter(c => c.office_id === selectedOfficeId)
         : allCells
       ).filter(c => c.work_status !== 'completed');
       setCells(relevantCells);
       setLoading(false);
     });
-  }, [currentUser]);
+  }, [selectedOfficeId]);
 
   const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
   const filteredCells = selectedArea ? cells.filter(c => c.area === selectedArea) : cells;
@@ -90,6 +87,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
       active_cell_id: cell.id,
       active_cell_prev_status: prevStatus,
       active_cell_checkin_date: today,
+      office_id: selectedOfficeId || null,
     });
 
     // Notify assigned manager
@@ -274,34 +272,41 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
           </div>
         ) : (
           <div className="p-5 space-y-4">
-            {/* Office — read-only */}
-            {office && (
-              <div className="flex items-center gap-2 px-3 py-2.5 bg-primary/5 border border-primary/20 rounded-xl">
-                <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
-                <div>
-                  <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Your Office</div>
-                  <div className="text-sm font-semibold text-foreground">{office.name}</div>
-                </div>
-              </div>
-            )}
-
-            {areas.length > 0 && (
+            {/* Office — dropdown */}
+            {offices.length > 0 && (
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                <MapPin className="h-3.5 w-3.5" /> Contract
+                  <Building2 className="h-3.5 w-3.5" /> Office
                 </label>
                 <select
-                value={selectedArea}
-                onChange={e => { setSelectedArea(e.target.value); setSelectedCellId(''); }}
-                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={selectedOfficeId}
+                  onChange={e => { setSelectedOfficeId(e.target.value); setSelectedArea(''); setSelectedCellId(''); }}
+                  className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
-                <option value="">— Select a contract —</option>
-                  {areas.map(a => (
-                    <option key={a} value={a}>{a}</option>
+                  <option value="">— Select an office —</option>
+                  {offices.map(o => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
                   ))}
                 </select>
               </div>
             )}
+
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                <MapPin className="h-3.5 w-3.5" /> Contract
+              </label>
+              <select
+                value={selectedArea}
+                onChange={e => { setSelectedArea(e.target.value); setSelectedCellId(''); }}
+                disabled={!selectedOfficeId}
+                className="w-full text-sm border border-input rounded-xl px-3 py-2.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">{selectedOfficeId ? (areas.length > 0 ? '— Select a contract —' : 'No contracts for this office') : '— Select an office first —'}</option>
+                {areas.map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
 
             <div>
               <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">

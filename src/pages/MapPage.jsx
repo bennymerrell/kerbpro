@@ -164,54 +164,32 @@ export default function MapPage() {
           return;
         }
 
-        // Build the set of cell IDs relevant to this user
-        const userId = user.id;
-        const relevantCellIds = new Set();
-
-        // 1. Cells directly assigned to the user
-        for (const cell of cellData) {
-          try {
-            const ids = JSON.parse(cell.assigned_user_ids || '[]');
-            if (ids.includes(userId)) relevantCellIds.add(cell.id);
-          } catch {}
-        }
-
-        // 2. Cells from this week's plan
-        try {
-          const monday = new Date();
-          const day = monday.getDay();
-          const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
-          monday.setDate(diff);
-          const weekKey = monday.toISOString().split('T')[0];
-          const plans = await base44.entities.WeeklyPlan.filter({ week_start: weekKey });
-          if (plans[0]) {
-            const assignments = JSON.parse(plans[0].assignments || '[]');
-            for (const a of assignments) {
-              if (a.user_id === userId) relevantCellIds.add(a.cell_id);
-            }
-          }
-        } catch {}
-
-        // 3. Also include the user's active cell if any
-        if (user.active_cell_id) relevantCellIds.add(user.active_cell_id);
-
-        const filteredCells = relevantCellIds.size > 0
-          ? cellData.filter(c => relevantCellIds.has(c.id))
-          : cellData; // fallback: show all if nothing assigned
+        // Filter cells by the user's chosen office
+        const userOfficeId = user.office_id;
+        const filteredCells = userOfficeId
+          ? cellData.filter(c => c.office_id === userOfficeId)
+          : cellData; // no office selected — show all
 
         setSavedCells(filteredCells);
         await indexedDBCache.cacheCells(filteredCells);
 
-        // Filter sightings to only those within the relevant cell polygons
-        const cellPolygons = filteredCells.map(c => {
+        // Build all cell polygons (for "outside all cells" check)
+        const allCellPolygons = cellData.map(c => {
+          try { return JSON.parse(c.points || '[]'); } catch { return []; }
+        }).filter(pts => pts.length >= 3);
+
+        // Polygons for the user's relevant cells
+        const relevantCellPolygons = filteredCells.map(c => {
           try { return JSON.parse(c.points || '[]'); } catch { return []; }
         }).filter(pts => pts.length >= 3);
 
         const filteredSightings = sightingData.filter(s => {
           if (!s.lat || !s.lng) return false;
-          // Always show sightings created by this user
-          if (s.created_by === user.email) return true;
-          return cellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
+          // Always show sightings that fall outside ALL known cell polygons
+          const isOutsideAllCells = !allCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
+          if (isOutsideAllCells) return true;
+          // Show sightings within the user's relevant cells
+          return relevantCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
         });
 
         setSpeciesSightings(filteredSightings);
@@ -358,7 +336,9 @@ export default function MapPage() {
     setShowCheckIn(false);
     setShowLanding(false);
     setActiveUserCell(cell);
-    setCurrentUser(u => ({ ...u, active_cell_id: cell.id, active_cell_checkin_date: new Date().toISOString().split('T')[0] }));
+    setCurrentUser(u => ({ ...u, active_cell_id: cell.id, active_cell_checkin_date: new Date().toISOString().split('T')[0], office_id: cell.office_id || u?.office_id }));
+    // Reload data so map shows cells/sightings filtered by the newly chosen office
+    loadData();
     // Update local savedCells so the map shows orange
     setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'in_progress' } : c));
     // Enable all sighting categories

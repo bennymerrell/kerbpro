@@ -65,12 +65,42 @@ export default function SightingsPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [sightingData, cellData, officeData] = await Promise.all([
+    const [sightingData, cellData, officeData, user] = await Promise.all([
       base44.entities.Sighting.list('-created_date', 500),
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.Office.list(),
+      base44.auth.me().catch(() => null),
     ]);
-    setSightings(sightingData);
+
+    const isRegularUser = user && user.role !== 'admin' && user.role !== 'manager';
+
+    if (isRegularUser && user.office_id) {
+      // Pre-select the user's office filter
+      setOfficeFilter(user.office_id);
+
+      // All cell polygons (for "outside all cells" check)
+      const allCellPolygons = cellData.map(c => {
+        try { return JSON.parse(c.points || '[]'); } catch { return []; }
+      }).filter(pts => pts.length >= 3);
+
+      // Office cell polygons
+      const officeCells = cellData.filter(c => c.office_id === user.office_id);
+      const officeCellPolygons = officeCells.map(c => {
+        try { return JSON.parse(c.points || '[]'); } catch { return []; }
+      }).filter(pts => pts.length >= 3);
+
+      // Include sightings within office cells OR outside all cells
+      const filtered = sightingData.filter(s => {
+        if (!s.lat || !s.lng) return true;
+        const isOutsideAll = !allCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
+        if (isOutsideAll) return true;
+        return officeCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
+      });
+      setSightings(filtered);
+    } else {
+      setSightings(sightingData);
+    }
+
     setCells(cellData);
     setOffices(officeData);
     setLoading(false);
