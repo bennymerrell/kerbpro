@@ -53,7 +53,7 @@ export default function BottomTabBar() {
             <button
               key={path}
               onClick={() => handleTabClick(path)}
-              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors select-none ${active ? 'text-blue-500' : 'text-gray-400'}`}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors select-none ${active ? 'text-primary' : 'text-gray-400'}`}
             >
               <Icon className={`h-5 w-5 ${active ? 'stroke-[2.5]' : 'stroke-2'}`} />
               <span className="text-[10px] font-medium">{label}</span>
