@@ -1,5 +1,17 @@
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, Polygon } from 'react-leaflet';
+import { useMemo, useEffect } from 'react';
+import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
+import L from 'leaflet';
+
+function FitBounds({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points && points.length > 0) {
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [10, 10] });
+    }
+  }, [map, points]);
+  return null;
+}
 
 export default function CellThumbnail({ cell, className = '' }) {
   const points = useMemo(() => {
@@ -39,6 +51,7 @@ export default function CellThumbnail({ cell, className = '' }) {
           positions={points}
           pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 0.25, weight: 2 }}
         />
+        <FitBounds points={points} />
       </MapContainer>
     </div>
   );
