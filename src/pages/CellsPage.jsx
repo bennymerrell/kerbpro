@@ -304,7 +304,7 @@ export default function CellsPage() {
             <div className="flex border-t border-border">
               <button
                 onClick={() => handleToggle(cell)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
                 {cell.visible !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 {cell.visible !== false ? 'Visible' : 'Hidden'}
