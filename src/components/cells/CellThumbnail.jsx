@@ -13,7 +13,14 @@ function FitBounds({ points }) {
   return null;
 }
 
+const STATUS_COLORS = {
+  completed:   { stroke: '#16a34a', fill: '#16a34a' },
+  in_progress: { stroke: '#f97316', fill: '#f97316' },
+  not_started: { stroke: '#3b82f6', fill: '#3b82f6' },
+};
+
 export default function CellThumbnail({ cell, className = '' }) {
+  const colors = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
   const points = useMemo(() => {
     try {
       const parsed = JSON.parse(cell.points);
@@ -49,7 +56,7 @@ export default function CellThumbnail({ cell, className = '' }) {
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Polygon
           positions={points}
-          pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 0.25, weight: 2 }}
+          pathOptions={{ color: colors.stroke, fillColor: colors.fill, fillOpacity: 0.25, weight: 2 }}
         />
         <FitBounds points={points} />
       </MapContainer>
