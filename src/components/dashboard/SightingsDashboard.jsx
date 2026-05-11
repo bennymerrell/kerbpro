@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Trash2, Pencil, X, Check, Camera, Image } from 'lucide-react';
+import { Loader2, Trash2, Pencil, X, Check, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { pointInPolygon } from '@/lib/mapUtils';
+
+const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van'];
 
 const CATEGORY_BG = {
   'Species':      'bg-green-100 text-green-700',
@@ -78,13 +81,25 @@ function EditModal({ item, onClose, onSave }) {
 
 export default function SightingsDashboard() {
   const [sightings, setSightings] = useState([]);
+  const [cells, setCells] = useState([]);
+  const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
+  const [officeFilter, setOfficeFilter] = useState('');
+  const [areaFilter, setAreaFilter] = useState('');
+  const [cellFilter, setCellFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
 
   useEffect(() => {
-    base44.entities.Sighting.list('-created_date', 500).then(data => {
-      setSightings(data);
+    Promise.all([
+      base44.entities.Sighting.list('-created_date', 500),
+      base44.entities.Cell.list('-created_date', 200),
+      base44.entities.Office.list(),
+    ]).then(([sightingData, cellData, officeData]) => {
+      setSightings(sightingData);
+      setCells(cellData);
+      setOffices(officeData);
       setLoading(false);
     });
   }, []);
@@ -98,29 +113,68 @@ export default function SightingsDashboard() {
     setSightings(prev => prev.map(s => s.id === updated.id ? updated : s));
   }
 
-  const filtered = sightings.filter(s =>
-    !search ||
-    s.species?.toLowerCase().includes(search.toLowerCase()) ||
-    s.notes?.toLowerCase().includes(search.toLowerCase()) ||
-    s.reported_by?.toLowerCase().includes(search.toLowerCase())
-  );
+  const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
+  const areas = [...new Set(cells.filter(c => !officeFilter || c.office_id === officeFilter).map(c => c.area).filter(Boolean))].sort();
+  const filteredCellOptions = cells.filter(c => (!officeFilter || c.office_id === officeFilter) && (!areaFilter || c.area === areaFilter));
+
+  const polygonsForFilter = useMemo(() => {
+    if (cellFilter) return cells.filter(c => c.id === cellFilter).map(c => { try { return JSON.parse(c.points || '[]'); } catch { return []; } }).filter(pts => pts.length >= 3);
+    if (areaFilter) return cells.filter(c => c.area === areaFilter && (!officeFilter || c.office_id === officeFilter)).map(c => { try { return JSON.parse(c.points || '[]'); } catch { return []; } }).filter(pts => pts.length >= 3);
+    if (officeFilter) return cells.filter(c => c.office_id === officeFilter).map(c => { try { return JSON.parse(c.points || '[]'); } catch { return []; } }).filter(pts => pts.length >= 3);
+    return null;
+  }, [cells, cellFilter, areaFilter, officeFilter]);
+
+  const filtered = sightings.filter(s => {
+    const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+    if (search && !s.species?.toLowerCase().includes(search.toLowerCase()) && !s.notes?.toLowerCase().includes(search.toLowerCase()) && !s.reported_by?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (categoryFilter && cat !== categoryFilter) return false;
+    if (polygonsForFilter && !(s.lat && s.lng && polygonsForFilter.some(poly => pointInPolygon(s.lat, s.lng, poly)))) return false;
+    return true;
+  });
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Sightings</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{filtered.length} of {sightings.length} records</p>
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">Sightings</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">{filtered.length} of {sightings.length} records</p>
+      </div>
+
+      {/* Filters */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full text-xs border border-input rounded-lg pl-8 pr-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search…"
-          className="text-xs border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 w-48"
-        />
+        <div className="flex gap-2">
+          {offices.length > 0 && (
+            <select value={officeFilter} onChange={e => { setOfficeFilter(e.target.value); setAreaFilter(''); setCellFilter(''); }} className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0">
+              <option value="">All Offices</option>
+              {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          )}
+          {areas.length > 0 && (
+            <select value={areaFilter} onChange={e => { setAreaFilter(e.target.value); setCellFilter(''); }} className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0">
+              <option value="">All Contracts</option>
+              {areas.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          )}
+          <select value={cellFilter} onChange={e => setCellFilter(e.target.value)} className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0">
+            <option value="">All Cells</option>
+            {filteredCellOptions.map(c => <option key={c.id} value={c.id}>{c.name || 'Unnamed'}</option>)}
+          </select>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="text-xs border border-input rounded-lg px-2 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 flex-1 min-w-0">
+            <option value="">All Categories</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
