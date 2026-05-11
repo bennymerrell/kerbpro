@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Eye, EyeOff, Map, SquareDashedBottom, Loader2 } from 'lucide-react';
+import CellThumbnail from '../components/cells/CellThumbnail';
 import { format, startOfWeek } from 'date-fns';
 
 import { cn } from '@/lib/utils';
@@ -277,6 +278,7 @@ export default function CellsPage() {
         )}
         {filtered.map(cell => (
           <div key={cell.id} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <CellThumbnail cell={cell} className="w-full h-28" />
             <button
               onClick={() => handleSelect(cell)}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
