@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Trash2, Pencil, MapPin, SquareDashedBottom, FlaskConical, X, Check, Camera, Image } from 'lucide-react';
+import { Loader2, Trash2, Pencil, MapPin, SquareDashedBottom, FlaskConical, X, Check, Camera, Image, Zap } from 'lucide-react';
+import { compressImage } from '../../lib/compressImage';
 
 const SECTIONS = [
   { key: 'sightings', label: 'Sightings', icon: MapPin },
@@ -217,6 +218,46 @@ export default function DataManagement() {
 
   const items = data[activeSection] || [];
 
+  const [optimising, setOptimising] = useState(false);
+  const [optimiseResult, setOptimiseResult] = useState(null);
+
+  async function handleOptimiseImages() {
+    setOptimising(true);
+    setOptimiseResult(null);
+    let processed = 0, skipped = 0, failed = 0;
+
+    const sightings = await base44.entities.Sighting.list('-created_date', 500);
+    const withPhotos = sightings.filter(s => s.photo_url);
+
+    for (const s of withPhotos) {
+      try {
+        // Fetch the existing image as a blob
+        const resp = await fetch(s.photo_url);
+        if (!resp.ok) { skipped++; continue; }
+        const blob = await resp.blob();
+
+        // Skip if already small (< 100KB — likely already compressed)
+        if (blob.size < 100 * 1024) { skipped++; continue; }
+
+        const file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
+        const compressed = await compressImage(file);
+
+        // Skip if compression didn't help
+        if (compressed.size >= blob.size * 0.9) { skipped++; continue; }
+
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: compressed });
+        await base44.entities.Sighting.update(s.id, { photo_url: file_url });
+        processed++;
+      } catch {
+        failed++;
+      }
+      setOptimiseResult({ processed, skipped, failed, total: withPhotos.length, done: false });
+    }
+
+    setOptimiseResult({ processed, skipped, failed, total: withPhotos.length, done: true });
+    setOptimising(false);
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-foreground">Data Management</h2>
@@ -268,6 +309,34 @@ export default function DataManagement() {
           ))}
         </div>
       )}
+
+      {/* One-off image optimisation */}
+      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <Zap className="h-4 w-4 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-foreground">Optimise Legacy Photos</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Re-compress existing sighting photos to 800px / JPEG 75%. Already-small images are skipped. This runs once in your browser.</div>
+          </div>
+        </div>
+        {optimiseResult && (
+          <div className={`text-xs px-3 py-2 rounded-lg ${optimiseResult.done ? 'bg-green-50 text-green-700' : 'bg-muted text-muted-foreground'}`}>
+            {optimiseResult.done ? '✓ Done — ' : 'Running — '}
+            {optimiseResult.processed} optimised · {optimiseResult.skipped} skipped · {optimiseResult.failed} failed
+            {!optimiseResult.done && ` (${optimiseResult.processed + optimiseResult.skipped + optimiseResult.failed} / ${optimiseResult.total})`}
+          </div>
+        )}
+        <button
+          onClick={handleOptimiseImages}
+          disabled={optimising}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors disabled:opacity-50"
+        >
+          {optimising ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+          {optimising ? 'Optimising…' : 'Run Optimisation'}
+        </button>
+      </div>
 
       {editing && (
         <EditModal
