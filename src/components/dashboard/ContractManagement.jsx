@@ -121,8 +121,8 @@ export default function ContractManagement() {
         <div className="bg-card border border-border rounded-xl divide-y divide-border/60 overflow-hidden">
           {contracts.map(name => (
             <div key={name} className="flex items-center gap-3 px-4 py-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <FileText className="h-4 w-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <FileText className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium text-foreground truncate">{name}</div>
