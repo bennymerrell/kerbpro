@@ -44,8 +44,8 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border flex-shrink-0">
-          <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-            <SquareDashedBottom className="h-4 w-4 text-indigo-600" />
+          <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <SquareDashedBottom className="h-4 w-4 text-emerald-600" />
           </div>
           <div className="flex-1">
             <h2 className="font-semibold text-foreground text-sm">Save Cell</h2>
@@ -65,7 +65,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
             {!results && !loading && (
               <button
                 onClick={handleCalculate}
-                className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
+                className="w-full h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
               >
                 Calculate Road Mileage
               </button>
@@ -141,7 +141,7 @@ export default function AreaResultsPanel({ points, closed, onClearArea, onUnadop
               );
             }}
             disabled={loading}
-            className="w-full h-9 text-sm bg-indigo-600 hover:bg-indigo-700"
+            className="w-full h-9 text-sm bg-emerald-600 hover:bg-emerald-700"
           >
             Save Cell
           </Button>
