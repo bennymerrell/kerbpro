@@ -13,7 +13,7 @@ function getThisWeekKey() {
 const STATUS_LABELS = {
   completed:   { label: 'Completed',   color: 'bg-green-100 text-green-700' },
   in_progress: { label: 'In Progress', color: 'bg-orange-100 text-orange-700' },
-  not_started: { label: 'Not Started', color: 'bg-blue-100 text-blue-700' },
+  not_started: { label: 'Not Started', color: 'bg-slate-100 text-slate-600' },
 };
 
 function EditCellModal({ cell, offices, onClose, onSave }) {
@@ -350,7 +350,7 @@ export default function CellsDashboard() {
           <button
             onClick={handleBatchRecalc}
             disabled={batchRunning}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors disabled:opacity-50"
           >
             {batchRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {batchRunning ? 'Running…' : 'Recalc All Miles'}
@@ -425,9 +425,9 @@ export default function CellsDashboard() {
           <div className="text-2xl font-bold text-orange-700">{inProgress.length}</div>
           <div className="text-[11px] text-orange-600 font-medium mt-0.5">In Progress</div>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-          <div className="text-2xl font-bold text-blue-700">{notStarted.length}</div>
-          <div className="text-[11px] text-blue-600 font-medium mt-0.5">Not Started</div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+          <div className="text-2xl font-bold text-slate-600">{notStarted.length}</div>
+          <div className="text-[11px] text-slate-500 font-medium mt-0.5">Not Started</div>
         </div>
       </div>
 
@@ -456,12 +456,12 @@ export default function CellsDashboard() {
                     >
                       {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-green-500' : cell.work_status === 'in_progress' ? 'bg-orange-400' : 'bg-slate-400'}`} />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-foreground truncate">{cell.name || 'Unnamed Cell'}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {[officeMap[cell.office_id], cell.area].filter(Boolean).join(' · ') || '—'}
-                        {cell.adopted_m != null && <span className="text-blue-600 font-medium ml-1">· {Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>}
+                        {cell.adopted_m != null && <span className="text-emerald-600 font-medium ml-1">· {Math.round((cell.adopted_m / 1609.34) * 2)} mi</span>}
                       </div>
                       {isCompleted && (
                         <div className="text-[10px] text-green-600 font-medium mt-0.5">
@@ -475,7 +475,7 @@ export default function CellsDashboard() {
                         {isResetting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
                       </button>
                     )}
-                    <button onClick={() => setAssigningCell(cell)} title="Assign user" className="p-1.5 rounded-lg hover:bg-indigo-50 text-muted-foreground hover:text-indigo-600 transition-colors flex-shrink-0">
+                    <button onClick={() => setAssigningCell(cell)} title="Assign user" className="p-1.5 rounded-lg hover:bg-emerald-50 text-muted-foreground hover:text-emerald-600 transition-colors flex-shrink-0">
                       <UserPlus className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -541,7 +541,7 @@ export default function CellsDashboard() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Road Type Breakdown</span>
-                        {bdEntries.length > 0 && <span className="text-xs font-bold text-blue-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</span>}
+                        {bdEntries.length > 0 && <span className="text-xs font-bold text-emerald-600">{Math.round((includedTotal / 1609.34) * 2)} mi spray</span>}
                       </div>
                       {bdEntries.length === 0 ? (
                         <p className="text-[11px] text-muted-foreground">No road data yet — run Recalc Miles.</p>
@@ -553,7 +553,7 @@ export default function CellsDashboard() {
                               <div key={type} className="flex items-center gap-2">
                                 <button
                                   onClick={() => handleToggleRoadType(cell, type, isExcl)}
-                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcl ? 'border-border bg-background' : 'border-blue-500 bg-blue-500'}`}
+                                  className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isExcl ? 'border-border bg-background' : 'border-emerald-500 bg-emerald-500'}`}
                                 >
                                   {!isExcl && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                 </button>
