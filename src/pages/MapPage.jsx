@@ -630,6 +630,10 @@ export default function MapPage() {
           onSaved={async (sighting) => {
             setSpeciesModalLocation(null);
             setSpeciesSightings(prev => [...prev, sighting]);
+            // Activate the category filter for this sighting
+            if (sighting.category && !activeCategories.includes(sighting.category)) {
+              setActiveCategories(prev => [...prev, sighting.category]);
+            }
             const sightingData = {
               species: sighting.species,
               notes: sighting.notes,

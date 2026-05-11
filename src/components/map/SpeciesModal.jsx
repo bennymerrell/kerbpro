@@ -94,7 +94,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
     setSending(false);
     setSent(true);
-    onSaved({ lat: pinLocation.lat, lng: pinLocation.lng, species: `[${category}] ${speciesName}`, notes, photoUrl, status_details: statusDetails || null });
+    onSaved({ lat: pinLocation.lat, lng: pinLocation.lng, species: `[${category}] ${speciesName}`, notes, photoUrl, status_details: statusDetails || null, category });
     setTimeout(onClose, 1500);
   }
 
