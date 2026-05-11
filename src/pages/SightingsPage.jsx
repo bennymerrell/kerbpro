@@ -234,8 +234,8 @@ export default function SightingsPage() {
                 {s.photo_url ? (
                   <img src={s.photo_url} alt={s.species} className="w-full h-40 object-cover" />
                 ) : (
-                  <div className="w-full h-40 bg-emerald-50 flex items-center justify-center">
-                    <Leaf className="h-12 w-12 text-emerald-200" />
+                  <div className="w-full h-40 bg-card flex items-center justify-center">
+                    <Leaf className="h-12 w-12 text-emerald-600" />
                   </div>
                 )}
                 <div className="p-3 space-y-1.5 flex-1">
