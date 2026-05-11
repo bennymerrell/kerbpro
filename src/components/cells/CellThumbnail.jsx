@@ -33,7 +33,7 @@ export default function CellThumbnail({ cell, className = '' }) {
   if (!points || !center) return null;
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-border ${className}`} style={{ pointerEvents: 'none' }}>
+    <div className={`rounded-t-lg overflow-hidden border-x border-t border-border ${className}`} style={{ pointerEvents: 'none' }}>
       <MapContainer
         center={center}
         zoom={14}
