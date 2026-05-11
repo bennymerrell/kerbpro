@@ -266,7 +266,8 @@ export default function CellsPage() {
         </div>
       )}
 
-      <div className="flex-1 px-4 py-3 space-y-2 overflow-y-auto">
+      <div className="flex-1 px-4 py-3 overflow-y-auto">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading…</div>
         )}
@@ -314,6 +315,7 @@ export default function CellsPage() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
     </div>
