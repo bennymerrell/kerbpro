@@ -231,8 +231,12 @@ export default function SightingsPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map(s => (
               <div key={s.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-all flex flex-col">
-                {s.photo_url && (
+                {s.photo_url ? (
                   <img src={s.photo_url} alt={s.species} className="w-full h-40 object-cover" />
+                ) : (
+                  <div className="w-full h-40 bg-emerald-50 flex items-center justify-center">
+                    <Leaf className="h-12 w-12 text-emerald-200" />
+                  </div>
                 )}
                 <div className="p-3 space-y-1.5 flex-1">
                   <div className="flex items-start justify-between gap-2">
