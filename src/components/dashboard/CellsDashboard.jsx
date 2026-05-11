@@ -350,7 +350,7 @@ export default function CellsDashboard() {
           <button
             onClick={handleBatchRecalc}
             disabled={batchRunning}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors disabled:opacity-50"
           >
             {batchRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {batchRunning ? 'Running…' : 'Recalc All Miles'}
