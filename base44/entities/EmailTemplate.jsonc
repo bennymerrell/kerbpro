@@ -30,15 +30,18 @@
       }
     },
     "read": {
-      "user_condition": {
-        "role": {
-          "$in": [
-            "admin",
-            "manager",
-            "user"
-          ]
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
         }
-      }
+      ]
     },
     "update": {
       "user_condition": {
