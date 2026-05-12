@@ -110,7 +110,9 @@
           }
         },
         {
-          "data.office_id": "{{user.office_id}}"
+          "user_condition": {
+            "role": "user"
+          }
         }
       ]
     },

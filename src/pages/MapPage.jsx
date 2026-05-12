@@ -147,52 +147,14 @@ export default function MapPage() {
 
   const loadData = useCallback(async () => {
       try {
-        const [cellData, sightingData, user] = await Promise.all([
+        const [cellData, sightingData] = await Promise.all([
           base44.entities.Cell.list('-created_date', 100),
           base44.entities.Sighting.list('-created_date', 500),
-          base44.auth.me().catch(() => null),
         ]);
 
-        const isRegularUser = user && user.role !== 'admin' && user.role !== 'manager';
-        const showAllCells = localStorage.getItem('cells_show_all') === '1';
-
-        if (!isRegularUser || showAllCells) {
-          // Admins/managers see everything; regular users who chose "All" also see everything
-          setSavedCells(cellData);
-          setSpeciesSightings(sightingData);
-          await indexedDBCache.cacheCells(cellData);
-          return;
-        }
-
-        // Filter cells by the user's chosen office
-        const userOfficeId = user.office_id;
-        const filteredCells = userOfficeId
-          ? cellData.filter(c => c.office_id === userOfficeId)
-          : cellData; // no office selected — show all
-
-        setSavedCells(filteredCells);
-        await indexedDBCache.cacheCells(filteredCells);
-
-        // Build all cell polygons (for "outside all cells" check)
-        const allCellPolygons = cellData.map(c => {
-          try { return JSON.parse(c.points || '[]'); } catch { return []; }
-        }).filter(pts => pts.length >= 3);
-
-        // Polygons for the user's relevant cells
-        const relevantCellPolygons = filteredCells.map(c => {
-          try { return JSON.parse(c.points || '[]'); } catch { return []; }
-        }).filter(pts => pts.length >= 3);
-
-        const filteredSightings = sightingData.filter(s => {
-          if (!s.lat || !s.lng) return false;
-          // Always show sightings that fall outside ALL known cell polygons
-          const isOutsideAllCells = !allCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
-          if (isOutsideAllCells) return true;
-          // Show sightings within the user's relevant cells
-          return relevantCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
-        });
-
-        setSpeciesSightings(filteredSightings);
+        setSavedCells(cellData);
+        setSpeciesSightings(sightingData);
+        await indexedDBCache.cacheCells(cellData);
       } catch (e) {
         const cached = await indexedDBCache.getCells();
         setSavedCells(cached);
