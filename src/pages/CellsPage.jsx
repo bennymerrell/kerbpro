@@ -18,8 +18,7 @@ export default function CellsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [officeFilter, setOfficeFilter] = useState('');
 
-  const [showAllCells, setShowAllCells] = useState(() => localStorage.getItem('cells_show_all') === '1');
-  const [userCellIds, setUserCellIds] = useState(null); // null = not loaded yet
+
 
   useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
   useEffect(() => { base44.analytics.track({ eventName: 'page_view', properties: { page: 'cells' } }); }, []);
@@ -37,40 +36,7 @@ export default function CellsPage() {
 
   useEffect(() => { loadCells(); }, [loadCells]);
 
-  // For regular users, build the set of their assigned/planned cell IDs
-  useEffect(() => {
-    if (!currentUser) return;
-    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
-      setUserCellIds(null); // no filtering for admins/managers
-      return;
-    }
-    const userId = currentUser.id;
-    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekKey = format(monday, 'yyyy-MM-dd');
 
-    Promise.all([
-      base44.entities.Cell.list('-created_date', 200),
-      base44.entities.WeeklyPlan.filter({ week_start: weekKey }),
-    ]).then(([allCells, plans]) => {
-      const ids = new Set();
-      for (const cell of allCells) {
-        try {
-          const assigned = JSON.parse(cell.assigned_user_ids || '[]');
-          if (assigned.includes(userId)) ids.add(cell.id);
-        } catch {}
-      }
-      if (plans[0]) {
-        try {
-          const assignments = JSON.parse(plans[0].assignments || '[]');
-          for (const a of assignments) {
-            if (a.user_id === userId) ids.add(a.cell_id);
-          }
-        } catch {}
-      }
-      if (currentUser.active_cell_id) ids.add(currentUser.active_cell_id);
-      setUserCellIds(ids);
-    }).catch(() => setUserCellIds(new Set()));
-  }, [currentUser]);
 
   useEffect(() => {
     const unsub = base44.entities.Cell.subscribe((event) => {
@@ -87,9 +53,8 @@ export default function CellsPage() {
   const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
 
   const isRegularUser = currentUser && currentUser.role !== 'admin' && currentUser.role !== 'manager';
-  const baseCells = (isRegularUser && !showAllCells && userCellIds !== null)
-    ? cells.filter(c => userCellIds.has(c.id))
-    : cells;
+  // RLS now filters cells by office_id; no additional filtering needed
+  const baseCells = cells;
 
   const filtered = baseCells.filter(c => {
     const matchesSearch = (c.name || 'Unnamed Cell').toLowerCase().includes(search.toLowerCase());
@@ -210,26 +175,7 @@ export default function CellsPage() {
         )}
       </div>
 
-      {/* My Cells / All toggle for regular users */}
-      {isRegularUser && userCellIds !== null && (
-        <div className="px-4 py-3 border-b border-border">
-          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">View</div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setShowAllCells(false); localStorage.setItem('cells_show_all', '0'); }}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              My Cells
-            </button>
-            <button
-              onClick={() => { setShowAllCells(true); localStorage.setItem('cells_show_all', '1'); }}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${showAllCells ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              All Cells
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* Bulk visibility controls for filtered selection */}
       {filtered.length > 0 && (
