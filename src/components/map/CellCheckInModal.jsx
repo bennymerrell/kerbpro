@@ -6,7 +6,7 @@ import { notifyManagers } from '../../lib/notifyManagers';
 
 export default function CellCheckInModal({ currentUser, preselectedCell, onCheckIn, onPhoneSaved, onDismiss, activeCell, mode }) {
   const [offices, setOffices] = useState([]);
-  const [selectedOfficeId, setSelectedOfficeId] = useState(currentUser?.office_id || '');
+  const [selectedOfficeId, setSelectedOfficeId] = useState(preselectedCell?.office_id || currentUser?.office_id || '');
   const [cells, setCells] = useState([]);
   const [selectedArea, setSelectedArea] = useState(preselectedCell?.area || '');
   const [selectedCellId, setSelectedCellId] = useState(preselectedCell?.id || '');
@@ -65,6 +65,11 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
         : allCells
       ).filter(c => c.work_status !== 'completed');
       setCells(relevantCells);
+      // Restore preselected cell selections if they were cleared
+      if (preselectedCell) {
+        if (preselectedCell.area) setSelectedArea(prev => prev || preselectedCell.area);
+        setSelectedCellId(prev => prev || preselectedCell.id);
+      }
       setLoading(false);
     });
   }, [selectedOfficeId]);
