@@ -443,7 +443,13 @@ export default function MapPage() {
             const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
             return activeCategories.includes(cat);
           })}
-          onViewDetails={(s) => setSelectedSighting(s)}
+          onViewDetails={(s) => {
+            setSelectedSighting(s);
+            const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+            if (!activeCategories.includes(cat)) {
+              setActiveCategories(prev => [...prev, cat]);
+            }
+          }}
           onRemove={(i) => {
             const visible = speciesSightings.filter(s => {
               const cat = s.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
