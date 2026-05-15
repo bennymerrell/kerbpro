@@ -263,7 +263,7 @@ export default function MapPage() {
     await indexedDBCache.cacheCells(cached.filter(c => c.id !== cell.id));
   }
   const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van'];
-  const [activeCategories, setActiveCategories] = useState(CATEGORIES);
+  const [activeCategories, setActiveCategories] = useState([]);
   const [unadoptedRoads, setUnadoptedRoads] = useState([]);
   const [editingCell, setEditingCell] = useState(null); // { cell, points }
   const [showLanding, setShowLanding] = useState(false);
