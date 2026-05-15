@@ -79,7 +79,7 @@ export function SightingThumbnail({ sighting, clickable = true }) {
       onClick={handleClick}
       className={`w-24 h-24 rounded-lg overflow-hidden border border-border ${clickable ? 'cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all' : ''}`}
     >
-      <MapContainer center={[sighting.lat, sighting.lng]} zoom={16} className="w-full h-full" zoomControl={false} dragging={false} scrollWheelZoom={false}>
+      <MapContainer center={[sighting.lat, sighting.lng]} zoom={18} className="w-full h-full" zoomControl={false} dragging={false} scrollWheelZoom={false}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} />
         <Marker position={[sighting.lat, sighting.lng]} icon={createSightingIcon(sighting)} />
       </MapContainer>

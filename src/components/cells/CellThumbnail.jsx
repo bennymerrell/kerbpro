@@ -7,7 +7,7 @@ function FitBounds({ points }) {
   useEffect(() => {
     if (points && points.length > 0) {
       const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { padding: [10, 10] });
+      map.fitBounds(bounds, { padding: [40, 40] });
     }
   }, [map, points]);
   return null;
