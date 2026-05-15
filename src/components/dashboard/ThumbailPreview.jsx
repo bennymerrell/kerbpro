@@ -1,6 +1,51 @@
-import { MapContainer, TileLayer, Polygon, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+const CATEGORY_COLORS = {
+  'Species': '#16a34a',
+  'Free Parking': '#2563eb',
+  'Hydrant': '#ea580c',
+  'WO Point': '#0284c7',
+  'Public Toilet': '#ea580c',
+  'Cafe / Van': '#dc2626',
+};
+
+function createCategoryMarker(category, color) {
+  const html = `
+    <div style="
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: ${color};
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    ">
+      ${
+        category === 'Species' ? '🌿' :
+        category === 'Free Parking' ? '🅿️' :
+        category === 'Hydrant' ? '💧' :
+        category === 'WO Point' ? '📍' :
+        category === 'Public Toilet' ? '🚻' :
+        category === 'Cafe / Van' ? '☕' :
+        '📍'
+      }
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    className: 'category-marker',
+  });
+}
 
 export function SightingThumbnail({ sighting, clickable = true }) {
   const navigate = useNavigate();
@@ -8,6 +53,9 @@ export function SightingThumbnail({ sighting, clickable = true }) {
   if (!sighting?.lat || !sighting?.lng) {
     return <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center text-[10px] text-muted-foreground">No location</div>;
   }
+
+  const cat = sighting.species?.match(/^\[(.+?)\]/)?.[1] || 'Species';
+  const color = CATEGORY_COLORS[cat] || '#6b7280';
 
   const handleClick = () => {
     if (clickable) {
@@ -22,7 +70,7 @@ export function SightingThumbnail({ sighting, clickable = true }) {
     >
       <MapContainer center={[sighting.lat, sighting.lng]} zoom={16} className="w-full h-full" zoomControl={false} dragging={false} scrollWheelZoom={false}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} />
-        <CircleMarker center={[sighting.lat, sighting.lng]} radius={4} fillColor="#ef4444" color="#dc2626" weight={2} opacity={1} fillOpacity={0.8} />
+        <Marker position={[sighting.lat, sighting.lng]} icon={createCategoryMarker(cat, color)} />
       </MapContainer>
     </div>
   );
