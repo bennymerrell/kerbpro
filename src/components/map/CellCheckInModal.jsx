@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone, ArrowLeft, Camera, X, Upload } from 'lucide-react';
+import { Loader2, Building2, SquareDashedBottom, LogIn, Leaf, MapPin, Phone, ArrowLeft, Camera, X, Upload, AlertCircle } from 'lucide-react';
 import { compressImage } from '../../lib/compressImage';
 import { notifyManagers } from '../../lib/notifyManagers';
 
@@ -15,6 +15,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
   const [phoneInput, setPhoneInput] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
   const [phoneConfirmed, setPhoneConfirmed] = useState(!!currentUser?.phone);
+  const [error, setError] = useState(null);
 
   // Resume / photo state
   const isResumeMode = mode === 'resume' && !!activeCell;
@@ -81,10 +82,12 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
   async function handleStartNew() {
     if (!selectedCellId) return;
     setSubmitting(true);
+    setError(null);
     try {
       const cell = cells.find(c => c.id === selectedCellId);
       if (!cell) {
         setSubmitting(false);
+        setError('Cell not found');
         return;
       }
 
@@ -112,8 +115,10 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
 
       setSubmitting(false);
       onCheckIn({ ...cell, work_status: 'in_progress' });
-    } catch (error) {
+    } catch (err) {
+      console.error('Cell start work error:', err);
       setSubmitting(false);
+      setError(err?.message || 'Failed to start work');
     }
   }
 
@@ -284,6 +289,12 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
           </div>
         ) : (
           <div className="p-5 space-y-4">
+            {error && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-xs text-red-800">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-red-600" />
+                {error}
+              </div>
+            )}
             {/* Office — dropdown */}
             {offices.length > 0 && (
               <div>
