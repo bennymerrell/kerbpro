@@ -81,33 +81,40 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
   async function handleStartNew() {
     if (!selectedCellId) return;
     setSubmitting(true);
-    const cell = cells.find(c => c.id === selectedCellId);
-    if (!cell) return;
+    try {
+      const cell = cells.find(c => c.id === selectedCellId);
+      if (!cell) {
+        setSubmitting(false);
+        return;
+      }
 
-    const prevStatus = cell.work_status || 'not_started';
-    const today = new Date().toISOString().split('T')[0];
+      const prevStatus = cell.work_status || 'not_started';
+      const today = new Date().toISOString().split('T')[0];
 
-    await base44.entities.Cell.update(cell.id, { work_status: 'in_progress' });
-    await base44.auth.updateMe({
-      active_cell_id: cell.id,
-      active_cell_prev_status: prevStatus,
-      active_cell_checkin_date: today,
-      office_id: selectedOfficeId || null,
-    });
+      await base44.entities.Cell.update(cell.id, { work_status: 'in_progress' });
+      await base44.auth.updateMe({
+        active_cell_id: cell.id,
+        active_cell_prev_status: prevStatus,
+        active_cell_checkin_date: today,
+        office_id: selectedOfficeId || null,
+      });
 
-    // Notify assigned manager
-    const me = await base44.auth.me();
-    if (me?.manager_id) {
-      base44.functions.invoke('notifyCellAction', {
-        action: 'started',
-        cellName: cell.name || 'Unnamed Cell',
-        cellArea: cell.area || '',
-        managerId: me.manager_id,
-      }).catch(() => {});
+      // Notify assigned manager
+      const me = await base44.auth.me();
+      if (me?.manager_id) {
+        base44.functions.invoke('notifyCellAction', {
+          action: 'started',
+          cellName: cell.name || 'Unnamed Cell',
+          cellArea: cell.area || '',
+          managerId: me.manager_id,
+        }).catch(() => {});
+      }
+
+      setSubmitting(false);
+      onCheckIn({ ...cell, work_status: 'in_progress' });
+    } catch (error) {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
-    onCheckIn({ ...cell, work_status: 'in_progress' });
   }
 
   async function handleSavePhone() {
