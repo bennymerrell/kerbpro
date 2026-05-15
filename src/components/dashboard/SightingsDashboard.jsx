@@ -187,11 +187,9 @@ export default function SightingsDashboard() {
             const label = s.species?.replace(/^\[.+?\]\s*/, '').trim() || cat;
             const badgeColor = CATEGORY_BG[cat] || 'bg-muted text-muted-foreground';
             return (
-              <div key={s.id} className="flex items-stretch">
-                <div className="w-40 h-40 flex-shrink-0">
-                  <SightingThumbnail sighting={s} clickable={true} />
-                </div>
-                <div className="flex-1 min-w-0 px-4 py-3 flex flex-col justify-center">
+              <div key={s.id} className="flex items-center gap-3 px-4 py-3">
+                <SightingThumbnail sighting={s} clickable={true} />
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeColor}`}>{cat}</span>
                     <span className="text-xs font-medium text-foreground truncate">{label}</span>
@@ -201,15 +199,13 @@ export default function SightingsDashboard() {
                     {s.reported_by || 'Unknown'} · {s.created_date ? format(new Date(s.created_date), 'dd MMM yyyy') : '—'}
                     {s.notes && ` · ${s.notes.slice(0, 40)}${s.notes.length > 40 ? '…' : ''}`}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <button onClick={() => setEditing(s)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
                 </div>
+                <button onClick={() => setEditing(s)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })}
