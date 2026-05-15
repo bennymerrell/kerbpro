@@ -97,50 +97,7 @@
         "role": "admin"
       }
     },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "data.office_id": "{{user.data.office_id}}"
-            }
-          ]
-        },
-        {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "user"
-              }
-            },
-            {
-              "$or": [
-                {
-                  "data.office_id": "{{user.data.office_id}}"
-                },
-                {
-                  "data.assigned_user_ids": {
-                    "$in": [
-                      "{{user.id}}"
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "$or": [
         {

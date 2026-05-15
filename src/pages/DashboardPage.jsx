@@ -18,9 +18,9 @@ const ALL_TABS = [
   { key: 'contracts', label: 'Contracts', icon: FileText, roles: ['admin', 'manager'] },
   { key: 'cells', label: 'Cells', icon: SquareDashedBottom, roles: ['admin', 'manager'] },
   { key: 'sightings', label: 'Sightings', icon: Leaf, roles: ['admin', 'manager'] },
-  { key: 'planner', label: 'Planner', icon: CalendarDays, roles: ['admin', 'manager'] },
+  { key: 'planner', label: 'Planner', icon: CalendarDays, roles: ['admin'] },
   { key: 'users', label: 'Users', icon: Users, roles: ['admin', 'manager'] },
-  { key: 'email_templates', label: 'Email Templates', icon: Mail, roles: ['admin', 'manager'] },
+  { key: 'email_templates', label: 'Email Templates', icon: Mail, roles: ['admin'] },
   { key: 'data', label: 'Data', icon: Database, roles: ['admin'] },
 ];
 
