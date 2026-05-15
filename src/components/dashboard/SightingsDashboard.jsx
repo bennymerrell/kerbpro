@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Trash2, Pencil, X, Check, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { pointInPolygon } from '@/lib/mapUtils';
+import { SightingThumbnail } from './ThumbailPreview';
 
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van'];
 
@@ -187,6 +188,7 @@ export default function SightingsDashboard() {
             const badgeColor = CATEGORY_BG[cat] || 'bg-muted text-muted-foreground';
             return (
               <div key={s.id} className="flex items-center gap-3 px-4 py-3">
+                <SightingThumbnail sighting={s} clickable={true} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeColor}`}>{cat}</span>

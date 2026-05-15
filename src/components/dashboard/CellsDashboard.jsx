@@ -4,6 +4,7 @@ import { Loader2, Pencil, Trash2, X, Check, RotateCcw, User, Search, RefreshCw, 
 import AssignUserModal from '@/components/cells/AssignUserModal';
 import { format, startOfWeek } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { CellThumbnail } from './ThumbailPreview';
 
 function getThisWeekKey() {
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -450,6 +451,7 @@ export default function CellsDashboard() {
                 {/* Main row */}
                 <div className="px-4 py-3">
                   <div className="flex items-center gap-3">
+                    <CellThumbnail cell={cell} clickable={true} />
                     <button
                       onClick={() => setExpandedCells(prev => ({ ...prev, [cell.id]: !prev[cell.id] }))}
                       className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
