@@ -85,40 +85,40 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
     setError(null);
     try {
       const cell = cells.find(c => c.id === selectedCellId);
-      if (!cell) {
-        setSubmitting(false);
-        setError('Cell not found');
-        return;
-      }
+      if (!cell) throw new Error('Cell not found');
 
       const prevStatus = cell.work_status || 'not_started';
       const today = new Date().toISOString().split('T')[0];
 
-      await base44.entities.Cell.update(cell.id, { work_status: 'in_progress' });
-      await base44.auth.updateMe({
-        active_cell_id: cell.id,
-        active_cell_prev_status: prevStatus,
-        active_cell_checkin_date: today,
-        office_id: selectedOfficeId || null,
-      });
+      // Update cell and user in parallel
+      await Promise.all([
+        base44.entities.Cell.update(cell.id, { work_status: 'in_progress' }),
+        base44.auth.updateMe({
+          active_cell_id: cell.id,
+          active_cell_prev_status: prevStatus,
+          active_cell_checkin_date: today,
+          office_id: selectedOfficeId || null,
+        })
+      ]);
 
-      // Notify assigned manager
-      const me = await base44.auth.me();
-      if (me?.manager_id) {
-        base44.functions.invoke('notifyCellAction', {
-          action: 'started',
-          cellName: cell.name || 'Unnamed Cell',
-          cellArea: cell.area || '',
-          managerId: me.manager_id,
-        }).catch(() => {});
-      }
+      // Notify manager async (don't wait)
+      base44.auth.me().then(me => {
+        if (me?.manager_id) {
+          base44.functions.invoke('notifyCellAction', {
+            action: 'started',
+            cellName: cell.name || 'Unnamed Cell',
+            cellArea: cell.area || '',
+            managerId: me.manager_id,
+          }).catch(() => {});
+        }
+      }).catch(() => {});
 
       setSubmitting(false);
       onCheckIn({ ...cell, work_status: 'in_progress' });
     } catch (err) {
       console.error('Cell start work error:', err);
       setSubmitting(false);
-      setError(err?.message || 'Failed to start work');
+      setError(err?.message || 'Failed to start work. Please try again.');
     }
   }
 
