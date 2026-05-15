@@ -92,7 +92,7 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
 
       // Update cell and user in parallel
       await Promise.all([
-        base44.entities.Cell.update(cell.id, { work_status: 'in_progress' }),
+        base44.functions.invoke('startCell', { cellId: cell.id }),
         base44.auth.updateMe({
           active_cell_id: cell.id,
           active_cell_prev_status: prevStatus,
