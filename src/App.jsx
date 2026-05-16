@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
+import TimeSavingsQuestionnaire from './pages/TimeSavingsQuestionnaire';
 import Layout from './components/Layout';
 import MapPage from './pages/MapPage';
 import SightingsPage from './pages/SightingsPage';
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
+      <Route path="/survey" element={<TimeSavingsQuestionnaire />} />
       <Route path="/print-map/:cellId" element={<PrintMapPage />} />
     </Routes>
   );
