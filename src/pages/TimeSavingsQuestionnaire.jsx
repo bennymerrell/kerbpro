@@ -465,7 +465,7 @@ export default function TimeSavingsQuestionnaire() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32 overflow-y-auto" style={{ height: '100dvh', overflowY: 'auto' }}>
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
         <div className="max-w-lg mx-auto">
