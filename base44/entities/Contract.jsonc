@@ -5,6 +5,10 @@
     "name": {
       "type": "string",
       "description": "Contract name / area label"
+    },
+    "office_id": {
+      "type": "string",
+      "description": "ID of the Office this contract belongs to"
     }
   },
   "required": [

@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Plus, Pencil, Trash2, X, Check, FileText } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, X, Check, FileText, Building2 } from 'lucide-react';
 
-function ContractModal({ contract, onClose, onSave }) {
+function ContractModal({ contract, offices, onClose, onSave }) {
   const [name, setName] = useState(contract?.name || '');
+  const [officeId, setOfficeId] = useState(contract?.office_id || '');
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
-    await onSave(name.trim());
+    await onSave(name.trim(), officeId || null);
     setSaving(false);
     onClose();
   }
@@ -23,17 +24,34 @@ function ContractModal({ contract, onClose, onSave }) {
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
-        <div className="p-5">
-          <label className="block text-[11px] font-medium text-muted-foreground mb-1">Contract Name *</label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. North District"
-            autoFocus
-            onKeyDown={e => e.key === 'Enter' && handleSave()}
-            className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-[11px] font-medium text-muted-foreground mb-1">Contract Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. North District"
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+              className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          {offices.length > 0 && (
+            <div>
+              <label className="block text-[11px] font-medium text-muted-foreground mb-1">Office</label>
+              <select
+                value={officeId}
+                onChange={e => setOfficeId(e.target.value)}
+                className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">— No office assigned —</option>
+                {offices.map(o => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <div className="flex gap-2 px-5 py-4 border-t border-border">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg bg-muted text-sm font-medium text-foreground hover:bg-muted/70 transition-colors">Cancel</button>
@@ -52,7 +70,8 @@ function ContractModal({ contract, onClose, onSave }) {
 }
 
 export default function ContractManagement() {
-  const [contractRecords, setContractRecords] = useState([]); // Contract entity records
+  const [contractRecords, setContractRecords] = useState([]);
+  const [offices, setOffices] = useState([]);
   const [cells, setCells] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // null | 'new' | contract record
@@ -62,45 +81,51 @@ export default function ContractManagement() {
     Promise.all([
       base44.entities.Contract.list('name', 200),
       base44.entities.Cell.list('-created_date', 500),
-    ]).then(([contractData, cellData]) => {
+      base44.entities.Office.list(),
+    ]).then(([contractData, cellData, officeData]) => {
       setCells(cellData);
+      setOffices(officeData);
 
-      // Merge: existing Contract records + any area strings not yet in Contract records
+      // Migrate any cell areas not yet in Contract records
       const recordNames = new Set(contractData.map(c => c.name));
       const cellAreaNames = [...new Set(cellData.map(c => c.area).filter(Boolean))];
       const missing = cellAreaNames.filter(a => !recordNames.has(a));
 
-      // Create Contract records for any orphaned cell areas
-      Promise.all(missing.map(name => base44.entities.Contract.create({ name }))).then(created => {
-        setContractRecords([...contractData, ...created].sort((a, b) => a.name.localeCompare(b.name)));
-        setLoading(false);
-      });
-
-      if (missing.length === 0) {
+      if (missing.length > 0) {
+        Promise.all(missing.map(name => base44.entities.Contract.create({ name }))).then(created => {
+          setContractRecords([...contractData, ...created].sort((a, b) => a.name.localeCompare(b.name)));
+          setLoading(false);
+        });
+      } else {
         setContractRecords(contractData.sort((a, b) => a.name.localeCompare(b.name)));
         setLoading(false);
       }
     });
   }, []);
 
+  const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
+
   function cellCountForContract(name) {
     return cells.filter(c => c.area === name).length;
   }
 
-  async function handleSave(newName, existingRecord) {
+  async function handleSave(newName, newOfficeId, existingRecord) {
+    const updateData = { name: newName, office_id: newOfficeId || null };
+
     if (existingRecord) {
-      // Rename: update Contract record + all cells with old name
-      await base44.entities.Contract.update(existingRecord.id, { name: newName });
-      const affected = cells.filter(c => c.area === existingRecord.name);
-      await Promise.all(affected.map(c => base44.entities.Cell.update(c.id, { area: newName })));
-      setCells(prev => prev.map(c => c.area === existingRecord.name ? { ...c, area: newName } : c));
+      await base44.entities.Contract.update(existingRecord.id, updateData);
+      // If renamed, update all cells with old area name
+      if (existingRecord.name !== newName) {
+        const affected = cells.filter(c => c.area === existingRecord.name);
+        await Promise.all(affected.map(c => base44.entities.Cell.update(c.id, { area: newName })));
+        setCells(prev => prev.map(c => c.area === existingRecord.name ? { ...c, area: newName } : c));
+      }
       setContractRecords(prev =>
-        prev.map(r => r.id === existingRecord.id ? { ...r, name: newName } : r)
+        prev.map(r => r.id === existingRecord.id ? { ...r, ...updateData } : r)
             .sort((a, b) => a.name.localeCompare(b.name))
       );
     } else {
-      // Create new Contract record — persists in DB
-      const created = await base44.entities.Contract.create({ name: newName });
+      const created = await base44.entities.Contract.create(updateData);
       setContractRecords(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
     }
   }
@@ -151,7 +176,15 @@ export default function ContractManagement() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium text-foreground truncate">{record.name}</div>
-                <div className="text-[11px] text-muted-foreground">{cellCountForContract(record.name)} cell{cellCountForContract(record.name) !== 1 ? 's' : ''}</div>
+                <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                  <span>{cellCountForContract(record.name)} cell{cellCountForContract(record.name) !== 1 ? 's' : ''}</span>
+                  {record.office_id && officeMap[record.office_id] && (
+                    <span className="flex items-center gap-0.5 text-emerald-600">
+                      <Building2 className="h-2.5 w-2.5" />
+                      {officeMap[record.office_id]}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setModal(record)}
@@ -174,9 +207,10 @@ export default function ContractManagement() {
       {modal && (
         <ContractModal
           contract={modal === 'new' ? null : modal}
+          offices={offices}
           onClose={() => setModal(null)}
-          onSave={async (newName) => {
-            await handleSave(newName, modal === 'new' ? null : modal);
+          onSave={async (newName, newOfficeId) => {
+            await handleSave(newName, newOfficeId, modal === 'new' ? null : modal);
           }}
         />
       )}
