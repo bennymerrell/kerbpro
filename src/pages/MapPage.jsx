@@ -4,7 +4,6 @@ import { indexedDBCache } from '@/lib/indexedDBCache';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TILE_LAYERS, pointInPolygon } from '../lib/mapUtils';
-import { useMap } from 'react-leaflet';
 import MapClickHandler from '../components/map/MapClickHandler';
 import WaypointMarkers from '../components/map/WaypointMarkers';
 import RouteLine from '../components/map/RouteLine';
@@ -48,15 +47,7 @@ L.Icon.Default.mergeOptions({
 const DEFAULT_CENTER = [51.505, -1.27]; // UK fallback
 const DEFAULT_ZOOM = 13;
 
-function ZoomInvalidator() {
-  const map = useMap();
-  useEffect(() => {
-    function onZoomEnd() { map.invalidateSize(); }
-    map.on('zoomend', onZoomEnd);
-    return () => map.off('zoomend', onZoomEnd);
-  }, [map]);
-  return null;
-}
+
 
 export default function MapPage() {
   const isMobile = useIsMobile();
@@ -431,20 +422,18 @@ export default function MapPage() {
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
         zoomControl={false}
-        zoomSnap={0.5}
-        zoomDelta={1}
         maxZoom={19}
         ref={mapRef}
-        style={{ cursor: isPlotting || isAreaMode ? 'crosshair' : 'grab' }}
       >
-        <ZoomInvalidator />
         <TileLayer
           key={tileLayer}
           attribution={currentTile.attribution}
           url={currentTile.url}
           maxZoom={currentTile.maxZoom}
           maxNativeZoom={currentTile.maxNativeZoom || currentTile.maxZoom}
-          keepBuffer={4}
+          keepBuffer={8}
+          updateWhenZooming={false}
+          updateWhenIdle={true}
         />
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || (isAreaMode && !areaClosed)} />
         <LocationWatcher onLocationUpdate={setLocationData} />
