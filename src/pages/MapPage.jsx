@@ -420,8 +420,7 @@ export default function MapPage() {
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
         zoomControl={false}
-        zoomAnimation={false}
-        zoomSnap={0}
+        zoomSnap={0.5}
         zoomDelta={1}
         maxZoom={19}
         ref={mapRef}
