@@ -124,6 +124,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // Allow automation/service calls (no user token) OR authenticated admin/manager users
+    const user = await base44.auth.me().catch(() => null);
+    if (user && user.role !== 'admin' && user.role !== 'manager') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const cellId = body?.event?.entity_id || body?.cellId;
     if (!cellId) return Response.json({ error: 'cellId required' }, { status: 400 });
