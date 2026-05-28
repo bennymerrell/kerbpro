@@ -410,7 +410,7 @@ export default function MapPage() {
   const currentTile = TILE_LAYERS[tileLayer];
 
   return (
-    <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }} className={isPlotting || isAreaMode ? 'map-cursor-crosshair' : ''}>
       <OfflineIndicator isOnline={isOnline} />
       {pendingCount > 0 && (
         <div className="absolute z-[1100] left-1/2 -translate-x-1/2 flex items-center gap-2 bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}>

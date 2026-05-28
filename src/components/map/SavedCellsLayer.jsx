@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Polygon, Tooltip } from 'react-leaflet';
 
 const STATUS_COLORS = {
@@ -6,29 +7,40 @@ const STATUS_COLORS = {
   not_started: { color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.15, weight: 2 },
 };
 
+const CellPolygon = memo(function CellPolygon({ cell, isActiveCell, locked, onCellClick }) {
+  let points = [];
+  try { points = JSON.parse(cell.points); } catch { return null; }
+  const positions = points.map(p => [p.lat, p.lng]);
+  const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
+  const clickable = !locked && onCellClick && (cell.work_status !== 'completed' || isActiveCell);
+  return (
+    <Polygon
+      positions={positions}
+      pathOptions={pathOptions}
+      eventHandlers={clickable ? { click: () => onCellClick(cell) } : undefined}
+    >
+      {cell.name && (
+        <Tooltip permanent direction="center" className="cell-label">
+          {cell.name}
+        </Tooltip>
+      )}
+    </Polygon>
+  );
+});
+
 export default function SavedCellsLayer({ cells, userRole, activeUserCell, onCellClick, locked = false }) {
   return cells
     .filter(c => c.visible !== false)
     .map((cell, i) => {
-      let points = [];
-      try { points = JSON.parse(cell.points); } catch { return null; }
-      const positions = points.map(p => [p.lat, p.lng]);
-      const pathOptions = STATUS_COLORS[cell.work_status] || STATUS_COLORS.not_started;
-      const isActiveCell = activeUserCell && cell.id === activeUserCell.id;
-      const clickable = !locked && onCellClick && (cell.work_status !== 'completed' || isActiveCell);
+      const isActiveCell = activeUserCell?.id === cell.id;
       return (
-        <Polygon
+        <CellPolygon
           key={cell.id || i}
-          positions={positions}
-          pathOptions={pathOptions}
-          eventHandlers={clickable ? { click: () => onCellClick(cell) } : undefined}
-        >
-          {cell.name && (
-            <Tooltip permanent direction="center" className="cell-label">
-              {cell.name}
-            </Tooltip>
-          )}
-        </Polygon>
+          cell={cell}
+          isActiveCell={isActiveCell}
+          locked={locked}
+          onCellClick={onCellClick}
+        />
       );
     });
 }
