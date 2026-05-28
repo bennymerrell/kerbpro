@@ -425,8 +425,8 @@ export default function MapPage() {
         zoomSnap={0.5}
         zoomDelta={1}
         maxZoom={19}
-        zoomAnimation={true}
-        markerZoomAnimation={true}
+        zoomAnimation={false}
+        markerZoomAnimation={false}
         ref={mapRef}
       >
         <TileLayer
