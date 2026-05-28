@@ -12,6 +12,7 @@ export default function CellsPage() {
   const navigate = useNavigate();
   const [cells, setCells] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState('');
@@ -25,12 +26,14 @@ export default function CellsPage() {
 
   const loadCells = useCallback(async () => {
     setLoading(true);
-    const [data, officeData] = await Promise.all([
+    const [data, officeData, contractData] = await Promise.all([
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.Office.list(),
+      base44.entities.Contract.list('name', 200),
     ]);
     setCells(data);
     setOffices(officeData);
+    setContracts(contractData);
     setLoading(false);
   }, []);
 
@@ -49,7 +52,15 @@ export default function CellsPage() {
 
   const { refreshing } = usePullToRefresh(loadCells);
 
-  const areas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+  // Contracts available for the selected office (or all if no office selected)
+  const availableContracts = officeFilter
+    ? contracts.filter(c => c.office_id === officeFilter)
+    : contracts;
+  const availableContractNames = new Set(availableContracts.map(c => c.name));
+
+  // Fall back to cell areas for any contracts not in the Contract entity
+  const allAreas = [...new Set(cells.map(c => c.area).filter(Boolean))].sort();
+  const areas = allAreas.filter(a => !officeFilter || availableContractNames.has(a));
   const officeMap = Object.fromEntries(offices.map(o => [o.id, o.name]));
 
   const isRegularUser = currentUser && currentUser.role !== 'admin' && currentUser.role !== 'manager';
@@ -139,7 +150,7 @@ export default function CellsPage() {
               {offices.map(office => (
                 <button
                   key={office.id}
-                  onClick={() => setOfficeFilter(officeFilter === office.id ? '' : office.id)}
+                  onClick={() => { setOfficeFilter(officeFilter === office.id ? '' : office.id); setAreaFilter(''); }}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${officeFilter === office.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                 >
                   {office.name}
