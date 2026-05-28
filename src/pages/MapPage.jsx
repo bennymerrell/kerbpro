@@ -422,7 +422,11 @@ export default function MapPage() {
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
         zoomControl={false}
+        zoomSnap={0.5}
+        zoomDelta={1}
         maxZoom={19}
+        zoomAnimation={true}
+        markerZoomAnimation={true}
         ref={mapRef}
       >
         <TileLayer
@@ -431,9 +435,7 @@ export default function MapPage() {
           url={currentTile.url}
           maxZoom={currentTile.maxZoom}
           maxNativeZoom={currentTile.maxNativeZoom || currentTile.maxZoom}
-          keepBuffer={8}
-          updateWhenZooming={false}
-          updateWhenIdle={true}
+          keepBuffer={4}
         />
         <MapClickHandler onMapClick={handleMapClick} isActive={isPlotting || (isAreaMode && !areaClosed)} />
         <LocationWatcher onLocationUpdate={setLocationData} />
