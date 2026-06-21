@@ -7,6 +7,7 @@ import SightingDetailModal from '../components/SightingDetailModal';
 import { format, startOfWeek } from 'date-fns';
 import { pointInPolygon } from '@/lib/mapUtils';
 
+
 const CATEGORIES = ['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van'];
 
 const CATEGORY_SVGS = {
@@ -59,48 +60,16 @@ export default function SightingsPage() {
   const [areaFilter, setAreaFilter] = useState('');
   const [cellFilter, setCellFilter] = useState('');
   const [selected, setSelected] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => { base44.auth.me().then(u => setCurrentUser(u)).catch(() => {}); }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [sightingData, cellData, officeData, user] = await Promise.all([
+    const [sightingData, cellData, officeData] = await Promise.all([
       base44.entities.Sighting.list('-created_date', 500),
       base44.entities.Cell.list('-created_date', 200),
       base44.entities.Office.list(),
-      base44.auth.me().catch(() => null),
     ]);
 
-    const isRegularUser = user && user.role !== 'admin' && user.role !== 'manager';
-
-    if (isRegularUser && user.office_id) {
-      // Pre-select the user's office filter
-      setOfficeFilter(user.office_id);
-
-      // All cell polygons (for "outside all cells" check)
-      const allCellPolygons = cellData.map(c => {
-        try { return JSON.parse(c.points || '[]'); } catch { return []; }
-      }).filter(pts => pts.length >= 3);
-
-      // Office cell polygons
-      const officeCells = cellData.filter(c => c.office_id === user.office_id);
-      const officeCellPolygons = officeCells.map(c => {
-        try { return JSON.parse(c.points || '[]'); } catch { return []; }
-      }).filter(pts => pts.length >= 3);
-
-      // Include sightings within office cells OR outside all cells
-      const filtered = sightingData.filter(s => {
-        if (!s.lat || !s.lng) return true;
-        const isOutsideAll = !allCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
-        if (isOutsideAll) return true;
-        return officeCellPolygons.some(poly => pointInPolygon(s.lat, s.lng, poly));
-      });
-      setSightings(filtered);
-    } else {
-      setSightings(sightingData);
-    }
-
+    setSightings(sightingData);
     setCells(cellData);
     setOffices(officeData);
     setLoading(false);
@@ -177,18 +146,6 @@ export default function SightingsPage() {
           />
         </div>
 
-        {/* Office filter */}
-        {offices.length > 0 && (
-          <div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Office</div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => { setOfficeFilter(''); setAreaFilter(''); setCellFilter(''); }} className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!officeFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>All</button>
-              {offices.map(o => (
-                <button key={o.id} onClick={() => { setOfficeFilter(officeFilter === o.id ? '' : o.id); setAreaFilter(''); setCellFilter(''); }} className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${officeFilter === o.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{o.name}</button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Contract filter */}
         {areas.length > 0 && (
