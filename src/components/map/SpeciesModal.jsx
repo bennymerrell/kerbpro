@@ -66,8 +66,12 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
     setPhotoPreview(URL.createObjectURL(file));
   }
 
+  const needsStatus = category === 'Hydrant' || category === 'WO Point';
+  const isValid = photoFile && (!needsStatus || statusDetails);
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!isValid) return;
     base44.analytics.track({ eventName: 'sighting_submitted', properties: { category } });
     setSending(true);
 
@@ -192,7 +196,7 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
           {/* Photo */}
           <div>
-            <label className="text-xs font-medium text-foreground block mb-1.5">Photo</label>
+            <label className="text-xs font-medium text-foreground block mb-1.5">Photo <span className="text-destructive">*</span></label>
             <input
               ref={fileInputRef}
               type="file"
@@ -238,9 +242,16 @@ export default function SpeciesModal({ location, onClose, onSaved }) {
 
 
 
+          {!photoFile && (
+            <p className="text-xs text-destructive -mt-2">A photo is required to submit a report.</p>
+          )}
+          {needsStatus && !statusDetails && (
+            <p className="text-xs text-destructive -mt-2">Please select a status for this {category}.</p>
+          )}
+
           <Button
             type="submit"
-            disabled={sending || sent || ((category === 'Hydrant' || category === 'WO Point') && !statusDetails)}
+            disabled={sending || sent || !isValid}
             className="w-full h-9 text-sm"
           >
             {sent ? (
