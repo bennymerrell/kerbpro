@@ -106,23 +106,7 @@
         }
       ]
     },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
-          }
-        },
-        {
-          "data.office_id": "{{user.office_id}}"
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "$or": [
         {
