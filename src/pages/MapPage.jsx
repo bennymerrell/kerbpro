@@ -306,7 +306,7 @@ export default function MapPage() {
     // Update local savedCells so the map shows orange
     setSavedCells(prev => prev.map(c => c.id === cell.id ? { ...c, work_status: 'in_progress' } : c));
     // Enable all sighting categories
-    setActiveCategories(['Species', 'Free Parking', 'Hydrant', 'Incident', 'Public Toilet', 'Cafe / Van']);
+    setActiveCategories(['Species', 'Free Parking', 'Hydrant', 'WO Point', 'Public Toilet', 'Cafe / Van']);
     // Fly to the cell
     let pts = [];
     try { pts = JSON.parse(cell.points); } catch {}
