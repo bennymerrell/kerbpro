@@ -90,16 +90,14 @@ export default function CellCheckInModal({ currentUser, preselectedCell, onCheck
       const prevStatus = cell.work_status || 'not_started';
       const today = new Date().toISOString().split('T')[0];
 
-      // Update cell and user in parallel
-      await Promise.all([
-        base44.entities.Cell.update(cell.id, { work_status: 'in_progress' }),
-        base44.auth.updateMe({
-          active_cell_id: cell.id,
-          active_cell_prev_status: prevStatus,
-          active_cell_checkin_date: today,
-          office_id: selectedOfficeId || null,
-        })
-      ]);
+      // Update cell first — if this fails, don't update user profile
+      await base44.entities.Cell.update(cell.id, { work_status: 'in_progress' });
+      await base44.auth.updateMe({
+        active_cell_id: cell.id,
+        active_cell_prev_status: prevStatus,
+        active_cell_checkin_date: today,
+        office_id: selectedOfficeId || null,
+      });
 
       // Notify manager async (don't wait)
       base44.auth.me().then(me => {
