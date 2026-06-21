@@ -107,30 +107,7 @@
       ]
     },
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
-          }
-        },
-        {
-          "id": "{{user.active_cell_id}}"
-        },
-        {
-          "data.assigned_user_ids": {
-            "$in": [
-              "{{user.id}}"
-            ]
-          }
-        }
-      ]
-    },
+    "update": {},
     "delete": {
       "user_condition": {
         "role": "admin"
