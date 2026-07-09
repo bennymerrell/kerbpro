@@ -11,8 +11,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing z, x, y params' }, { status: 400 });
     }
 
-    const url = `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
-    const response = await fetch(url);
+    const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'KerbPro/1.0 (field mapping tool)' }
+    });
 
     if (!response.ok) {
       return Response.json({ error: 'Tile fetch failed', status: response.status }, { status: 502 });

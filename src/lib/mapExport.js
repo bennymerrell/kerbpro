@@ -82,7 +82,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
   }
 
   // Fetch in small batches to avoid rate limiting
-  const BATCH_SIZE = 4;
+  const BATCH_SIZE = 2;
   for (let i = 0; i < tileTasks.length; i += BATCH_SIZE) {
     const batch = tileTasks.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(({ z, x, y, cx, cy }) =>
@@ -96,7 +96,7 @@ export async function buildMapCanvas(cells = [], selectedCell = null, overrideOr
         .catch(() => {})
     ));
     if (i + BATCH_SIZE < tileTasks.length) {
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
 
