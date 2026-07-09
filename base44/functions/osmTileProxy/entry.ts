@@ -12,7 +12,9 @@ Deno.serve(async (req) => {
     }
 
     const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'KerbPro/1.0 (field mapping tool; contact via base44.com)' }
+    });
 
     if (!response.ok) {
       return Response.json({ error: 'Tile fetch failed', status: response.status }, { status: 502 });
